@@ -14,11 +14,11 @@
 }
 
 \sqlexec{
-    select td.id, td.test_run_id, td.test_type_id, tt.name, td.start_time, td.end_time, td.rc
-      from test_data td, test_types tt
-     where td.id=\sqlquote{\get{dataid}} and td.test_type_id = tt.id
+    select tr.platform, tr.reporter_ip, td.id, td.test_run_id, td.test_type_id, tt.name, td.start_time, td.end_time, td.rc
+      from test_runs tr, test_data td, test_types tt
+     where tr.id=td.test_run_id and td.id=\sqlquote{\get{dataid}} and td.test_type_id = tt.id
 }
-\while{\sqlrow{id}{runid}{typeid}{typename}{st}{et}{rc}}{
+\while{\sqlrow{platform}{ip}{id}{runid}{typeid}{typename}{st}{et}{rc}}{
 }
 
 \href{Test Results}{index.ghtml} - \href{Test Run}{test.ghtml?runid=\get{runid}}
@@ -26,6 +26,8 @@
 
 <br>
 Test Run: \href{\get{runid}}{test.ghtml?runid=\get{runid}}<br>
+Platform: \get{platform}<br>
+Reporter: \get{ip}<br>
 Test: \get{typename}<br>
 Start Time: \get{st}<br>
 End Time: \get{et}<br>

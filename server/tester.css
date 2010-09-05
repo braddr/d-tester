@@ -1,0 +1,42 @@
+table.runs {
+}
+
+table.runs td {
+    border-top: 1px solid black;
+    padding-top:    5px;
+    padding-bottom: 5px;
+    padding-right:  10px;
+    padding-left:   10px;
+    text-align: center;
+}
+table.runs th {
+    padding-right:  10px;
+    padding-left:   10px;
+}
+table.runs td.result_pass {
+    background: #CAFF70;
+}
+table.runs td.result_fail {
+    background: #F08080;
+}
+
+table.run td {
+    border-top: 1px solid black;
+    padding-top:    5px;
+    padding-bottom: 5px;
+    padding-right:  10px;
+    padding-left:   10px;
+    text-align: center;
+}
+table.run th {
+    padding-right:  10px;
+    padding-left:   10px;
+}
+table.run td.result_pass {
+    background: #CAFF70;
+}
+table.run td.result_fail {
+    background: #F08080;
+}
+
+

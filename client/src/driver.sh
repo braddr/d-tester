@@ -12,7 +12,7 @@ function callcurl
     curl --silent "http://d.puremagic.com/test-results/add/$1.ghtml?$2"
 }
 
-runid=$(callcurl start_run)
+runid=$(callcurl start_run "os=linux_32")
 
 echo "runid: $runid"
 

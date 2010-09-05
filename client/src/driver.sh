@@ -12,7 +12,7 @@ function callcurl
     curl --silent "http://d.puremagic.com/test-results/add/$1.ghtml?$2"
 }
 
-runid=$(callcurl start_run)
+runid=$(callcurl start_run "os=win_32")
 
 echo "runid: $runid"
 
@@ -62,11 +62,11 @@ test_phobos_rc=$?
 callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
 scp -q $runid/phobos-unittest.log dwebsite:~/.www/test-results/$runid
 
-testid=$(callcurl start_test "runid=$runid&type=7")
-src/do_test_dmd.sh "$runid"
-test_dmd_rc=$?
-callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
-scp -q $runid/dmd-unittest.log dwebsite:~/.www/test-results/$runid
+#testid=$(callcurl start_test "runid=$runid&type=7")
+#src/do_test_dmd.sh "$runid"
+#test_dmd_rc=$?
+#callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
+#scp -q $runid/dmd-unittest.log dwebsite:~/.www/test-results/$runid
 
 callcurl finish_run "runid=$runid"
 

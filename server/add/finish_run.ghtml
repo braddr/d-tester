@@ -1,0 +1,20 @@
+\include{/include/test-results}
+
+Content-type: text/plain
+
+\set{validate}{\quote{
+    \if{\not{\get{runid}}}{testid}
+}}#
+#
+\if{\not{\checksecurity}}{
+    unauthorized: \get{REMOTE_ADDR}
+    \exit
+}#
+#
+\set{_rc}{\validate}#
+\if{\_rc}{
+    bad input: \_rc
+    \exit
+}#
+#
+\sqlexec{update test_runs set end_time=now() where id=\sqlquote{\get{runid}} }#

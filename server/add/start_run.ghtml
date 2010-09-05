@@ -1,0 +1,13 @@
+\include{/include/test-results}
+
+Content-type: text/plain
+
+\if{\not{\checksecurity}}{
+    unauthorized: \get{REMOTE_ADDR}
+    \exit
+}#
+#
+\sqlexec{insert into test_runs (start_time) values (now())}#
+\sqlexec{select last_insert_id()}#
+\ignore{\sqlrow{newid}}#
+\get{newid}

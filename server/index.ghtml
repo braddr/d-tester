@@ -1,0 +1,83 @@
+\include{/include/test-results}
+
+\htmlhead
+
+Test results:
+
+<table border=1>
+    <tr><th>id</th><th>Start Time</th><th>End Time</th>
+    \sqlexec{select id, name from test_types order by id}
+    \set{i}{1}
+    \while{\sqlrow{type_\get{i}_id}{type_\get{i}_name}}{
+        <th>\get{type_\get{i}_name}(\get{type_\get{i}_id})</th>
+        \inc{i}
+    }
+    \set{numtypes}{\i}
+    </tr>
+
+\set{i}{1}
+\while{\op{\numtypes}{>}{\i}}{
+    \set{result_\i}{}
+    \set{result_id_\i}{}
+    \inc{i}
+}
+
+\set{showresultset}{\quote{
+    \set{i}{1}
+    \while{\op{\numtypes}{>}{\i}}{
+        <td>\href{
+            \if{\eq{\get{result_\i}}{0}}{
+                pass
+            }{
+                \if{\eq{\get{result_\i}}{}}{
+                    &nbsp;
+                }{
+                    fail
+                }
+            }}{test_data.ghtml?dataid=\get{result_id_\i}}
+        </td>
+        \set{result_\i}{}
+        \set{result_id_\i}{}
+        \inc{i}
+    }
+}}
+
+\sqlexec{
+    select tr.id, tr.start_time, tr.end_time, td.id, td.test_type_id, td.rc
+      from test_runs tr left join test_data td on tr.id = td.test_run_id
+  order by tr.start_time desc, tr.id desc
+}
+\set{previd}{}
+\set{haverow}{\sqlrow{id}{start_time}{end_time}{tdid}{tdtid}{tdrc}}
+\while{\haverow}{
+    <tr>
+    <td>\href{\get{id}}{test.ghtml?runid=\get{id}}</td>
+    <td>\get{start_time}</td>
+    <td>\get{end_time}</td>
+
+    \set{result_\get{tdtid}}{\get{tdrc}}
+    \set{result_id_\get{tdtid}}{\get{tdid}}
+    \set{keepgoing}{1}
+    \set{previd}{\get{id}}
+    \while{\get{keepgoing}}{
+        \set{haverow}{\sqlrow{id}{start_time}{end_time}{tdid}{tdtid}{tdrc}}
+        \if{\haverow}{
+            \if{\eq{\get{previd}}{\get{id}}}{
+                \set{result_\get{tdtid}}{\get{tdrc}}
+                \set{result_id_\get{tdtid}}{\get{tdid}}
+            }{
+                \showresultset
+                </tr>
+                \unset{keepgoing}
+            }
+        }{
+            \unset{keepgoing}
+        }
+    }
+}
+\showresultset
+
+</table>
+
+\htmlfoot
+

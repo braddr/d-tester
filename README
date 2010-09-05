@@ -1,1 +1,13 @@
 This is a crude tester for dmd, druntime, and phobos.
+
+The server pieces are in a script language for which I can't share the engine.
+The client pieces are just shell scripts.
+
+Given the crudeness of the code, there's assumptions about my environment
+and hosts that will need to be edited out.
+
+I run it from the client dir with:
+
+   $ while 1; do ./src/driver.sh; sleep 3600; done
+
+

@@ -8,6 +8,6 @@ and hosts that will need to be edited out.
 
 I run it from the client dir with:
 
-   $ while 1; do ./src/driver.sh; sleep 3600; done
+   $ while /bin/true; do ./src/driver.sh; sleep 3600; done
 
 

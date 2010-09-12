@@ -2,12 +2,19 @@
 
 Content-type: text/plain
 
+\set{validate}{\quote{
+    \if{\not{\get{os}}}{os}
+}}#
+#
 \if{\not{\checksecurity}}{
     unauthorized: \get{REMOTE_ADDR}
     \exit
 }#
 #
-\sqlexec{insert into test_runs (start_time) values (now())}#
+\sqlexec{
+    insert into test_runs (start_time, reporter_ip, platform)
+    values (now(), "\sqlquote{\get{REMOTE_ADDR}}", "\sqlquote{\get{os}}")
+}#
 \sqlexec{select last_insert_id()}#
 \ignore{\sqlrow{newid}}#
 \get{newid}

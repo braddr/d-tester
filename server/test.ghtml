@@ -1,6 +1,8 @@
 \include{/include/test-results}
 
-\htmlhead
+\htmlhead{D AutoTester}{}{}{
+  <link rel="stylesheet" href="tester.css" type="text/css" />
+}
 
 \if{\not{\get{runid}}}{
     error, missing runid parameter
@@ -17,12 +19,14 @@
 <p>
 
 \sqlexec{
-    select id, start_time, end_time from test_runs where id=\sqlquote{\get{runid}}
+    select id, start_time, end_time, platform, reporter_ip from test_runs where id=\sqlquote{\get{runid}}
 }
-\while{\sqlrow{id}{st}{et}}{
+\while{\sqlrow{id}{st}{et}{platform}{ip}}{
     Test Run: \get{id}<br>
     Start Time: \get{st}<br>
     End Time: \get{et}<br>
+    Platform: \get{platform}<br>
+    Reporter: \get{ip}<br>
 }
 
 <br>
@@ -52,17 +56,21 @@
     \if{\get{rc}}{\set{tt_rc_\get{ttid}}{\get{rc}}}
 }
 
-<table border=1>
+<table class="run">
     <tr><th>Test</th><th>Start Time</th><th>End Time</th><th>Result Code</th><th>&nbsp;</th>
+
+\set{getclass}{\quote{
+   \if{\eq{\1}{0}}{pass}{\if{\eq{\1}{&nbsp;}}{unknown}{fail}}
+}}
 
 \set{i}{1}
 \while{\op{\numtypes}{>}{\i}}{
     <tr>
     <td>\get{tt_name_\get{i}}</td>
-    <td>\get{tt_st_\get{i}}</td>
-    <td>\get{tt_et_\get{i}}</td>
-    <td>\get{tt_rc_\get{i}}</td>
-    <td>\if{\get{tt_id_\get{i}}}{\href{Show Log}{test_data.ghtml?dataid=\get{tt_id_\get{i}}}}{&nbsp;}</td>
+    <td class="date">\get{tt_st_\get{i}}</td>
+    <td class="date">\get{tt_et_\get{i}}</td>
+    <td class="result_\getclass{\get{tt_rc_\get{i}}}">\get{tt_rc_\get{i}}</td>
+    <td>\if{\ne{\get{tt_rc_\get{i}}}{&nbsp;}}{\href{Show Log}{test_data.ghtml?dataid=\get{tt_id_\get{i}}}}{&nbsp;}</td>
     </tr>
 
     \inc{i}

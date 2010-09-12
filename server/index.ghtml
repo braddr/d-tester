@@ -1,15 +1,17 @@
 \include{/include/test-results}
 
-\htmlhead
+\htmlhead{D AutoTester}{}{}{
+  <link rel="stylesheet" href="tester.css" type="text/css" />
+}
 
 Test results:
 
-<table border=1>
-    <tr><th>id</th><th>Start Time</th><th>End Time</th>
+<table class="runs">
+    <tr><th>id</th><th>Start Time</th><th>End Time</th><th>Duration</th><th>Platform</th>
     \sqlexec{select id, name from test_types order by id}
     \set{i}{1}
     \while{\sqlrow{type_\get{i}_id}{type_\get{i}_name}}{
-        <th>\get{type_\get{i}_name}(\get{type_\get{i}_id})</th>
+        <th>\get{type_\get{i}_name}</th>
         \inc{i}
     }
     \set{numtypes}{\i}
@@ -18,6 +20,7 @@ Test results:
 \set{i}{1}
 \while{\op{\numtypes}{>}{\i}}{
     \set{result_\i}{}
+    \set{result_st_\i}{}
     \set{result_id_\i}{}
     \inc{i}
 }
@@ -25,45 +28,75 @@ Test results:
 \set{showresultset}{\quote{
     \set{i}{1}
     \while{\op{\numtypes}{>}{\i}}{
-        <td>\href{
-            \if{\eq{\get{result_\i}}{0}}{
-                pass
-            }{
-                \if{\eq{\get{result_\i}}{}}{
-                    &nbsp;
+        \if{\eq{\get{result_\i}}{0}}{
+            \set{text}{pass}
+            \set{class}{pass}
+        }{
+            \if{\eq{\get{result_\i}}{}}{
+                \if{\eq{\get{result_st_\i}}{}}{
+                    \set{text}{&nbsp;}
+                    \set{class}{unknown}
                 }{
-                    fail
+                    \set{text}{running}
+                    \set{class}{running}
                 }
-            }}{test_data.ghtml?dataid=\get{result_id_\i}}
+            }{
+                \set{text}{fail}
+                \set{class}{fail}
+            }
+        }
+        <td class="result_\get{class}">
+            \if{
+                \eq{\get{class}}{unknown}
+                \eq{\get{class}}{running}
+            }{
+                \get{text}
+            }{
+                \href{\get{text}}{test_data.ghtml?dataid=\get{result_id_\i}}
+            }
         </td>
         \set{result_\i}{}
+        \set{result_st_\i}{}
         \set{result_id_\i}{}
         \inc{i}
     }
 }}
 
+\if{\not{\get{showall}}}{
+    \sqlexec{
+        select max(id)-50 from test_runs
+    }
+    \ignore{\sqlrow{max_test_run}}
+}
+
 \sqlexec{
-    select tr.id, tr.start_time, tr.end_time, td.id, td.test_type_id, td.rc
+    select tr.id, tr.start_time, tr.end_time, timediff(tr.end_time, tr.start_time), tr.platform,
+           td.id, td.test_type_id, td.start_time, td.rc
       from test_runs tr left join test_data td on tr.id = td.test_run_id
+     \if{\not{\get{showall}}}{where tr.id > \get{max_test_run}}
   order by tr.start_time desc, tr.id desc
 }
 \set{previd}{}
-\set{haverow}{\sqlrow{id}{start_time}{end_time}{tdid}{tdtid}{tdrc}}
+\set{haverow}{\sqlrow{id}{start_time}{end_time}{duration}{platform}{tdid}{tdtid}{tdst}{tdrc}}
 \while{\haverow}{
     <tr>
     <td>\href{\get{id}}{test.ghtml?runid=\get{id}}</td>
-    <td>\get{start_time}</td>
-    <td>\get{end_time}</td>
+    <td class="run_date">\get{start_time}</td>
+    <td class="run_date">\get{end_time}</td>
+    <td class="run_date">\get{duration}</td>
+    <td class="run_date">\get{platform}</td>
 
     \set{result_\get{tdtid}}{\get{tdrc}}
+    \set{result_st_\get{tdtid}}{\get{tdst}}
     \set{result_id_\get{tdtid}}{\get{tdid}}
     \set{keepgoing}{1}
     \set{previd}{\get{id}}
     \while{\get{keepgoing}}{
-        \set{haverow}{\sqlrow{id}{start_time}{end_time}{tdid}{tdtid}{tdrc}}
+        \set{haverow}{\sqlrow{id}{start_time}{end_time}{duration}{platform}{tdid}{tdtid}{tdst}{tdrc}}
         \if{\haverow}{
             \if{\eq{\get{previd}}{\get{id}}}{
                 \set{result_\get{tdtid}}{\get{tdrc}}
+                \set{result_st_\get{tdtid}}{\get{tdst}}
                 \set{result_id_\get{tdtid}}{\get{tdid}}
             }{
                 \showresultset
@@ -78,6 +111,12 @@ Test results:
 \showresultset
 
 </table>
+
+\if{\not{\get{showall}}}{
+    <a href="?showall=true">Show all runs</a>
+}{
+    <a href="?">Show only recent runs</a>
+}
 
 \htmlfoot
 

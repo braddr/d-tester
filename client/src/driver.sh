@@ -24,9 +24,10 @@ ssh dwebsite mkdir ~/.www/test-results/$runid
 testid=$(callcurl start_test "runid=$runid&type=1")
 src/do_checkout.sh "$runid"
 rc=$?
-callcurl finish_test "testid=$testid&rc=$rc"
 scp -q $runid/checkout.log dwebsite:~/.www/test-results/$runid
+callcurl finish_test "testid=$testid&rc=$rc"
 if [ $rc -ne 0 ]; then
+    callcurl finish_run "runid=$runid"
     exit 1;
 fi
 
@@ -35,38 +36,38 @@ src/do_fixup.sh "$runid"
 testid=$(callcurl start_test "runid=$runid&type=2")
 src/do_build_dmd.sh "$runid"
 build_dmd_rc=$?
-callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
 scp -q $runid/dmd-build.log dwebsite:~/.www/test-results/$runid
+callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=3")
 src/do_build_druntime.sh "$runid"
 build_druntime_rc=$?
-callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
 scp -q $runid/druntime-build.log dwebsite:~/.www/test-results/$runid
+callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=4")
 src/do_build_phobos.sh "$runid"
 build_phobos_rc=$?
-callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
 scp -q $runid/phobos-build.log dwebsite:~/.www/test-results/$runid
+callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=5")
 src/do_test_druntime.sh "$runid"
 test_druntime_rc=$?
-callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
 scp -q $runid/druntime-unittest.log dwebsite:~/.www/test-results/$runid
+callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=6")
 src/do_test_phobos.sh "$runid"
 test_phobos_rc=$?
-callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
 scp -q $runid/phobos-unittest.log dwebsite:~/.www/test-results/$runid
+callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=7")
 src/do_test_dmd.sh "$runid"
 test_dmd_rc=$?
-callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
 scp -q $runid/dmd-unittest.log dwebsite:~/.www/test-results/$runid
+callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
 
 callcurl finish_run "runid=$runid"
 

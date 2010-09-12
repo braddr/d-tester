@@ -1,0 +1,13 @@
+Index: dmd-trunk/src/linux.mak
+===================================================================
+--- dmd-trunk/src/linux.mak	(revision 667)
++++ dmd-trunk/src/linux.mak	(working copy)
+@@ -93,7 +93,7 @@
+ all: dmd
+ 
+ dmd: $(DMD_OBJS)
+-	gcc $(MODEL) -lstdc++ -lpthread $(COV) $(DMD_OBJS) -o dmd
++	gcc $(MODEL) -lstdc++ -lpthread -lm $(COV) $(DMD_OBJS) -o dmd
+ 
+ clean:
+ 	rm -f $(DMD_OBJS) dmd optab.o id.o impcnvgen idgen id.c id.h \

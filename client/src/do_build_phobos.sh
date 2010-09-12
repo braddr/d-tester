@@ -1,15 +1,32 @@
 #!/bin/bash
 
-#set -x
+# set -x
 
 # args:
 #    1) directory for build
+#    2) os
 
 cd $1/phobos-trunk/phobos
 
-make DMD=../../dmd-trunk/src/dmd DRUNTIME_PATH=../../druntime-trunk -f posix.mak >> ../../phobos-build.log 2>&1
+case "$2" in
+    Linux_32|Darwin_32|FreeBSD_32)
+        makefile=posix.mak
+        ;;
+    Win_32)
+        makefile=win32.mak
+        ;;
+    *)
+        echo "unknown os: $2"
+        exit 1;
+esac
+
+if [ "$2" == "Win_32" ]; then
+    make DMD=../../dmd-trunk/src/dmd DRUNTIME=../../druntime-trunk -f $makefile >> ../../phobos-build.log 2>&1
+else
+    make DMD=../../dmd-trunk/src/dmd DRUNTIME_PATH=../../druntime-trunk -f $makefile >> ../../phobos-build.log 2>&1
+fi
 if [ $? -ne 0 ]; then
-    echo "druntime failed to build"
+    echo "phobos failed to build"
     exit 1;
 fi
 

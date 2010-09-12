@@ -10,10 +10,44 @@ shopt -s extglob
 
 function callcurl
 {
+    if [ "$runid" == "test" ]; then
+        return;
+    fi
     curl --silent "http://d.puremagic.com/test-results/add/$1.ghtml?$2"
 }
 
-runid=$(callcurl start_run "os=linux_32")
+foo=`uname`
+case "$foo" in
+    Linux|Darwin|FreeBSD)
+        OS=$foo
+        ;;
+    CYGWIN_NT-5.1)
+        OS=win32
+        ;;
+    *)
+        echo "unknown os ($foo), aborting"
+        exit 1
+        ;;
+esac
+
+foo=`uname -m`
+case "$foo" in
+    i[3456]86)
+        OS=${OS}_32
+        ;;
+    x86_64)
+        OS=${OS}_64
+        ;;
+    *)
+        echo "unknown machine ($foo), aborting"
+        exit 1;
+esac
+
+if [ "$1" == "test" ]; then
+    runid=test
+else
+    runid=$(callcurl start_run "os=$OS")
+fi
 
 echo "runid: $runid"
 
@@ -23,7 +57,7 @@ fi
 ssh dwebsite mkdir ~/.www/test-results/$runid
 
 testid=$(callcurl start_test "runid=$runid&type=1")
-src/do_checkout.sh "$runid"
+src/do_checkout.sh "$runid" "$OS"
 rc=$?
 scp -q $runid/checkout.log dwebsite:~/.www/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$rc"
@@ -32,40 +66,40 @@ if [ $rc -ne 0 ]; then
     exit 1;
 fi
 
-src/do_fixup.sh "$runid"
+src/do_fixup.sh "$runid" "$OS"
 
 testid=$(callcurl start_test "runid=$runid&type=2")
-src/do_build_dmd.sh "$runid"
+src/do_build_dmd.sh "$runid" "$OS"
 build_dmd_rc=$?
 scp -q $runid/dmd-build.log dwebsite:~/.www/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=3")
-src/do_build_druntime.sh "$runid"
+src/do_build_druntime.sh "$runid" "$OS"
 build_druntime_rc=$?
 scp -q $runid/druntime-build.log dwebsite:~/.www/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=4")
-src/do_build_phobos.sh "$runid"
+src/do_build_phobos.sh "$runid" "$OS"
 build_phobos_rc=$?
 scp -q $runid/phobos-build.log dwebsite:~/.www/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=5")
-src/do_test_druntime.sh "$runid"
+src/do_test_druntime.sh "$runid" "$OS"
 test_druntime_rc=$?
 scp -q $runid/druntime-unittest.log dwebsite:~/.www/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=6")
-src/do_test_phobos.sh "$runid"
+src/do_test_phobos.sh "$runid" "$OS"
 test_phobos_rc=$?
 scp -q $runid/phobos-unittest.log dwebsite:~/.www/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=7")
-src/do_test_dmd.sh "$runid"
+src/do_test_dmd.sh "$runid" "$OS"
 test_dmd_rc=$?
 scp -q $runid/dmd-unittest.log dwebsite:~/.www/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$test_dmd_rc"

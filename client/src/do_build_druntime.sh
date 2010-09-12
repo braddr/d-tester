@@ -12,7 +12,7 @@ case "$2" in
     Linux_32|Darwin_32|FreeBSD_32)
         makefile=posix.mak
         ;;
-    Win32)
+    Win_32)
         makefile=win32.mak
         ;;
     *)

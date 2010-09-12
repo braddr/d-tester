@@ -12,7 +12,7 @@ case "$2" in
     Linux_32|Darwin_32|FreeBSD_32)
         makefile=posix.mak
         ;;
-    Win32)
+    Win_32)
         makefile=win32.mak
         ;;
     *)
@@ -20,7 +20,7 @@ case "$2" in
         exit 1;
 esac
 
-if [ "$1" == "Win32" ]; then
+if [ "$2" == "Win_32" ]; then
     make DMD=../../dmd-trunk/src/dmd DRUNTIME=../../druntime-trunk -f $makefile unittest >> ../../phobos-unittest.log 2>&1
 else
     make DMD=../../dmd-trunk/src/dmd DRUNTIME_PATH=../../druntime-trunk -f $makefile unittest >> ../../phobos-unittest.log 2>&1

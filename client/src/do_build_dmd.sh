@@ -18,7 +18,7 @@ case "$2" in
     FreeBSD_32)
         makefile=freebsd.mak
         ;;
-    Win32)
+    Win_32)
         makefile=win32.mak
         ;;
     *)

@@ -22,7 +22,7 @@ case "$foo" in
         OS=$foo
         ;;
     CYGWIN_NT-5.1)
-        OS=win32
+        OS=Win32
         ;;
     *)
         echo "unknown os ($foo), aborting"

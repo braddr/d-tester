@@ -54,12 +54,12 @@ echo "runid: $runid"
 if [ ! -d $runid ]; then
     mkdir "$runid"
 fi
-ssh dwebsite mkdir ~/.www/test-results/$runid
+ssh dwebsite mkdir /home/dwebsite/test-results/$runid
 
 testid=$(callcurl start_test "runid=$runid&type=1")
 src/do_checkout.sh "$runid" "$OS"
 rc=$?
-scp -q $runid/checkout.log dwebsite:~/.www/test-results/$runid
+scp -q $runid/checkout.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$rc"
 if [ $rc -ne 0 ]; then
     callcurl finish_run "runid=$runid"
@@ -71,37 +71,37 @@ src/do_fixup.sh "$runid" "$OS"
 testid=$(callcurl start_test "runid=$runid&type=2")
 src/do_build_dmd.sh "$runid" "$OS"
 build_dmd_rc=$?
-scp -q $runid/dmd-build.log dwebsite:~/.www/test-results/$runid
+scp -q $runid/dmd-build.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=3")
 src/do_build_druntime.sh "$runid" "$OS"
 build_druntime_rc=$?
-scp -q $runid/druntime-build.log dwebsite:~/.www/test-results/$runid
+scp -q $runid/druntime-build.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=4")
 src/do_build_phobos.sh "$runid" "$OS"
 build_phobos_rc=$?
-scp -q $runid/phobos-build.log dwebsite:~/.www/test-results/$runid
+scp -q $runid/phobos-build.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=5")
 src/do_test_druntime.sh "$runid" "$OS"
 test_druntime_rc=$?
-scp -q $runid/druntime-unittest.log dwebsite:~/.www/test-results/$runid
+scp -q $runid/druntime-unittest.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=6")
 src/do_test_phobos.sh "$runid" "$OS"
 test_phobos_rc=$?
-scp -q $runid/phobos-unittest.log dwebsite:~/.www/test-results/$runid
+scp -q $runid/phobos-unittest.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
 
 testid=$(callcurl start_test "runid=$runid&type=7")
 src/do_test_dmd.sh "$runid" "$OS"
 test_dmd_rc=$?
-scp -q $runid/dmd-unittest.log dwebsite:~/.www/test-results/$runid
+scp -q $runid/dmd-unittest.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
 
 callcurl finish_run "runid=$runid"

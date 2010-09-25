@@ -106,6 +106,10 @@ callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
 
 callcurl finish_run "runid=$runid"
 
+if [ -d "$runid" ]; then
+    rm -rf "$runid"
+fi
+
 # gather results for publication
 
 # TODO: figure out how to get the right revision ids

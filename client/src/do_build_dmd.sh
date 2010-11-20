@@ -6,7 +6,7 @@
 #    1) directory for build
 #    2) os
 
-cd $1/dmd-trunk/src
+cd $1/dmd/src
 
 case "$2" in
     Linux_32)

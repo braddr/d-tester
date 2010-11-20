@@ -1,7 +1,7 @@
-Index: dmd-trunk/src/win32.mak
+Index: dmd/src/win32.mak
 ===================================================================
---- dmd-trunk/src/win32.mak	(revision 659)
-+++ dmd-trunk/src/win32.mak	(working copy)
+--- dmd/src/win32.mak	(revision 659)
++++ dmd/src/win32.mak	(working copy)
 @@ -9,7 +9,7 @@
  #DMDSVN=\svnproj\dmd\branches\dmd-1.x\src
  SCROOT=$D\dm

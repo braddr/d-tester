@@ -7,8 +7,8 @@
 # NOTE: not all changes apply to all OS', but there's no conflicts, so just apply everything
 
 # need a conf files so that dmd can find the imports and libs from within the test
-cp src/dmd.conf $1/dmd-trunk/src
-cp src/sc.ini $1/dmd-trunk/src
+cp src/dmd.conf $1/dmd/src
+cp src/sc.ini $1/dmd/src
 
 #cd $1
 #patch -p0 < ../src/dmd-libm.patch
@@ -20,4 +20,4 @@ patch -p0 < ../src/patch-dmd-win32.mak
 cd ..
 
 # move minit.obj to be newer than minit.asm
-touch $1/druntime-trunk/src/rt/minit.obj
+touch $1/druntime/src/rt/minit.obj

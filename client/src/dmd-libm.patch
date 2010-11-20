@@ -1,7 +1,7 @@
-Index: dmd-trunk/src/linux.mak
+Index: dmd/src/linux.mak
 ===================================================================
---- dmd-trunk/src/linux.mak	(revision 667)
-+++ dmd-trunk/src/linux.mak	(working copy)
+--- dmd/src/linux.mak	(revision 667)
++++ dmd/src/linux.mak	(working copy)
 @@ -93,7 +93,7 @@
  all: dmd
  

@@ -6,7 +6,7 @@
 #    1) directory for build
 #    2) os
 
-cd $1/phobos-trunk/phobos
+cd $1/phobos/phobos
 
 case "$2" in
     Linux_32|Darwin_32|FreeBSD_32)
@@ -21,9 +21,9 @@ case "$2" in
 esac
 
 if [ "$2" == "Win_32" ]; then
-    make DMD=../../dmd-trunk/src/dmd DRUNTIME=../../druntime-trunk -f $makefile >> ../../phobos-build.log 2>&1
+    make DMD=../../dmd/src/dmd DRUNTIME=../../druntime -f $makefile >> ../../phobos-build.log 2>&1
 else
-    make DMD=../../dmd-trunk/src/dmd DRUNTIME_PATH=../../druntime-trunk -f $makefile >> ../../phobos-build.log 2>&1
+    make DMD=../../dmd/src/dmd DRUNTIME_PATH=../../druntime -f $makefile >> ../../phobos-build.log 2>&1
 fi
 if [ $? -ne 0 ]; then
     echo "phobos failed to build"

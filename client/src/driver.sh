@@ -21,7 +21,7 @@ case "$foo" in
     Linux|Darwin|FreeBSD)
         OS=$foo
         ;;
-    CYGWIN_NT-5.1)
+    CYGWIN_NT-5.1|CYGWIN_NT-6.1)
         OS=Win
         ;;
     *)

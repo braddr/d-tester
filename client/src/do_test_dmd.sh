@@ -8,7 +8,7 @@
 
 cd $1/dmd/test
 
-/usr/bin/make -j2 quick >> ../../dmd-unittest.log 2>&1
+/usr/bin/make -j2 >> ../../dmd-unittest.log 2>&1
 if [ $? -ne 0 ]; then
     echo "failed to test dmd"
     exit 1;

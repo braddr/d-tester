@@ -9,7 +9,7 @@
 cd $1/dmd/src
 
 case "$2" in
-    Linux_32)
+    Linux_32|Linux_64)
         makefile=linux.mak
         ;;
     Darwin_32)

@@ -8,9 +8,14 @@
 
 cd $1/phobos/phobos
 
+MODEL=32
 case "$2" in
     Linux_32|Darwin_32|FreeBSD_32)
         makefile=posix.mak
+        ;;
+    Linux_64)
+        makefile=posix.mak
+        MODEL=64
         ;;
     Win_32)
         makefile=win32.mak
@@ -21,9 +26,9 @@ case "$2" in
 esac
 
 if [ "$2" == "Win_32" ]; then
-    make DMD=../../dmd/src/dmd DRUNTIME=../../druntime -f $makefile >> ../../phobos-build.log 2>&1
+    make DMD=../../dmd/src/dmd DRUNTIME=../../druntime MODEL=$MODEL -f $makefile >> ../../phobos-build.log 2>&1
 else
-    make DMD=../../dmd/src/dmd DRUNTIME_PATH=../../druntime -f $makefile >> ../../phobos-build.log 2>&1
+    make DMD=../../dmd/src/dmd DRUNTIME_PATH=../../druntime MODEL=$MODEL -f $makefile >> ../../phobos-build.log 2>&1
 fi
 if [ $? -ne 0 ]; then
     echo "phobos failed to build"

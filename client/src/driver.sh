@@ -104,9 +104,16 @@ test_dmd_rc=$?
 scp -q $runid/dmd-unittest.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
 
+testid=$(callcurl start_test "runid=$runid&type=8")
+src/do_html_phobos.sh "$runid" "$OS"
+html_dmd_rc=$?
+scp -q $runid/phobos-html.log dwebsite:/home/dwebsite/test-results/$runid
+rsync --archive --compress --delete $runid/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/
+callcurl finish_test "testid=$testid&rc=$html_dmd_rc"
+
 callcurl finish_run "runid=$runid"
 
-if [ -d "$runid" ]; then
+if [ -d "$runid" -a "$runid" != "test" ]; then
     rm -rf "$runid"
 fi
 

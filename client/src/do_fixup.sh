@@ -14,8 +14,11 @@ case "$2" in
     FreeBSD_32)
         cp src/dmd-freebsd.conf $1/dmd/src/dmd.conf
         ;;
-    Linux_32|Linux_64)
+    Linux_32)
         cp src/dmd-linux.conf $1/dmd/src/dmd.conf
+        ;;
+    Linux_64)
+        cp src/dmd-linux-64.conf $1/dmd/src/dmd.conf
         ;;
     Win_32)
         cp src/sc.ini $1/dmd/src

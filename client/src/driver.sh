@@ -108,7 +108,7 @@ testid=$(callcurl start_test "runid=$runid&type=8")
 src/do_html_phobos.sh "$runid" "$OS"
 html_dmd_rc=$?
 scp -q $runid/phobos-html.log dwebsite:/home/dwebsite/test-results/$runid
-rsync --archive --compress --delete $runid/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/
+rsync --archive --compress --delete $runid/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
 callcurl finish_test "testid=$testid&rc=$html_dmd_rc"
 
 callcurl finish_run "runid=$runid"

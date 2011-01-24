@@ -23,7 +23,7 @@ if [ ! -d $top/source/dmd ]; then
     fi
 else
     cd $top/source/dmd
-    git fetch --verbose --progress origin >> $top/$1/checkout.log 2>&1
+    git pull --verbose --progress origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error updating dmd"
         exit 1
@@ -40,7 +40,7 @@ if [ ! -d $top/source/druntime ]; then
     fi
 else
     cd $top/source/druntime
-    git fetch --verbose --progress origin >> $top/$1/checkout.log 2>&1
+    git pull --verbose --progress origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error checking out druntime"
         exit 1
@@ -57,7 +57,7 @@ if [ ! -d $top/source/phobos ]; then
     fi
 else
     cd $top/source/phobos
-    git fetch --verbose --progress origin >> $top/$1/checkout.log 2>&1
+    git pull --verbose --progress origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error updating phobos"
         exit 1

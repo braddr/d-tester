@@ -6,7 +6,7 @@
 #    1) directory for build
 #    2) os
 
-cd $1/phobos/phobos
+cd $1/phobos
 
 MODEL=32
 case "$2" in
@@ -26,9 +26,9 @@ case "$2" in
 esac
 
 if [ "$2" == "Win_32" ]; then
-    make DMD=../../dmd/src/dmd DRUNTIME=../../druntime MODEL=$MODEL -f $makefile unittest >> ../../phobos-unittest.log 2>&1
+    make DMD=../dmd/src/dmd DRUNTIME=../druntime MODEL=$MODEL -f $makefile unittest >> ../phobos-unittest.log 2>&1
 else
-    make DMD=../../dmd/src/dmd DRUNTIME_PATH=../../druntime MODEL=$MODEL -f $makefile unittest >> ../../phobos-unittest.log 2>&1
+    make DMD=../dmd/src/dmd DRUNTIME_PATH=../druntime MODEL=$MODEL -f $makefile unittest >> ../phobos-unittest.log 2>&1
 fi
 if [ $? -ne 0 ]; then
     echo "phobos tests failed"

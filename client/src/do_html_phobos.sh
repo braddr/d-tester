@@ -6,10 +6,10 @@
 #    1) directory for build
 #    2) os
 
-cd $1/phobos/phobos
+cd $1/phobos
 
-DMD=../../dmd/src/dmd
-DRUNTIME=../../druntime
+DMD=../dmd/src/dmd
+DRUNTIME=../druntime
 DOC=../web/2.0
 MODEL=32
 
@@ -34,7 +34,7 @@ case "$2" in
         exit 1;
 esac
 
-make DDOC=$DMD $DD=$DOC DMD=$DMD $DR=$DRUNTIME MODEL=$MODEL -f $makefile html >> ../../phobos-html.log 2>&1
+make DDOC=$DMD $DD=$DOC DMD=$DMD $DR=$DRUNTIME MODEL=$MODEL -f $makefile html >> ../phobos-html.log 2>&1
 if [ $? -ne 0 ]; then
     echo "phobos html generation failed"
     exit 1;

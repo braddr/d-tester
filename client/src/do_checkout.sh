@@ -50,14 +50,14 @@ cp -r $top/source/druntime $top/$1/druntime
 
 if [ ! -d $top/source/phobos ]; then
     cd $top/source
-    svn co http://svn.dsource.org/projects/phobos/trunk phobos >> $top/$1/checkout.log 2>&1
+    git clone git://github.com/D-Programming-Language/phobos.git phobos >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error checking out phobos"
         exit 1
     fi
 else
     cd $top/source/phobos
-    svn update >> $top/$1/checkout.log 2>&1
+    git fetch --verbose --progress origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error updating phobos"
         exit 1

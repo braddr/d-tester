@@ -16,14 +16,14 @@ fi
 
 if [ ! -d $top/source/dmd ]; then
     cd $top/source
-    svn co http://svn.dsource.org/projects/dmd/trunk dmd >> $top/$1/checkout.log 2>&1
+    git clone git://github.com/D-Programming-Language/dmd.git dmd >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error checking out dmd"
         exit 1
     fi
 else
     cd $top/source/dmd
-    svn update >> $top/$1/checkout.log 2>&1
+    git fetch --verbose --progress origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error updating dmd"
         exit 1
@@ -40,7 +40,7 @@ if [ ! -d $top/source/druntime ]; then
     fi
 else
     cd $top/source/druntime
-    git fetch origin >> $top/$1/checkout.log 2>&1
+    git fetch --verbose --progress origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo "error checking out druntime"
         exit 1

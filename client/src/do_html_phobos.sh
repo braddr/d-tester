@@ -6,6 +6,8 @@
 #    1) directory for build
 #    2) os
 
+echo -e "\tgenerating html"
+
 cd $1/phobos
 
 DMD=../dmd/src/dmd
@@ -36,7 +38,7 @@ esac
 
 make DDOC=$DMD $DD=$DOC DMD=$DMD $DR=$DRUNTIME MODEL=$MODEL -f $makefile html >> ../phobos-html.log 2>&1
 if [ $? -ne 0 ]; then
-    echo "phobos html generation failed"
+    echo -e "\tphobos html generation failed"
     exit 1;
 fi
 

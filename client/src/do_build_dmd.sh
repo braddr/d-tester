@@ -6,6 +6,8 @@
 #    1) directory for build
 #    2) os
 
+echo -e "\tbuilding dmd"
+
 cd $1/dmd/src
 
 case "$2" in
@@ -28,7 +30,7 @@ esac
 
 make -f $makefile dmd >> ../../dmd-build.log 2>&1
 if [ $? -ne 0 ]; then
-    echo "failed to build dmd"
+    echo -e "\tfailed to build dmd"
     exit 1;
 fi
 

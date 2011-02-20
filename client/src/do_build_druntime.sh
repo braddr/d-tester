@@ -6,6 +6,8 @@
 #    1) directory for build
 #    2) os
 
+echo -e "\tbuilding druntime"
+
 cd $1/druntime
 
 MODEL=32
@@ -27,7 +29,7 @@ esac
 
 make DMD=../dmd/src/dmd MODEL=$MODEL -f $makefile >> ../druntime-build.log 2>&1
 if [ $? -ne 0 ]; then
-    echo "druntime failed to build"
+    echo -e "\tdruntime failed to build"
     exit 1;
 fi
 

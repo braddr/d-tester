@@ -6,6 +6,8 @@
 #    1) directory for build
 #    2) os
 
+echo -e "\ttesting phobos"
+
 cd $1/phobos
 
 MODEL=32
@@ -31,7 +33,7 @@ else
     make DMD=../dmd/src/dmd DRUNTIME_PATH=../druntime MODEL=$MODEL -f $makefile unittest >> ../phobos-unittest.log 2>&1
 fi
 if [ $? -ne 0 ]; then
-    echo "phobos tests failed"
+    echo -e "\tphobos tests failed"
     exit 1;
 fi
 

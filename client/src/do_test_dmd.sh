@@ -6,6 +6,8 @@
 #    1) directory for build
 #    2) os
 
+echo -e "\ttesting dmd"
+
 MODEL=32
 case "$2" in
     Linux_32|Darwin_32|FreeBSD_32|Win_32)
@@ -22,7 +24,7 @@ cd $1/dmd/test
 
 /usr/bin/make MODEL=$MODEL -j2 >> ../../dmd-unittest.log 2>&1
 if [ $? -ne 0 ]; then
-    echo "failed to test dmd"
+    echo -e "\tdmd tests had failures"
     exit 1;
 fi
 

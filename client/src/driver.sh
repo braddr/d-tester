@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+# set -x
 shopt -s extglob
 
 # start_run.ghtml                    --> new run id
@@ -49,11 +49,11 @@ else
     runid=$(callcurl start_run "os=$OS")
 fi
 
-echo "runid: $runid"
-
 if [ "x$runid" == "xskip" ]; then
-    echo "Skipping run..."
+    echo -e -n "Skipping run...\r"
     exit 2
+else
+    echo "Starting run $runid."
 fi
 
 if [ ! -d $runid ]; then

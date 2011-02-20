@@ -6,6 +6,8 @@
 #    1) directory for build
 #    2) os
 
+echo -e "\tbuilding phobos"
+
 cd $1/phobos
 
 MODEL=32
@@ -31,7 +33,7 @@ else
     make DMD=../dmd/src/dmd DRUNTIME_PATH=../druntime MODEL=$MODEL -f $makefile >> ../phobos-build.log 2>&1
 fi
 if [ $? -ne 0 ]; then
-    echo "phobos failed to build"
+    echo -e "\tphobos failed to build"
     exit 1;
 fi
 

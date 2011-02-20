@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #set -x
 
@@ -10,6 +10,8 @@
 
 top=$PWD
 
+echo -e "\tchecking out source trees"
+
 if [ ! -d $top/source ]; then
     mkdir $top/source
 fi
@@ -18,14 +20,14 @@ if [ ! -d $top/source/dmd ]; then
     cd $top/source
     git clone git://github.com/D-Programming-Language/dmd.git dmd >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
-        echo "error checking out dmd"
+        echo -e "\terror checking out dmd"
         exit 1
     fi
 else
     cd $top/source/dmd
     git pull origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
-        echo "error updating dmd"
+        echo -e "\terror updating dmd"
         exit 1
     fi
 fi
@@ -35,14 +37,14 @@ if [ ! -d $top/source/druntime ]; then
     cd $top/source
     git clone git://github.com/D-Programming-Language/druntime.git druntime >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
-        echo "error checking out druntime"
+        echo -e "\terror checking out druntime"
         exit 1
     fi
 else
     cd $top/source/druntime
     git pull origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
-        echo "error checking out druntime"
+        echo -e "\terror checking out druntime"
         exit 1
     fi
 fi
@@ -52,14 +54,14 @@ if [ ! -d $top/source/phobos ]; then
     cd $top/source
     git clone git://github.com/D-Programming-Language/phobos.git phobos >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
-        echo "error checking out phobos"
+        echo -e "\terror checking out phobos"
         exit 1
     fi
 else
     cd $top/source/phobos
     git pull origin >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
-        echo "error updating phobos"
+        echo -e "\terror updating phobos"
         exit 1
     fi
 fi

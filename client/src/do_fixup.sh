@@ -4,7 +4,7 @@
 #    1) directory for build
 #    2) os
 
-# NOTE: not all changes apply to all OS', but there's no conflicts, so just apply everything
+echo -e "\tapplying fixups to checked out source"
 
 # need a conf files so that dmd can find the imports and libs from within the test
 case "$2" in
@@ -22,16 +22,12 @@ case "$2" in
         ;;
     Win_32)
         cp src/sc.ini $1/dmd/src
+
+        # strip off the abs path for dmc and let the path take care of finding it
+        patch -p0 < ../src/patch-dmd-win32.mak
+
+        # move minit.obj to be newer than minit.asm
+        touch $1/druntime/src/rt/minit.obj
         ;;
 esac
 
-
-cd $1
-
-# strip off the abs path for dmc and let the path take care of finding it
-patch -p0 < ../src/patch-dmd-win32.mak
-
-cd ..
-
-# move minit.obj to be newer than minit.asm
-touch $1/druntime/src/rt/minit.obj

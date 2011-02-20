@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # set -x
 
@@ -10,14 +10,19 @@ echo -e "\tbuilding druntime"
 
 cd $1/druntime
 
+makecmd=make
 MODEL=32
 case "$2" in
-    Linux_32|Darwin_32|FreeBSD_32)
+    Linux_32|Darwin_32)
         makefile=posix.mak
         ;;
     Linux_64)
         makefile=posix.mak
         MODEL=64
+        ;;
+    FreeBSD_32)
+        makefile=posix.mak
+        makecmd=gmake
         ;;
     Win_32)
         makefile=win32.mak
@@ -27,7 +32,7 @@ case "$2" in
         exit 1;
 esac
 
-make DMD=../dmd/src/dmd MODEL=$MODEL -f $makefile >> ../druntime-build.log 2>&1
+$makecmd DMD=../dmd/src/dmd MODEL=$MODEL -f $makefile >> ../druntime-build.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tdruntime failed to build"
     exit 1;

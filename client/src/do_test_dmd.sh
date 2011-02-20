@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #set -x
 
@@ -8,12 +8,19 @@
 
 echo -e "\ttesting dmd"
 
+makecmd=make
 MODEL=32
 case "$2" in
-    Linux_32|Darwin_32|FreeBSD_32|Win_32)
+    Linux_32|Darwin_32)
+        ;;
+    FreeBSD_32)
+        makecmd=gmake
         ;;
     Linux_64)
         MODEL=64
+        ;;
+    Win_32)
+        makecmd=/usr/bin/make
         ;;
     *)
         echo "unknown os: $2"
@@ -22,7 +29,7 @@ esac
 
 cd $1/dmd/test
 
-/usr/bin/make MODEL=$MODEL -j2 >> ../../dmd-unittest.log 2>&1
+$makecmd MODEL=$MODEL -j2 >> ../../dmd-unittest.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tdmd tests had failures"
     exit 1;

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #set -x
 
@@ -11,20 +11,23 @@ echo -e "\tgenerating html"
 cd $1/phobos
 
 DMD=../dmd/src/dmd
-DRUNTIME=../druntime
 DOC=../web/2.0
 MODEL=32
 
-DR=DRUNTIME_PATH
 DD=WEBSITE_DIR
 
+makecmd=make
 case "$2" in
-    Linux_32|Darwin_32|FreeBSD_32)
+    Linux_32|Darwin_32)
         makefile=posix.mak
         ;;
     Linux_64)
         makefile=posix.mak
         MODEL=64
+        ;;
+    FreeBSD_32)
+        makecmd=gmake
+        makefile=posix.mak
         ;;
     Win_32)
         DR=DRUNTIME
@@ -36,7 +39,7 @@ case "$2" in
         exit 1;
 esac
 
-make DDOC=$DMD $DD=$DOC DMD=$DMD $DR=$DRUNTIME MODEL=$MODEL -f $makefile html >> ../phobos-html.log 2>&1
+$makecmd DDOC=$DMD $DD=$DOC DMD=$DMD MODEL=$MODEL -f $makefile html >> ../phobos-html.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tphobos html generation failed"
     exit 1;

@@ -51,6 +51,11 @@ fi
 
 echo "runid: $runid"
 
+if [ "x$runid" == "xskip" ]; then
+    echo "Skipping run..."
+    exit 2
+fi
+
 if [ ! -d $runid ]; then
     mkdir "$runid"
 fi
@@ -61,91 +66,58 @@ src/do_checkout.sh "$runid" "$OS"
 rc=$?
 scp -q $runid/checkout.log dwebsite:/home/dwebsite/test-results/$runid
 callcurl finish_test "testid=$testid&rc=$rc"
-if [ $rc -ne 0 ]; then
-    callcurl finish_run "runid=$runid"
-    exit 1;
+if [ $rc -eq 0 ]; then
+
+    src/do_fixup.sh "$runid" "$OS"
+
+    testid=$(callcurl start_test "runid=$runid&type=2")
+    src/do_build_dmd.sh "$runid" "$OS"
+    build_dmd_rc=$?
+    scp -q $runid/dmd-build.log dwebsite:/home/dwebsite/test-results/$runid
+    callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
+
+    testid=$(callcurl start_test "runid=$runid&type=3")
+    src/do_build_druntime.sh "$runid" "$OS"
+    build_druntime_rc=$?
+    scp -q $runid/druntime-build.log dwebsite:/home/dwebsite/test-results/$runid
+    callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
+
+    testid=$(callcurl start_test "runid=$runid&type=4")
+    src/do_build_phobos.sh "$runid" "$OS"
+    build_phobos_rc=$?
+    scp -q $runid/phobos-build.log dwebsite:/home/dwebsite/test-results/$runid
+    callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
+
+    testid=$(callcurl start_test "runid=$runid&type=5")
+    src/do_test_druntime.sh "$runid" "$OS"
+    test_druntime_rc=$?
+    scp -q $runid/druntime-unittest.log dwebsite:/home/dwebsite/test-results/$runid
+    callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
+
+    testid=$(callcurl start_test "runid=$runid&type=6")
+    src/do_test_phobos.sh "$runid" "$OS"
+    test_phobos_rc=$?
+    scp -q $runid/phobos-unittest.log dwebsite:/home/dwebsite/test-results/$runid
+    callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
+
+    testid=$(callcurl start_test "runid=$runid&type=7")
+    src/do_test_dmd.sh "$runid" "$OS"
+    test_dmd_rc=$?
+    scp -q $runid/dmd-unittest.log dwebsite:/home/dwebsite/test-results/$runid
+    callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
+
+    #testid=$(callcurl start_test "runid=$runid&type=8")
+    #src/do_html_phobos.sh "$runid" "$OS"
+    #html_dmd_rc=$?
+    #scp -q $runid/phobos-html.log dwebsite:/home/dwebsite/test-results/$runid
+    #rsync --archive --compress --delete $runid/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
+    #callcurl finish_test "testid=$testid&rc=$html_dmd_rc"
+
 fi
-
-src/do_fixup.sh "$runid" "$OS"
-
-testid=$(callcurl start_test "runid=$runid&type=2")
-src/do_build_dmd.sh "$runid" "$OS"
-build_dmd_rc=$?
-scp -q $runid/dmd-build.log dwebsite:/home/dwebsite/test-results/$runid
-callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
-
-testid=$(callcurl start_test "runid=$runid&type=3")
-src/do_build_druntime.sh "$runid" "$OS"
-build_druntime_rc=$?
-scp -q $runid/druntime-build.log dwebsite:/home/dwebsite/test-results/$runid
-callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
-
-testid=$(callcurl start_test "runid=$runid&type=4")
-src/do_build_phobos.sh "$runid" "$OS"
-build_phobos_rc=$?
-scp -q $runid/phobos-build.log dwebsite:/home/dwebsite/test-results/$runid
-callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
-
-testid=$(callcurl start_test "runid=$runid&type=5")
-src/do_test_druntime.sh "$runid" "$OS"
-test_druntime_rc=$?
-scp -q $runid/druntime-unittest.log dwebsite:/home/dwebsite/test-results/$runid
-callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
-
-testid=$(callcurl start_test "runid=$runid&type=6")
-src/do_test_phobos.sh "$runid" "$OS"
-test_phobos_rc=$?
-scp -q $runid/phobos-unittest.log dwebsite:/home/dwebsite/test-results/$runid
-callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
-
-testid=$(callcurl start_test "runid=$runid&type=7")
-src/do_test_dmd.sh "$runid" "$OS"
-test_dmd_rc=$?
-scp -q $runid/dmd-unittest.log dwebsite:/home/dwebsite/test-results/$runid
-callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
-
-#testid=$(callcurl start_test "runid=$runid&type=8")
-#src/do_html_phobos.sh "$runid" "$OS"
-#html_dmd_rc=$?
-#scp -q $runid/phobos-html.log dwebsite:/home/dwebsite/test-results/$runid
-#rsync --archive --compress --delete $runid/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
-#callcurl finish_test "testid=$testid&rc=$html_dmd_rc"
 
 callcurl finish_run "runid=$runid"
 
 if [ -d "$runid" -a "$runid" != "test" ]; then
     rm -rf "$runid"
 fi
-
-# gather results for publication
-
-# TODO: figure out how to get the right revision ids
-# TODO: include in test db?
-
-# dmdrev=`grep "Checked out revision" $runid/dmd-checkout.log | tail -1`
-# dmdrev=${dmdrev#Checked out revision }
-# dmdrev=${dmdrev%.}
-# 
-# druntimerev=`grep "Checked out revision" $runid/druntime-checkout.log | tail -1`
-# druntimerev=${druntimerev#Checked out revision }
-# druntimerev=${druntimerev%.}
-# 
-# phobosrev=`grep "Checked out revision" $runid/phobos-checkout.log | tail -1`
-# phobosrev=${phobosrev#Checked out revision }
-# phobosrev=${phobosrev%.}
-# 
-# echo "Tests based on:"
-# echo "  dmd      : $dmdrev"
-# echo "  druntime : $druntimerev"
-# echo "  phobos   : $phobosrev"
-# echo
-# echo "Build results:"
-# echo "  dmd      : $build_dmd_rc"
-# echo "  druntime : $build_druntime_rc"
-# echo "  phobos   : $build_phobos_rc"
-# echo
-# echo "Test results:"
-# echo "  dmd      : $test_dmd_rc"
-# echo "  druntime : $test_druntime_rc"
-# echo "  phobos   : $test_phobos_rc"
 

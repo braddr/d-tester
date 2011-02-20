@@ -24,7 +24,9 @@ case "$2" in
         cp src/sc.ini $1/dmd/src
 
         # strip off the abs path for dmc and let the path take care of finding it
-        patch -p0 < ../src/patch-dmd-win32.mak
+        cd $1
+        patch -p0 < ../src/patch-dmd-win32.mak >> ../$1/checkout.log 2>&1
+        cd ..
 
         # move minit.obj to be newer than minit.asm
         touch $1/druntime/src/rt/minit.obj

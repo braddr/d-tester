@@ -69,6 +69,7 @@ callcurl finish_test "testid=$testid&rc=$rc"
 if [ $rc -eq 0 ]; then
 
     src/do_fixup.sh "$runid" "$OS"
+    scp -q $runid/checkout.log dwebsite:/home/dwebsite/test-results/$runid
 
     testid=$(callcurl start_test "runid=$runid&type=2")
     src/do_build_dmd.sh "$runid" "$OS"

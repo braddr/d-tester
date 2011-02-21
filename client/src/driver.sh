@@ -49,7 +49,7 @@ else
     runid=$(callcurl start_run "os=$OS")
 fi
 
-if [ "x$runid" == "xskip" ]; then
+if [ "x$runid" == "xskip" -o "x$runid" == "x" ]; then
     echo -e -n "Skipping run...\r"
     exit 2
 else

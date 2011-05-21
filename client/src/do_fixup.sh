@@ -14,6 +14,9 @@ case "$2" in
     FreeBSD_32)
         cp src/dmd-freebsd.conf $1/dmd/src/dmd.conf
         ;;
+    FreeBSD_64)
+        cp src/dmd-freebsd-64.conf $1/dmd/src/dmd.conf
+        ;;
     Linux_32)
         cp src/dmd-linux.conf $1/dmd/src/dmd.conf
         ;;

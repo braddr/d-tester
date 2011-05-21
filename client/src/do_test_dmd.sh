@@ -10,11 +10,17 @@ echo -e "\ttesting dmd"
 
 makecmd=make
 MODEL=32
+PARALLELISM=2
 case "$2" in
     Linux_32|Darwin_32)
         ;;
     FreeBSD_32)
         makecmd=gmake
+        ;;
+    FreeBSD_64)
+        makecmd=gmake
+        MODEL=64
+        PARALLELISM=6
         ;;
     Linux_64)
         MODEL=64
@@ -29,7 +35,7 @@ esac
 
 cd $1/dmd/test
 
-$makecmd MODEL=$MODEL -j2 >> ../../dmd-unittest.log 2>&1
+$makecmd MODEL=$MODEL -j$PARALLELISM >> ../../dmd-unittest.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tdmd tests had failures"
     exit 1;

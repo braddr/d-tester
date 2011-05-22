@@ -11,18 +11,18 @@ echo -e "\ttesting phobos"
 cd $1/phobos
 
 makecmd=make
+makefile=posix.mak
 MODEL=32
 case "$2" in
-    Linux_32|Darwin_32)
-        makefile=posix.mak
+    Darwin_32)
         ;;
-    Linux_64)
-        makefile=posix.mak
+    Linux_32|Linux_64_32)
+        ;;
+    Linux_32_64|Linux_64_64)
         MODEL=64
         ;;
     FreeBSD_32)
         makecmd=gmake
-        makefile=posix.mak
         ;;
     FreeBSD_64)
         makecmd=gmake

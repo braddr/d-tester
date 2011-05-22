@@ -12,7 +12,7 @@ makecmd=make
 MODEL=32
 PARALLELISM=2
 case "$2" in
-    Linux_32|Darwin_32)
+    Darwin_32)
         ;;
     FreeBSD_32)
         makecmd=gmake
@@ -22,7 +22,9 @@ case "$2" in
         MODEL=64
         PARALLELISM=6
         ;;
-    Linux_64)
+    Linux_32|Linux_64_32)
+        ;;
+    Linux_32_64|Linux_64_64)
         MODEL=64
         ;;
     Win_32)

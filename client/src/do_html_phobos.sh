@@ -18,10 +18,13 @@ DD=WEBSITE_DIR
 
 makecmd=make
 case "$2" in
-    Linux_32|Darwin_32)
+    Darwin_32)
         makefile=posix.mak
         ;;
-    Linux_64)
+    Linux_32|Linux_64_32)
+        makefile=posix.mak
+        ;;
+    Linux_32_64|Linux_64_64)
         makefile=posix.mak
         MODEL=64
         ;;

@@ -11,18 +11,18 @@ echo -e "\ttesting druntime"
 cd $1/druntime
 
 makecmd=make
+makefile=posix.mak
 MODEL=32
 case "$2" in
-    Linux_32|Darwin_32)
-        makefile=posix.mak
-        ;;
-    Linux_64)
-        makefile=posix.mak
-        MODEL=64
+    Darwin_32)
         ;;
     FreeBSD_32)
         makecmd=gmake
-        makefile=posix.mak
+        ;;
+    Linux_32|Linux_64_32)
+        ;;
+    Linux_32_64|Linux_64_64)
+        MODEL=64
         ;;
     FreeBSD_64)
         makecmd=gmake

@@ -27,8 +27,12 @@ case "$2" in
         MODEL=64
         PARALLELISM="-j6"
         ;;
-    Linux_32|Linux_64)
+    Linux_32*)
         makefile=linux.mak
+        ;;
+    Linux_64*)
+        makefile=linux.mak
+        MODEL=64
         ;;
     Win_32)
         makefile=win32.mak

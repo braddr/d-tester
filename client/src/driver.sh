@@ -3,7 +3,7 @@
 # set -x
 shopt -s extglob
 
-# start_run.ghtml                    --> new run id
+# start_run.ghtml?os=##              --> new run id, optional addition: force=1
 # start_test.ghtml?runid=##&type=##" --> new test id
 # finish_test.ghtml?testid=7&rc=100  --> nothing
 # finish_run.ghtml?runid=##          --> nothing

@@ -16,6 +16,7 @@ if [ ! -d $top/source ]; then
     mkdir $top/source
 fi
 
+echo "Checking out dmd:" >> $top/$1/checkout.log 2>&1
 if [ ! -d $top/source/dmd ]; then
     cd $top/source
     git clone git://github.com/D-Programming-Language/dmd.git dmd >> $top/$1/checkout.log 2>&1
@@ -31,8 +32,12 @@ else
         exit 1
     fi
 fi
+echo "Head commit:" >> $top/$1/checkout.log 2>&1
+git log -1 >> $top/$1/checkout.log 2>&1
 cp -r $top/source/dmd $top/$1/dmd
 
+echo >> $top/$1/checkout.log 2>&1
+echo "Checkout out druntime:" >> $top/$1/checkout.log 2>&1
 if [ ! -d $top/source/druntime ]; then
     cd $top/source
     git clone git://github.com/D-Programming-Language/druntime.git druntime >> $top/$1/checkout.log 2>&1
@@ -48,8 +53,12 @@ else
         exit 1
     fi
 fi
+echo "Head commit:" >> $top/$1/checkout.log 2>&1
+git log -1 >> $top/$1/checkout.log 2>&1
 cp -r $top/source/druntime $top/$1/druntime
 
+echo >> $top/$1/checkout.log 2>&1
+echo "Checkout out phobos:" >> $top/$1/checkout.log 2>&1
 if [ ! -d $top/source/phobos ]; then
     cd $top/source
     git clone git://github.com/D-Programming-Language/phobos.git phobos >> $top/$1/checkout.log 2>&1
@@ -65,6 +74,8 @@ else
         exit 1
     fi
 fi
+echo "Head commit:" >> $top/$1/checkout.log 2>&1
+git log -1 >> $top/$1/checkout.log 2>&1
 cp -r $top/source/phobos $top/$1/phobos
 
 cd $top

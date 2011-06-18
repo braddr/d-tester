@@ -17,24 +17,20 @@ MODEL=32
 DD=WEBSITE_DIR
 
 makecmd=make
+makefile=posix.mak
 case "$2" in
     Darwin_32)
-        makefile=posix.mak
         ;;
     Linux_32|Linux_64_32)
-        makefile=posix.mak
         ;;
     Linux_32_64|Linux_64_64)
-        makefile=posix.mak
         MODEL=64
         ;;
     FreeBSD_32)
         makecmd=gmake
-        makefile=posix.mak
         ;;
     FreeBSD_64)
         makecmd=gmake
-        makefile=posix.mak
         MODEL=64
         ;;
     Win_32)

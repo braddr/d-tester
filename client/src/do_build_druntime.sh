@@ -11,24 +11,20 @@ echo -e "\tbuilding druntime"
 cd $1/druntime
 
 makecmd=make
+makefile=posix.mak
 MODEL=32
 case "$2" in
     Darwin_32)
-        makefile=posix.mak
         ;;
     Linux_32|Linux_64_32)
-        makefile=posix.mak
         ;;
     Linux_32_64|Linux_64_64)
-        makefile=posix.mak
         MODEL=64
         ;;
     FreeBSD_32)
-        makefile=posix.mak
         makecmd=gmake
         ;;
     FreeBSD_64)
-        makefile=posix.mak
         makecmd=gmake
         MODEL=64
         ;;

@@ -11,27 +11,23 @@ echo -e "\tbuilding dmd"
 cd $1/dmd/src
 
 makecmd=make
+makefile=posix.mak
 MODEL=32
 PARALLELISM="-j2"
 case "$2" in
     Darwin_32)
-        makefile=osx.mak
         ;;
     FreeBSD_32)
-        makefile=freebsd.mak
         makecmd=gmake
         ;;
     FreeBSD_64)
-        makefile=freebsd.mak
         makecmd=gmake
         MODEL=64
         PARALLELISM="-j6"
         ;;
     Linux_32*)
-        makefile=linux.mak
         ;;
     Linux_64*)
-        makefile=linux.mak
         MODEL=64
         ;;
     Win_32)

@@ -26,7 +26,6 @@ case "$2" in
         ;;
     FreeBSD_64)
         makecmd=gmake
-        makefile=posix.mak
         MODEL=64
         ;;
     Win_32)

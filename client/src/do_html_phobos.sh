@@ -6,6 +6,12 @@
 #    1) directory for build
 #    2) os
 
+parallelism=1
+
+if [ -f ./tester.cfg ]; then
+    . ./tester.cfg
+fi
+
 echo -e "\tgenerating html"
 
 cd $1/phobos

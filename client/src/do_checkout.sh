@@ -8,6 +8,12 @@
 #   1) directory to create and use
 #   2) os
 
+parallelism=1
+
+if [ -f ./tester.cfg ]; then
+    . ./tester.cfg
+fi
+
 top=$PWD
 
 echo -e "\tchecking out source trees"

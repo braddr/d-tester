@@ -6,6 +6,12 @@
 #    1) directory for build
 #    2) os
 
+parallelism=1
+
+if [ -f ./tester.cfg ]; then
+    . ./tester.cfg
+fi
+
 echo -e "\tbuilding dmd"
 
 cd $1/dmd/src
@@ -13,7 +19,7 @@ cd $1/dmd/src
 makecmd=make
 makefile=posix.mak
 MODEL=32
-PARALLELISM="-j2"
+PARALLELISM="-j$parallelism"
 case "$2" in
     Darwin_32)
         ;;
@@ -23,7 +29,6 @@ case "$2" in
     FreeBSD_64)
         makecmd=gmake
         MODEL=64
-        PARALLELISM="-j6"
         ;;
     Linux_32*)
         ;;

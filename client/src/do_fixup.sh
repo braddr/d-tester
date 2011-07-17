@@ -4,6 +4,12 @@
 #    1) directory for build
 #    2) os
 
+parallelism=1
+
+if [ -f ./tester.cfg ]; then
+    . ./tester.cfg
+fi
+
 echo -e "\tapplying fixups to checked out source"
 
 # need a conf files so that dmd can find the imports and libs from within the test

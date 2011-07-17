@@ -94,6 +94,7 @@ function runtests
         run_rc=2
         return
     else
+        pretest
         echo "Starting run $runid."
     fi
 
@@ -167,23 +168,24 @@ function runtests
     run_rc=0
 }
 
-OS=$(detectos)
+parallelism=1
+platforms=($(detectos))
+function pretest
+{
+    return
+}
 
-if [ $OS == "Linux_64" ]; then
-    runtests Linux_64_64 $1
-    rc1=$run_rc
-    runtests Linux_32_64 $1
-    rc2=$run_rc
-    runtests Linux_64_32 $1
-    rc3=$run_rc
-
-    if [ $rc1 -eq 2 -a $rc2 -eq 2 -a $rc3 -eq 2 ]; then
-        exit 2
-    fi
-else
-    runtests $OS $1
-    if [ $run_rc -eq 2 ]; then
-        exit 2
-    fi
+if [ -f ./tester.cfg ]; then
+    . ./tester.cfg
 fi
+
+rc=2
+for OS in ${platforms[*]}; do
+    runtests $OS $1
+    if [ $run_rc -ne 2 ]; then
+        rc=0
+    fi
+done
+
+exit $rc
 

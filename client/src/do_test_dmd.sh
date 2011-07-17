@@ -6,11 +6,17 @@
 #    1) directory for build
 #    2) os
 
+parallelism=1
+
+if [ -f ./tester.cfg ]; then
+    . ./tester.cfg
+fi
+
 echo -e "\ttesting dmd"
 
 makecmd=make
 MODEL=32
-PARALLELISM=2
+PARALLELISM="-j$parallelism"
 case "$2" in
     Darwin_32)
         ;;
@@ -20,7 +26,6 @@ case "$2" in
     FreeBSD_64)
         makecmd=gmake
         MODEL=64
-        PARALLELISM=6
         ;;
     Linux_32|Linux_64_32)
         ;;
@@ -37,7 +42,7 @@ esac
 
 cd $1/dmd/test
 
-$makecmd MODEL=$MODEL -j$PARALLELISM >> ../../dmd-unittest.log 2>&1
+$makecmd MODEL=$MODEL $PARALLELISM >> ../../dmd-unittest.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tdmd tests had failures"
     exit 1;

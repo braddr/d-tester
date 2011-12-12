@@ -89,7 +89,7 @@ function runtests
         rundir=$runid
     fi
 
-    if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:10}" == "x<!DOCTYPE" ]; then
+    if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" ]; then
         echo -e -n "Skipping run...\r"
         run_rc=2
         return

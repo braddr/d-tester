@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
 while [ 1 ]; do
-    ./src/driver.sh
-    if [ $? -eq 2 ]; then
-        sleep 60
-    fi
+    #./src/driver.sh
+    #if [ $? -eq 2 ]; then
+        ./src/driver-pull.sh pull
+        if [ $? -eq 2 ]; then
+            sleep 60
+        fi
+    #fi
 done

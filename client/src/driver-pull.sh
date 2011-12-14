@@ -186,16 +186,19 @@ function runtests
 {
     OS=$1
 
-    if [ "$2" == "test" ]; then
-        runid=test
-        rundir=test-$OS
-    elif [ "$2" == "force" ]; then
+    if [ "$2" == "force" ]; then
         extraargs="&force=1"
     fi
 
     case "$runmode" in
         trunk)
-            runid=$(callcurl start_run "os=$OS$extraargs")
+            if [ "$2" == "test" ]; then
+                runid=test
+                rundir=test-$OS
+            else
+                runid=$(callcurl start_run "os=$OS$extraargs")
+                rundir=$runid
+            fi
             ;;
         pull)
             data=($(callcurl get_runnable_pull "os=$OS$extraargs"));
@@ -205,9 +208,9 @@ function runtests
             gitref=${data[3]}
             # note, sha not used
             sha=${data[4]}
+            rundir=pull-$runid
             ;;
     esac
-    rundir=$runid
 
     if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" -o "x${runid:0:17}" == "Unable to dispatch" ]; then
         echo -e -n "Skipping run...\r"

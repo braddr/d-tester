@@ -44,7 +44,7 @@ function detectos
             ;;
         *)
             echo "unknown machine ($foo), aborting"
-            exit 1;
+            exit 1
     esac
 
     echo $OS
@@ -168,15 +168,14 @@ function runtests
     run_rc=0
 }
 
-parallelism=1
 platforms=($(detectos))
 function pretest
 {
     return
 }
 
-if [ -f ./tester.cfg ]; then
-    . ./tester.cfg
+if [ -f configs/`hostname` ]; then
+    . configs/`hostname`
 fi
 
 rc=2

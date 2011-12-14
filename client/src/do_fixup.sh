@@ -4,10 +4,10 @@
 #    1) directory for build
 #    2) os
 
-parallelism=1
+PARALLELISM=1
 
-if [ -f ./tester.cfg ]; then
-    . ./tester.cfg
+if [ -f configs/`hostname` ]; then
+    . configs/`hostname`
 fi
 
 echo -e "\tapplying fixups to checked out source"

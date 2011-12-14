@@ -6,10 +6,10 @@
 #    1) directory for build
 #    2) os
 
-parallelism=1
+PARALLELISM=1
 
-if [ -f ./tester.cfg ]; then
-    . ./tester.cfg
+if [ -f configs/`hostname` ]; then
+    . configs/`hostname`
 fi
 
 echo -e "\ttesting phobos"
@@ -19,7 +19,7 @@ cd $1/phobos
 makecmd=make
 makefile=posix.mak
 MODEL=32
-PARALLELISM="-j$parallelism"
+EXTRA_ARGS="-j$PARALLELISM"
 case "$2" in
     Darwin_32)
         ;;
@@ -37,14 +37,14 @@ case "$2" in
         ;;
     Win_32)
         makefile=win32.mak
-        PARALLELISM=""
+        EXTRA_ARGS=""
         ;;
     *)
         echo "unknown os: $2"
         exit 1;
 esac
 
-$makecmd DMD=../dmd/src/dmd MODEL=$MODEL $PARALLELISM -f $makefile unittest >> ../phobos-unittest.log 2>&1
+$makecmd DMD=../dmd/src/dmd MODEL=$MODEL $EXTRA_ARGS -f $makefile unittest >> ../phobos-unittest.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tphobos tests failed"
     exit 1;

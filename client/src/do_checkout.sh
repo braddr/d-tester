@@ -8,10 +8,10 @@
 #   1) directory to create and use
 #   2) os
 
-parallelism=1
+PARALLELISM=1
 
-if [ -f ./tester.cfg ]; then
-    . ./tester.cfg
+if [ -f configs/`hostname` ]; then
+    . configs/`hostname`
 fi
 
 top=$PWD
@@ -40,7 +40,7 @@ else
 fi
 echo "Head commit:" >> $top/$1/checkout.log 2>&1
 git log -1 >> $top/$1/checkout.log 2>&1
-cp -r $top/source/dmd $top/$1/dmd
+git clone --shared $top/source/dmd $top/$1/dmd >> $top/$1/checkout.log 2>&1
 
 echo >> $top/$1/checkout.log 2>&1
 echo "Checkout out druntime:" >> $top/$1/checkout.log 2>&1
@@ -61,7 +61,7 @@ else
 fi
 echo "Head commit:" >> $top/$1/checkout.log 2>&1
 git log -1 >> $top/$1/checkout.log 2>&1
-cp -r $top/source/druntime $top/$1/druntime
+git clone --shared $top/source/druntime $top/$1/druntime >> $top/$1/checkout.log 2>&1
 
 echo >> $top/$1/checkout.log 2>&1
 echo "Checkout out phobos:" >> $top/$1/checkout.log 2>&1
@@ -82,7 +82,7 @@ else
 fi
 echo "Head commit:" >> $top/$1/checkout.log 2>&1
 git log -1 >> $top/$1/checkout.log 2>&1
-cp -r $top/source/phobos $top/$1/phobos
+git clone --shared $top/source/phobos $top/$1/phobos >> $top/$1/checkout.log 2>&1
 
 cd $top
 

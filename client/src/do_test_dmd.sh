@@ -6,17 +6,17 @@
 #    1) directory for build
 #    2) os
 
-parallelism=1
+PARALLELISM=1
 
-if [ -f ./tester.cfg ]; then
-    . ./tester.cfg
+if [ -f configs/`hostname` ]; then
+    . configs/`hostname`
 fi
 
 echo -e "\ttesting dmd"
 
 makecmd=make
 MODEL=32
-PARALLELISM="-j$parallelism"
+EXTRA_ARGS="-j$PARALLELISM"
 case "$2" in
     Darwin_32)
         ;;
@@ -42,7 +42,7 @@ esac
 
 cd $1/dmd/test
 
-$makecmd MODEL=$MODEL $PARALLELISM >> ../../dmd-unittest.log 2>&1
+$makecmd MODEL=$MODEL $EXTRA_ARGS >> ../../dmd-unittest.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tdmd tests had failures"
     exit 1;

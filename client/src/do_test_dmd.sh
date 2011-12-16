@@ -5,6 +5,7 @@
 # args:
 #    1) directory for build
 #    2) os
+#    3) runmode (trunk, pull)
 
 PARALLELISM=1
 
@@ -40,9 +41,18 @@ case "$2" in
         exit 1;
 esac
 
+if [ "$3" == "pull" ]; then
+    ARGS="-O -inline -release"
+fi
+
 cd $1/dmd/test
 
-$makecmd MODEL=$MODEL $EXTRA_ARGS >> ../../dmd-unittest.log 2>&1
+if [ ! -z "$ARGS" ]; then
+    $makecmd MODEL=$MODEL $EXTRA_ARGS ARGS="$ARGS" >> ../../dmd-unittest.log 2>&1
+else
+    $makecmd MODEL=$MODEL $EXTRA_ARGS >> ../../dmd-unittest.log 2>&1
+fi
+
 if [ $? -ne 0 ]; then
     echo -e "\tdmd tests had failures"
     exit 1;

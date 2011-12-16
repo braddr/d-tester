@@ -156,7 +156,7 @@ function execute_one_test
             callcurl $f "testid=$testid&rc=$test_phobos_rc"
 
             testid=$(callcurl $s "runid=$runid&type=7")
-            src/do_test_dmd.sh "$rundir" "$OS"
+            src/do_test_dmd.sh "$rundir" "$OS" "$runmode"
             test_dmd_rc=$?
             doscp $runid $rundir dmd-unittest.log
             callcurl $f "testid=$testid&rc=$test_dmd_rc"
@@ -213,13 +213,13 @@ function runtests
     esac
 
     if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" -o "x${runid:0:17}" == "Unable to dispatch" ]; then
-        echo -e -n "Skipping run...\r"
+        echo -e -n "Skipping run ($OS)...\r"
         run_rc=2
         return
     fi
 
     pretest
-    echo "Starting run $runid."
+    echo -e "\nStarting run $runid ($OS)."
 
     if [ ! -d $rundir ]; then
         mkdir "$rundir"

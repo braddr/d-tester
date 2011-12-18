@@ -47,6 +47,7 @@ fi
 
 cd $1/dmd/test
 
+$makecmd MODEL=$MODEL test-results/d_do_test >> ../../dmd-unittest.log 2>&1
 if [ ! -z "$ARGS" ]; then
     $makecmd MODEL=$MODEL $EXTRA_ARGS ARGS="$ARGS" >> ../../dmd-unittest.log 2>&1
 else

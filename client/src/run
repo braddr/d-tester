@@ -13,3 +13,6 @@ while [ 1 ]; do
         fi
     fi
 done
+
+echo "... auto-tester exited."
+

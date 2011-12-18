@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 while [ 1 ]; do
+    if [ -f stop ]; then
+        return
+    fi
+
     #./src/driver.sh
     #if [ $? -eq 2 ]; then
         ./src/driver-pull.sh pull

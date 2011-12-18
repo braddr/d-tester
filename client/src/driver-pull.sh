@@ -85,12 +85,10 @@ function execute_one_test
         trunk)
             s=start_test
             f=finish_test
-            fr=finish_run
             ;;
         pull)
             s=start_pull_test
             f=finish_pull_test
-            fr=finish_pull_run
             ;;
     esac
 
@@ -99,81 +97,101 @@ function execute_one_test
     rc=$?
     doscp $runid $rundir checkout.log
     callcurl $f "testid=$testid&rc=$rc"
-    if [ $rc -eq 0 ]; then
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
 
-        src/do_fixup.sh "$rundir" "$OS"
-        doscp $runid $rundir checkout.log
+    src/do_fixup.sh "$rundir" "$OS"
+    rc=$?
+    doscp $runid $rundir checkout.log
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
 
-        merge_rc=0
-        if [ "$runmode" == "pull" ]; then
-            case "$4" in
-                dmd)
-                    typeid=9
-                    ;;
-                druntime)
-                    typeid=10
-                    ;;
-                phobos)
-                    typeid=11
-                    ;;
-            esac
-            testid=$(callcurl $s "runid=$runid&type=$typeid")
-            src/do_pull.sh "$rundir" "$OS" "$4" "$5" "$6"
-            merge_rc=$?
-            doscp $runid $rundir $4-merge.log
-            callcurl $f "testid=$testid&rc=$merge_rc"
-        fi
-
-        if [ $merge_rc -eq 0 ]; then
-            testid=$(callcurl $s "runid=$runid&type=2")
-            src/do_build_dmd.sh "$rundir" "$OS"
-            build_dmd_rc=$?
-            doscp $runid $rundir dmd-build.log
-            callcurl $f "testid=$testid&rc=$build_dmd_rc"
-
-            testid=$(callcurl $s "runid=$runid&type=3")
-            src/do_build_druntime.sh "$rundir" "$OS"
-            build_druntime_rc=$?
-            doscp $runid $rundir druntime-build.log
-            callcurl $f "testid=$testid&rc=$build_druntime_rc"
-
-            testid=$(callcurl $s "runid=$runid&type=4")
-            src/do_build_phobos.sh "$rundir" "$OS"
-            build_phobos_rc=$?
-            doscp $runid $rundir phobos-build.log
-            callcurl $f "testid=$testid&rc=$build_phobos_rc"
-
-            testid=$(callcurl $s "runid=$runid&type=5")
-            src/do_test_druntime.sh "$rundir" "$OS"
-            test_druntime_rc=$?
-            doscp $runid $rundir druntime-unittest.log
-            callcurl $f "testid=$testid&rc=$test_druntime_rc"
-
-            testid=$(callcurl $s "runid=$runid&type=6")
-            src/do_test_phobos.sh "$rundir" "$OS"
-            test_phobos_rc=$?
-            doscp $runid $rundir phobos-unittest.log
-            callcurl $f "testid=$testid&rc=$test_phobos_rc"
-
-            testid=$(callcurl $s "runid=$runid&type=7")
-            src/do_test_dmd.sh "$rundir" "$OS" "$runmode"
-            test_dmd_rc=$?
-            doscp $runid $rundir dmd-unittest.log
-            callcurl $f "testid=$testid&rc=$test_dmd_rc"
-
-            #testid=$(callcurl $s "runid=$runid&type=8")
-            #src/do_html_phobos.sh "$rundir" "$OS"
-            #html_dmd_rc=$?
-            #doscp $runid $rundir phobos-html.log
-            # todo: should be condition on test mode
-            #rsync --archive --compress --delete $rundir/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
-            #callcurl $f "testid=$testid&rc=$html_dmd_rc"
+    if [ "$runmode" == "pull" ]; then
+        case "$4" in
+            dmd)
+                typeid=9
+                ;;
+            druntime)
+                typeid=10
+                ;;
+            phobos)
+                typeid=11
+                ;;
+        esac
+        testid=$(callcurl $s "runid=$runid&type=$typeid")
+        src/do_pull.sh "$rundir" "$OS" "$4" "$5" "$6"
+        rc=$?
+        doscp $runid $rundir $4-merge.log
+        callcurl $f "testid=$testid&rc=$rc"
+        if [ $rc -ne 0 ]; then
+            run_rc=1;
+            return
         fi
     fi
 
-    callcurl $fr "runid=$runid"
+    testid=$(callcurl $s "runid=$runid&type=2")
+    src/do_build_dmd.sh "$rundir" "$OS"
+    rc=$?
+    doscp $runid $rundir dmd-build.log
+    callcurl $f "testid=$testid&rc=$rc"
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
 
-    run_rc=0
+    testid=$(callcurl $s "runid=$runid&type=3")
+    src/do_build_druntime.sh "$rundir" "$OS"
+    rc=$?
+    doscp $runid $rundir druntime-build.log
+    callcurl $f "testid=$testid&rc=$rc"
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
+
+    testid=$(callcurl $s "runid=$runid&type=4")
+    src/do_build_phobos.sh "$rundir" "$OS"
+    rc=$?
+    doscp $runid $rundir phobos-build.log
+    callcurl $f "testid=$testid&rc=$rc"
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
+
+    testid=$(callcurl $s "runid=$runid&type=5")
+    src/do_test_druntime.sh "$rundir" "$OS"
+    rc=$?
+    doscp $runid $rundir druntime-unittest.log
+    callcurl $f "testid=$testid&rc=$rc"
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
+
+    testid=$(callcurl $s "runid=$runid&type=6")
+    src/do_test_phobos.sh "$rundir" "$OS"
+    rc=$?
+    doscp $runid $rundir phobos-unittest.log
+    callcurl $f "testid=$testid&rc=$rc"
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
+
+    testid=$(callcurl $s "runid=$runid&type=7")
+    src/do_test_dmd.sh "$rundir" "$OS" "$runmode"
+    rc=$?
+    doscp $runid $rundir dmd-unittest.log
+    callcurl $f "testid=$testid&rc=$rc"
+    if [ $rc -ne 0 ]; then
+        run_rc=1
+        return
+    fi
 }
 
 # $1 == OS
@@ -199,6 +217,7 @@ function runtests
                 runid=$(callcurl start_run "os=$OS$extraargs")
                 rundir=$runid
             fi
+            fr=finish_run
             ;;
         pull)
             data=($(callcurl get_runnable_pull "os=$OS$extraargs"));
@@ -209,6 +228,7 @@ function runtests
             # note, sha not used
             sha=${data[4]}
             rundir=pull-$runid
+            fr=finish_pull_run
             ;;
     esac
 
@@ -220,6 +240,7 @@ function runtests
 
     pretest
     echo -e "\nStarting run $runid ($OS)."
+    run_rc=0
 
     if [ ! -d $rundir ]; then
         mkdir "$rundir"
@@ -227,6 +248,9 @@ function runtests
     dossh $runid $rundir
 
     execute_one_test $1 $runid $rundir $project $giturl $gitref
+    echo -e "\trun_rc=$run_rc"
+
+    callcurl $fr "runid=$runid"
 
     if [ -d "$rundir" -a "$runid" != "test" ]; then
         rm -rf "$rundir"

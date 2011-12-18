@@ -2,7 +2,7 @@
 
 while [ 1 ]; do
     if [ -f stop ]; then
-        return
+        exit 0
     fi
 
     ./src/driver.sh

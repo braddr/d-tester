@@ -82,10 +82,10 @@ function runtests
         runid=test
         rundir=test-$OS
     elif [ "$2" == "force" ]; then
-        runid=$(callcurl start_run "os=$OS&force=1")
+        runid=$(callcurl start_run "os=$OS&hostname=`hostname`&force=1")
         rundir=$runid
     else
-        runid=$(callcurl start_run "os=$OS")
+        runid=$(callcurl start_run "os=$OS&hostname=`hostname`")
         rundir=$runid
     fi
 

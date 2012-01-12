@@ -1,0 +1,4 @@
+CPUS=2
+PARALLELISM=3
+
+export PATH=/home/Administrator/sandbox/d/d-tester/dmc/dm/bin:$PATH

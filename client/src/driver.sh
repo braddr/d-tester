@@ -104,8 +104,15 @@ function runtests
     dossh $runid $rundir
 
     testid=$(callcurl start_test "runid=$runid&type=1")
-    src/do_checkout.sh "$rundir" "$OS"
-    rc=$?
+
+    rc=1
+    while [ $rc -ne 0 ]; do
+        src/do_checkout.sh "$rundir" "$OS"
+        rc=$?
+        if [ $rc -ne 0 ]; then
+            sleep 60
+        fi
+    done
     doscp $runid $rundir checkout.log
     callcurl finish_test "testid=$testid&rc=$rc"
     if [ $rc -eq 0 ]; then

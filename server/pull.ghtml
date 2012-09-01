@@ -1,6 +1,6 @@
 \include{/include/test-results}
 
-\htmlhead{AutoTester}{}{}{
+\htmlhead{AutoTester -- Pulls}{}{}{
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
   <meta http-equiv="refresh" content="60">
   <link rel="stylesheet" href="pull-tester1.css" type="text/css">
@@ -22,11 +22,11 @@
 }
 
 \sqlexec{
-    select id, reporter_ip, platform, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
-      from test_runs tr
-      where tr.id = \get{runid}
+    select ptr.id, g_p_id, p.name, ghp.project_id, ghp.pull_id, reporter_ip, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
+      from pull_test_runs ptr, github_pulls ghp, projects p
+      where ptr.id = \get{runid} and ptr.g_p_id = ghp.id and ghp.project_id = p.id
 }
-\if{\not{\sqlrow{id}{reporter_ip}{platform}{start_time}{end_time}{duration}{rc}{deleted}}}{
+\if{\not{\sqlrow{id}{g_p_id}{pname}{pid}{pull_id}{reporter_ip}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}}{
     unknown runid
 }{
 
@@ -36,9 +36,13 @@
   <tr>
     <th>Run ID</th><td>\get{id}</td>
   </tr><tr>
+    <th>Pull</th><td><a href="https://github.com/D-Programming-Language/\get{pname}/pull/\get{pull_id}">\get{pname}/\get{pull_id}</a></td>
+  </tr><tr>
     <th>Reporter IP</th><td>\get{reporter_ip}</td>
   </tr><tr>
     <th>Platform</th><td>\get{platform}</td>
+  </tr><tr>
+    <th>SHA</th><td>\get{sha}</td>
   </tr><tr>
     <th>Start Time</th><td>\get{start_time}</td>
   </tr><tr>
@@ -48,13 +52,13 @@
   </tr><tr>
     <th>Result Code</th><td>\get{rc}</td>
   </tr><tr>
-    <th>Deleted</th><td>\get{deleted}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_run.ghtml?runid=\get{runid}">deprecate</a>}</td>
+    <th>Deleted</th><td>\get{deleted}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_pull_run.ghtml?runid=\get{runid}">deprecate</a>}</td>
   </tr>
 </table>
 
 \sqlexec{
     select id, test_type_id, rc, start_time, end_time, timediff(ifnull(end_time, now()), start_time)
-      from test_data
+      from pull_test_data
      where test_run_id = \get{runid}
 }
 \while{\sqlrow{t_id}{t_type}{t_rc}{t_st}{t_et}{t_dur}}{
@@ -87,7 +91,7 @@
   \if{\eq{\get{logid}}{\1}}{\set{extraclass}{logshown}}{\set{extraclass}{}}
   \if{\get{test_\1_et}}{
     \processRC{\get{test_\1_rc}}
-    <td class="testcell \get{class} \get{extraclass}"><a href="test_data.ghtml?runid=\get{runid}&logid=\1">\get{text}<br>\get{test_\1_dur}</a></td>
+    <td class="testcell \get{class} \get{extraclass}"><a href="pull.ghtml?runid=\get{runid}&logid=\1">\get{text}<br>\get{test_\1_dur}</a></td>
   }{
     \if{\get{test_\1_id}}{
       <td class="testcell running \get{extraclass}">R<br>\get{test_\1_dur}+</td>
@@ -100,6 +104,7 @@
 <table class="onepull" border=1>
     <tr class="testrow header">
         <th>checkout</th>
+        <th>merge</th>
         <th>build dmd</th>
         <th>build druntime</th>
         <th>build phobos</th>
@@ -109,6 +114,15 @@
     </tr>
     <tr class="testrow results">
         \showrc{1}
+        \if{\get{test_9_id}}{
+            \showrc{9}
+        }{ \if{\get{test_10_id}}{
+            \showrc{10}
+        }{ \if{\get{test_11_id}}{
+            \showrc{11}
+        }{
+            <td>&nbsp;</td>
+        }}}
         \showrc{2}
         \showrc{3}
         \showrc{4}
@@ -129,9 +143,12 @@ Log:<br>
 \set{file_6}{phobos-unittest}
 \set{file_7}{dmd-unittest}
 \set{file_8}{phobos-html}
+\set{file_9}{dmd-merge}
+\set{file_10}{druntime-merge}
+\set{file_11}{phobos-merge}
 
 <pre>
-\htmlquote{\fileread{/test-results/logs/\get{runid}/\get{file_\get{logid}}.log}}
+\htmlquote{\fileread{/test-results/pull-logs/pull-\get{runid}/\get{file_\get{logid}}.log}}
 </pre>
 }
 

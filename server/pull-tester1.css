@@ -1,0 +1,79 @@
+body {
+    background: #C8C8C8;
+    font-family: Helvetica,Arial,Geneva;
+}
+
+div.banner {
+    font-size: 200%;
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid black;
+}
+
+table.authtable {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 4em;
+}
+
+table.pulltable {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+tr.pullrow td {
+    text-align: center;
+}
+
+tr.pullrow td.header {
+    text-align: left;
+}
+
+tr.testrow td {
+    text-align: center;
+}
+
+tr.testrow td.header {
+    text-align: left;
+}
+
+td.old {
+    opacity: 0.4;
+}
+
+tr.testrow td.logshown {
+    border: 2px solid black;
+}
+
+tr.pass, td.pass {
+    background: #CAFF70;
+}
+tr.fail, td.fail {
+    background: #F08080;
+}
+
+table.pullruns {
+    margin-top: 10px;
+    border: 1px solid black;
+}
+
+table.pullruns td {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+table.pullruns td.result {
+    text-align: center;
+}
+
+table.pullruns td.deleted {
+    text-align: center;
+}
+
+tr.newsha > td {
+    padding-top: 10px;
+    border-top: 1px solid black;
+}
+

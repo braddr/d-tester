@@ -1,0 +1,52 @@
+\include{/include/test-results}
+
+\set{draw}{\quote{
+    \set{projectid}{0}
+    \set{pullid}{0}
+    \set{tok}{\strtok{\get{ref}}{/}}
+    \while{\get{tok}}{
+        \if{\eq{\get{tok}}{dmd}}{\set{projectid}{1}}
+        \if{\eq{\get{tok}}{druntime}}{\set{projectid}{2}}
+        \if{\eq{\get{tok}}{phobos}}{\set{projectid}{3}}
+        \if{\op{\get{tok}}{V}}{\set{pullid}{\get{tok}}}
+        \set{tok}{\strtok{}{/}}
+    }
+    \sqlexec{
+        select id from github_pulls where pull_id = \get{pullid} and project_id = \get{projectid}
+    }
+    \if{\sqlrow{gp_id}}{
+
+        \{
+            "historyURL" : "http://d.puremagic.com/test-results/pull-history.ghtml?projectid=\get{projectid}&pullid=\get{pullid}",
+            "results"    : [
+
+                \sqlexec{
+                    select id, rc, deleted, ptr.platform
+                         from pull_test_runs ptr,
+                              (select platform, max(start_time) as st from pull_test_runs where g_p_id = \get{gp_id} group by platform) maxes
+                        where ptr.platform = maxes.platform and
+                              ptr.start_time = maxes.st
+                     order by ptr.platform
+                }
+                \set{first}{true}
+                \while{\sqlrow{id}{rc}{deleted}{platform}}{
+                    \if{\get{first}}{\set{first}{}}{,}
+                    \{
+                        "id"       : "\get{id}",
+                        "rc"       : "\get{rc}",
+                        "deleted"  : "\get{deleted}",
+                        "platform" : "\get{platform}",
+                        "url"      : "http://d.puremagic.com/test-results/pull.ghtml?runid=\get{id}"
+                    \}
+                }
+
+            ]
+        \}
+
+    }{[]}
+}}
+
+Content-type: application/json
+
+\draw
+

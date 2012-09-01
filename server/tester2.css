@@ -1,0 +1,84 @@
+body {
+    background: #C8C8C8;
+    font-family: Helvetica,Arial,Geneva;
+}
+
+div.pager {
+    text-align: center;
+    padding-bottom: 10px;
+}
+
+table.runs {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table.runs td {
+    vertical-align: top;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+table.first {
+    width: 100%;
+    background: #F0F0F0;
+    border: 1px black solid;
+    margin-bottom: 20px;
+    border-radius: 5px 5px 5px 5px;
+    border-spacing: 0px;
+}
+
+table.first td {
+    border: none;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+table.first td.platform {
+    text-align: center;
+}
+
+table.first td.time {
+    text-align: center;
+    font-size: smaller;
+}
+
+table.first tr.data td {
+    width: 33%;
+    padding-bottom: 2px;
+}
+
+table.first tr.header {
+    text-align: center;
+}
+
+table.first tr.phobos td.test {
+    border-bottom-right-radius: 5px;
+}
+
+table.first td.result {
+    text-align: center;
+}
+
+table.first td.pass {
+    background: #CAFF70;
+}
+
+table.first td.fail {
+    background: #F08080;
+}
+
+table.first td.checkout.pass {
+    background: #F0F0F0;
+}
+
+table.first td.unknown {
+}
+table.first td.running {
+}
+
+iframe.logframe {
+}
+

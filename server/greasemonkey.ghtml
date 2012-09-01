@@ -1,0 +1,36 @@
+\include{/include/test-results}
+
+\htmlhead{D2 Auto-Tester - GreaseMonkey Scripts}{}{}{
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <meta http-equiv="refresh" content="60">
+  <link rel="stylesheet" href="tester3.css" type="text/css">
+  #\jsInHeader
+}{}{
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+}  # {\if{\op{\get{dataid}}{V}}{\ onLoad='return fireMyPopup(\get{dataid});'}}
+
+<div class="banner">D2 Auto-Tester - GreaseMonkey Scripts</div>
+
+There are two scripts that help integrate results from the auto-testers
+directly into the github website.  I've only tested them using firefox with the 
+<a href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/">greasemonkey</a>
+addon.  According to some quick google searching and reading, it looks like chrome has
+built-in support for userscripts and IE also has a similar plugin,
+<a href="http://www.bhelpuri.net/Trixie/">Trixie</a>.
+
+<p>
+
+1) To integrate the trunk builds into <a href="https://github.com/organizations/D-Programming-Language">https://github.com/D-Programming-Language</a>: <a href="http://d.puremagic.com/test-results/github-tester-summary.user.js">install script</a><br>
+
+After installation, there will be a new block along the right side of the page.  It looks like this:<br>
+<img border=0 src="masterresults.png">
+
+<p>
+
+2) To integrate the results of a pull requests test build: <a href="http://d.puremagic.com/test-results/github-pull.user.js">install script</a><br>
+
+After installation, there will be a new block along the right side of the page.  It looks like this:<br>
+<img border=0 src="pullresults.png">
+
+\htmlfoot
+

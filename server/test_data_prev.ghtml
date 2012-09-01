@@ -1,0 +1,57 @@
+\include{/include/test-results}
+
+\htmlhead{AutoTester}{}{}{
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <link rel="stylesheet" href="tester2.css" type="text/css">
+}{}{
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+}
+
+\if{\not{\get{dataid}}}{
+    error, missing dataid parameter
+    \exit
+}
+\if{
+    \not{\op{\get{dataid}}{V}}
+}{
+    error, invalid dataid parameter: \htmlquote{\get{dataid}}
+    \exit
+}
+
+\sqlexec{
+    select tr.platform, tr.reporter_ip, td.id, td.test_run_id, td.test_type_id, tt.name, td.start_time, td.end_time, td.rc
+      from test_runs tr, test_data td, test_types tt
+     where tr.id=td.test_run_id and td.id=\sqlquote{\get{dataid}} and td.test_type_id = tt.id
+}
+\while{\sqlrow{platform}{ip}{id}{runid}{typeid}{typename}{st}{et}{rc}}{
+}
+
+\href{Back to Test Results}{index.ghtml?runmax=\get{runid}&amp;runmin=\op{\get{runid}}{-}{50}}
+<p>
+
+<br>
+Test Run: \get{runid}<br>
+Platform: \get{platform}<br>
+Reporter: \get{ip}<br>
+Test: \get{typename}<br>
+Start Time: \get{st}<br>
+End Time: \get{et}<br>
+Result Code: \get{rc}<br>
+<p>
+Log:<br>
+
+\set{file_1}{checkout}
+\set{file_2}{dmd-build}
+\set{file_3}{druntime-build}
+\set{file_4}{phobos-build}
+\set{file_5}{druntime-unittest}
+\set{file_6}{phobos-unittest}
+\set{file_7}{dmd-unittest}
+\set{file_8}{phobos-html}
+
+<pre>
+\htmlquote{\fileread{/test-results/logs/\get{runid}/\get{file_\get{typeid}}.log}}
+</pre>
+
+\htmlfoot
+

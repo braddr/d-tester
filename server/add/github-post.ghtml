@@ -1,0 +1,18 @@
+\include{/include/test-results}
+
+Content-type: text/plain
+
+\if{\not{\checksecurity}}{
+    unauthorized: \get{REMOTE_ADDR}
+    \exit
+}#
+\if{\strindex{\get{payload}}{refs/heads/dmd-1.x}}{
+    \exit
+}#
+\if{\strindex{\get{payload}}{refs/heads/phobos-1.x}}{
+    \exit
+}#
+#
+\sqlexec{insert into github_posts (post_time, body) values (now(), "\sqlquote{\get{payload}}")}
+\sqlexec{update pull_test_runs set deleted=true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted=false}
+

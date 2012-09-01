@@ -5,6 +5,9 @@ Content-type: text/plain
 \set{validate}{\quote{
     \if{\not{\get{testid}}}{testid}
     \if{\not{\get{rc}}}{rc}
+
+    \if{\not{\op{\get{testid}}{V}}}{testid}
+    \if{\not{\op{\get{rc}}{V}}}{rc}
 }}#
 #
 \if{\not{\checksecurity}}{

@@ -11,6 +11,12 @@ Content-type: text/plain
     \exit
 }#
 #
+\if{\eq{\get{hostname}}{diamond}}{
+skip
+\exit
+}#
+#
+\if{\get{force}\shouldRun{\get{os}}}{
 \sqlexec{
     insert into test_runs (start_time, reporter_ip, platform)
     values (now(), "\sqlquote{\get{REMOTE_ADDR}}", "\sqlquote{\get{os}}")
@@ -18,3 +24,4 @@ Content-type: text/plain
 \sqlexec{select last_insert_id()}#
 \ignore{\sqlrow{newid}}#
 \get{newid}
+}{skip}

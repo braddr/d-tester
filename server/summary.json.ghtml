@@ -1,0 +1,62 @@
+\include{/include/test-results}
+
+# \1 == platform
+# \2 == display name for platform
+\set{draw}{\quote{
+    \sqlexec{
+        select tr.id, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.platform
+          from test_runs tr
+         where tr.platform = "\sqlquote{\1}"
+         order by tr.start_time desc, tr.id desc
+         limit 1
+    }
+    \set{haverow}{\sqlrow{result_id}{result_start}{result_end}{result_duration}{result_platform}}
+    \set{state}{unknown}
+    \if{\haverow}{
+        # get details of most recent run
+        \sqlexec{
+            select td.id, td.test_type_id, td.start_time, td.end_time, timediff(ifnull(td.end_time,now()), td.start_time), td.rc
+              from test_data td
+             where td.test_run_id = \get{result_id}
+        }
+        \set{n}{0}
+        \set{result}{0}
+        \while{\sqlrow{tdid}{tdtid}{tdst}{tdet}{tddur}{tdrc}}{
+            \set{result}{\op{\get{result}}{|}{\get{tdrc}}}
+            \if{\get{tdrc}}{\inc{n}}
+        }
+        \if{\op{7}{>}{\n}}{
+            \set{state}{building}
+        }{
+            \if{\eq{\get{result}}{0}}{
+                \set{state}{success}
+            }{
+                \set{state}{fail}
+            }
+        }
+    }
+
+    \{
+        "platform"    : "\1",
+        "displayName" : "\2",
+        "lastRunDate" : "\get{result_start}",
+        "state"       : "\get{state}",
+        "historyURL"  : "http://d.puremagic.com/test-results/platform-history.ghtml?os=\1"
+    \}
+}}
+
+Content-type: application/json
+
+[
+    \draw{FreeBSD_32}{FreeBSD 32},
+    \draw{FreeBSD_64}{FreeBSD 64},
+    \draw{Linux_32}{Linux 32},
+    \draw{Linux_64_64}{Linux 64},
+    \draw{Linux_32_64}{Linux 32/64},
+    \draw{Linux_64_32}{Linux 64/32},
+    \draw{Darwin_32}{OSX 32},
+    \draw{Darwin_64_64}{OSX 64},
+    \draw{Darwin_32_64}{OSX 32/64},
+    \draw{Darwin_64_32}{OSX 64/32},
+    \draw{Win_32}{Windows 32}
+]

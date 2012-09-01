@@ -1,21 +1,25 @@
 \include{/include/test-results}
 
-Content-type: text/plain
-
 \set{validate}{\quote{
     \if{\not{\get{runid}}}{runid}
     \if{\not{\op{\get{runid}}{V}}}{runid}
 }}#
 #
 \if{\not{\checksecurity}}{
+    Content-type: text/plain
+
     unauthorized: \get{REMOTE_ADDR}
     \exit
 }#
 #
 \set{_rc}{\validate}#
 \if{\_rc}{
+    Content-type: text/plain
+
     bad input: \_rc
     \exit
 }#
 #
-\sqlexec{update test_runs set end_time=now() where id=\sqlquote{\get{runid}} }#
+\sqlexec{update test_runs set deleted=true where id=\sqlquote{\get{runid}} }#
+Location: http://d.puremagic.com/test-results/test_data.ghtml?runid=\htmlquote{\get{runid}}
+

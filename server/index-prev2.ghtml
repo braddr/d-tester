@@ -1,6 +1,6 @@
 \include{/include/test-results}
 
-\htmlhead{D2 Auto-Tester}{}{}{
+\htmlhead{AutoTester}{}{}{
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
   <meta http-equiv="refresh" content="60">
   <link rel="stylesheet" href="tester3.css" type="text/css">
@@ -102,7 +102,7 @@
         </tr>
         <tr class="data header">
             <td class="result \resultClass{1} checkout">
-                \href{checkout}{test_data.ghtml?runid=\get{result_id}&amp;logid=1}</td>
+                \href{checkout}{test_data.ghtml?dataid=\get{result_id_1}}</td>
             <td class="build">build</td>
             <td class="test">test</td>
             \historyBox{2}{\1}
@@ -110,25 +110,25 @@
         <tr class="data dmd">
             <td>dmd</td>
             <td class="result \resultClass{2} build" title="\get{result_dur_2}">
-                \href{\resultText{2}}{test_data.ghtml?runid=\get{result_id}&amp;logid=2}</td>
+                \href{\resultText{2}}{test_data.ghtml?dataid=\get{result_id_2}}</td>
             <td class="result \resultClass{7} test"  title="\get{result_dur_7}">
-                \href{\resultText{7}}{test_data.ghtml?runid=\get{result_id}&amp;logid=7}</td>
+                \href{\resultText{7}}{test_data.ghtml?dataid=\get{result_id_7}}</td>
             \historyBox{3}{\1}
         </tr>
         <tr class="data druntime">
             <td>druntime</td>
             <td class="result \resultClass{3} build" title="\get{result_dur_3}">
-                \href{\resultText{3}}{test_data.ghtml?runid=\get{result_id}&amp;logid=3}</td>
+                \href{\resultText{3}}{test_data.ghtml?dataid=\get{result_id_3}}</td>
             <td class="result \resultClass{5} test"  title="\get{result_dur_5}">
-                \href{\resultText{5}}{test_data.ghtml?runid=\get{result_id}&amp;logid=5}</td>
+                \href{\resultText{5}}{test_data.ghtml?dataid=\get{result_id_5}}</td>
             \historyBox{4}{\1}
         </tr>
         <tr class="data phobos">
             <td>phobos</td>
             <td class="result \resultClass{4} build" title="\get{result_dur_4}">
-                \href{\resultText{4}}{test_data.ghtml?runid=\get{result_id}&amp;logid=4}</td>
+                \href{\resultText{4}}{test_data.ghtml?dataid=\get{result_id_4}}</td>
             <td class="result \resultClass{6} test"  title="\get{result_dur_6}">
-                \href{\resultText{6}}{test_data.ghtml?runid=\get{result_id}&amp;logid=6}</td>
+                \href{\resultText{6}}{test_data.ghtml?dataid=\get{result_id_6}}</td>
             \historyBox{5}{\1}
         </tr>
     </table>
@@ -191,14 +191,10 @@
 # \2 == platform
 # \3 == title
 \set{buildHeader}{\quote{
-    <th title="\3"><a href="/test-results/platform-history.ghtml?os=\2">\1 \if{\shouldRun{\2}}{\ &mdash; Build Pending}</a></th>
+    <th title="\3"><a href="/test-results/platform-history.ghtml?os=\2">\1</a></th>
 }}
 
-<div class="banner">D2 Auto-Tester</div>
-
-<div class="links" style="text-align:right; margin-top: -20px;">
-<a href="http://d.puremagic.com/test-results/pulls.ghtml">Pull Auto Tester</a><br>
-</div>
+<div class="banner">D Auto-Tester</div>
 
 <table class="runs">
 
@@ -230,15 +226,9 @@
 
 <tr>
 \buildHeader{OSX 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit libraries}
-\buildHeader{OSX 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit libraries}
-\buildHeader{OSX 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit libraries}
-\buildHeader{OSX 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit libraries}
 </tr>
 <tr>
 <td>\draw{Darwin_32}</td>
-<td>\draw{Darwin_64_64}</td>
-<td>\draw{Darwin_32_64}</td>
-<td>\draw{Darwin_64_32}</td>
 </tr>
 
 <tr>
@@ -251,7 +241,6 @@
 </table>
 
 <div>
-<a href="http://d.puremagic.com/test-results/greasemonkey.ghtml">GreaseMonkey scripts</a><br>
 <a href="http://github.com/braddr/d-tester">Source of auto-tester</a>
 </div>
 

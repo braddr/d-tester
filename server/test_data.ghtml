@@ -1,56 +1,30 @@
 \include{/include/test-results}
+\set{show_history_submenu}{unselected}
 
-\htmlhead{AutoTester}{}{}{
-  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-  <meta http-equiv="refresh" content="60">
-  <link rel="stylesheet" href="pull-tester1.css" type="text/css">
-  #\jsInHeader
-}{}{
-  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-}  # {\if{\op{\get{dataid}}{V}}{\ onLoad='return fireMyPopup(\get{dataid});'}}
-
-
-\if{\not{\get{runid}}}{
-    error, missing runid parameter
-    \exit
-}
-\if{
-    \not{\op{\get{runid}}{V}}
-}{
-    error, invalid runid parameter: \htmlquote{\get{runid}}
-    \exit
-}
+\validateURLParameter{projectid}
+\validateURLParameter{runid}
+\validateURLParameter{logid}
 
 \sqlexec{
     select tr.id, b.ipaddr, b.name, tr.platform, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.rc, tr.deleted
       from test_runs tr, build_hosts b
       where tr.id = \get{runid} and tr.host_id = b.id
 }
-\if{\not{\sqlrow{id}{b_ipaddr}{b_name}{platform}{start_time}{end_time}{duration}{rc}{deleted}}}{
+\set{runid_found}{\sqlrow{id}{b_ipaddr}{b_name}{os}{start_time}{end_time}{duration}{rc}{deleted}}
+
+\pageHeader{\if{\not{\get{end_time}}}{60}}{\get{projectid}}{
+    <link rel="stylesheet" href="/test-results/css/index.css" type="text/css">
+}{\ onload="resizeFrame(document.getElementById('logframe'));"}
+
+<script type="text/javascript">
+    function resizeFrame(f) \{
+        f.style.height = (f.contentWindow.document.body.scrollHeight + 30) + "px";
+    \}
+</script>
+
+\if{\not{\get{runid_found}}}{
     unknown runid
 }{
-
-<a href="index.ghtml">Back to D2 Auto-Tester</a><br>
-<a href="platform-history.ghtml?os=\get{platform}">History of \get{platform} results</a>
-<table class="pullmeta" border=1>
-  <tr>
-    <th>Run ID</th><td>\get{id}</td>
-  </tr><tr>
-    <th>Reporter</th><td>\get{b_name} (\get{b_ipaddr})</td>
-  </tr><tr>
-    <th>Platform</th><td>\get{platform}</td>
-  </tr><tr>
-    <th>Start Time</th><td>\get{start_time}</td>
-  </tr><tr>
-    <th>End Time</th><td>\get{end_time}</td>
-  </tr><tr>
-    <th>Duration</th><td>\get{duration}</td>
-  </tr><tr>
-    <th>Result Code</th><td>\get{rc}</td>
-  </tr><tr>
-    <th>Deleted</th><td>\get{deleted}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_run.ghtml?runid=\get{runid}\if{\get{logid}}{&logid=\get{logid}}">deprecate</a>}</td>
-  </tr>
-</table>
 
 \sqlexec{
     select id, test_type_id, rc, start_time, end_time, timediff(ifnull(end_time, now()), start_time)
@@ -66,14 +40,20 @@
 }
 
 # \1 == rc
+# \2 == start_time
 \set{processRC}{\quote{
     \if{\eq{\1}{0}}{
         \set{class}{pass}
         \set{text}{P}
     }{
         \if{\eq{\1}{}}{
-            \set{class}{running}
-            \set{text}{R}
+            \if{\2}{
+                \set{class}{running}
+                \set{text}{R}
+            }{
+                \set{class}{pending}
+                \set{text}{&nbsp;}
+            }
         }{
             \set{class}{fail}
             \set{text}{F}
@@ -81,60 +61,64 @@
     }
 }}
 
-# \1 == test type
-\set{showrc}{\quote{
-  \if{\not{\get{logid}}}{\if{\eq{\get{test_\1_rc}}{1}}{\set{logid}{\1}}}
-  \if{\eq{\get{logid}}{\1}}{\set{extraclass}{logshown}}{\set{extraclass}{}}
-  \if{\get{test_\1_et}}{
-    \processRC{\get{test_\1_rc}}
-    <td class="testcell \get{class} \get{extraclass}"><a href="test_data.ghtml?runid=\get{runid}&logid=\1">\get{text}<br>\get{test_\1_dur}</a></td>
-  }{
-    \if{\get{test_\1_id}}{
-      <td class="testcell running \get{extraclass}">R<br>\get{test_\1_dur}+</td>
-    }{
-      <td class="testcell unknown \get{extraclass}">&nbsp;</td>
-    }
-  }
+# \1 == testtype
+# \2 == style
+\set{drawOneTest}{\quote{
+    \processRC{\get{test_\1_rc}}{\get{test_\1_st}}
+    <td class="result \get{class} \2\if{\eq{\get{logid}}{\1}}{\ selected}\if{\eq{\1}{6}}{\ bottomright}" title="\get{test_\1_dur}">
+        \href{\if{\eq{\1}{1}}{checkout}{\get{text}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\1}
+    </td>
 }}
 
-<table class="onepull" border=1>
-    <tr class="testrow header">
-        <th>checkout</th>
-        <th>build dmd</th>
-        <th>build druntime</th>
-        <th>build phobos</th>
-        <th>test dmd</th>
-        <th>test druntime</th>
-        <th>test phobos</th>
-    </tr>
-    <tr class="testrow results">
-        \showrc{1}
-        \showrc{2}
-        \showrc{3}
-        \showrc{4}
-        \showrc{7}
-        \showrc{5}
-        \showrc{6}
-    </tr>
-</table>
+# render the html for one result set
+\set{showResultSet}{\quote{
+    <table class="summary">
+        <tr class="time topleft topright">
+            <td colspan="5" class="testdatatime">\get{start_time} (\get{duration})</td>
+        </tr>
+        <tr class="data header">
+            <td class="metadata header">Platform</td>
+            <td class="metadata data">\get{os}</td>
+            \drawOneTest{1}{checkout}
+            <td class="build">build</td>
+            <td>test</td>
+        </tr>
+        <tr class="data dmd">
+            <td class="metadata header">Reporter</td>
+            <td class="metadata data">\get{b_name}&nbsp;(\get{b_ipaddr})</td>
+            <td>dmd</td>
+            \drawOneTest{2}{build}
+            \drawOneTest{7}{}
+        </tr>
+        <tr class="data druntime">
+            <td class="metadata header">Run ID</td>
+            <td class="metadata data">\get{id}</td>
+            <td>druntime</td>
+            \drawOneTest{3}{build}
+            \drawOneTest{5}{}
+        </tr>
+        <tr class="data phobos">
+            <td class="metadata header bottomleft">Obsolete</td>
+            <td class="metadata data">\if{\eq{\get{deleted}}{0}}{No}{Yes}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_run.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}\if{\get{logid}}{&amp;logid=\get{logid}}">deprecate</a>}</td>
+            <td>phobos</td>
+            \drawOneTest{4}{build}
+            \drawOneTest{6}{}
+        </tr>
+    </table>
+}}
+
+\showResultSet
+
 
 \if{\and{\get{logid}}{\op{\get{logid}}{V}}}{
-Log:<br>
 
-\set{file_1}{checkout}
-\set{file_2}{dmd-build}
-\set{file_3}{druntime-build}
-\set{file_4}{phobos-build}
-\set{file_5}{druntime-unittest}
-\set{file_6}{phobos-unittest}
-\set{file_7}{dmd-unittest}
-\set{file_8}{phobos-html}
-
-<pre>
-\htmlquote{\fileread{/test-results/logs/\get{runid}/\get{file_\get{logid}}.log}}
-</pre>
+<div class="logheader">Log:</div>
+<div class="logbody">
+<iframe class="logframe" id="logframe" src="logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\get{logid}"></iframe>
+</div>
 }
 
-}
+} # if the runid is valid
 
-\htmlfoot
+\pageFooter
+

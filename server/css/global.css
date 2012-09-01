@@ -1,0 +1,106 @@
+/* global css elements */
+
+* {
+    margin:        0px;
+    padding:       0px;
+}
+
+html {
+    height:        100%;
+}
+
+body {
+    background:    #C8C8C8;
+    color:         #240f02;
+    font-family:   Helvetica, Arial, Geneva;
+    height:        100%;
+}
+
+table.page {
+    border-collapse: collapse;
+    min-height:      100%;
+    height:          100%;
+    width:           100%;
+} 
+
+div.page_banner {
+    height:          50px;
+    background:      #f0f0f0;
+    font-size:       200%;
+    text-align:      center;
+    padding-top:     10px;
+    padding-bottom:  10px;
+}
+
+td.page_menupushtop
+{
+    height:          100%;
+}
+
+table.page_menu
+{
+    min-width:       150px;
+    height:          100%;
+}
+
+td.page_menu {
+    vertical-align:  top;
+    width:           200px;
+    background:      #f0f0f0;
+    background:      -moz-linear-gradient(left, #f0f0f0, #c8c8c8 50%);
+    background:      -webkit-linear-gradient(left, #f0f0f0, #c8c8c8 50%);
+    color:           black;
+}
+
+td.page_menufoot {
+    background:      #f0f0f0;
+    background:      -moz-linear-gradient(left, #f0f0f0, #c8c8c8 50%);
+    background:      -webkit-linear-gradient(left, #f0f0f0, #c8c8c8 50%);
+    width:           150px;
+    vertical-align:  bottom;
+}
+
+td.page_menufoot div.copy {
+    font-size:       70%;
+}
+
+div.page_menu_spacer {
+    margin-bottom:   17px;
+}
+
+div.page_menu_unselected {
+    text-align:      left;
+    padding-left:    12px;
+    padding-top:     7px;
+    padding-bottom:  7px;
+    border:          1px solid #c8c8c8;
+    border-radius:   12px;
+    -moz-border-radius: 12px;
+}
+
+div.page_menu_unselected:hover {
+    background:      #C8C8C8;
+}
+
+div.page_menu_selected {
+    background:      #C8C8C8;
+    text-align:      left;
+    padding-left:    12px;
+    padding-top:     7px;
+    padding-bottom:  7px;
+    border:          1px solid #C8C8C8;
+    border-radius:   12px;
+    -moz-border-radius: 12px;
+}
+
+div.page_submenu {
+    margin-left:     20px;
+}
+
+td.page_body {
+    vertical-align: top;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 30px;
+    padding-right: 20px;
+}

@@ -1,6 +1,8 @@
 \include{/include/test-results}
 
 \set{validate}{\quote{
+    \if{\not{\get{projectid}}}{projectid}
+    \if{\not{\op{\get{projectid}}{V}}}{projectid}
     \if{\not{\get{runid}}}{runid}
     \if{\not{\op{\get{runid}}{V}}}{runid}
 }}#
@@ -21,5 +23,5 @@
 }#
 #
 \sqlexec{update test_runs set deleted=true where id=\sqlquote{\get{runid}} }#
-Location: http://d.puremagic.com/test-results/test_data.ghtml?runid=\htmlquote{\get{runid}}\if{\get{logid}}{&logid=\get{logid}}
+Location: http://\get{SERVERNAME}/test-results/test_data.ghtml?projectid=\get{projectid}&runid=\htmlquote{\get{runid}}\if{\get{logid}}{&logid=\get{logid}}
 

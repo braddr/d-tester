@@ -1,0 +1,170 @@
+
+table.runs {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table.runs td {
+    vertical-align: top;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+table.summary {
+    background: #F0F0F0;
+    border: 1px black solid;
+    margin-bottom: 20px;
+    border-radius: 5px 5px 5px 5px;
+    border-spacing: 0px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+table.summary td {
+    border: none;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+table.summary td.platform {
+    text-align: center;
+}
+
+table.summary tr.time td.time {
+    text-align: center;
+    font-size: smaller;
+    border-right: 1px solid black;
+}
+
+table.summary tr.time td.testdatatime {
+    text-align: center;
+    padding-bottom: 5px;
+}
+
+table.summary tr.pending {
+    background: green;
+}
+
+table.summary td.test {
+    border-right: 1px solid black;
+}
+
+td.topright {
+    border-top-right-radius: 5px;
+}
+
+td.bottomright {
+    border-bottom-right-radius: 5px;
+}
+
+td.topleft {
+    border-top-left-radius: 5px;
+}
+
+td.bottomleft {
+    border-bottom-left-radius: 5px;
+}
+
+table.summary tr.header td.build,td.test {
+    text-align: center;
+}
+
+table.summary td.result {
+    text-align: center;
+}
+
+table.summary td.pass {
+    background: #CAFF70;
+}
+
+table.summary td.fail {
+    background: #F08080;
+}
+
+table.summary td.checkout.pass {
+    background: #F0F0F0;
+}
+
+table.summary td.unknown {
+}
+table.summary td.running {
+}
+
+table.summary.pending td {
+    background: #F0F0F0;
+    color: #F0F0F0;
+}
+
+table.summary.pending td.history {
+    color: black;
+}
+
+table.summary.pending td.build {
+    color: black;
+}
+
+table.summary tr.time td.history {
+    border-bottom: 1px solid black;
+    opacity: 1.0;
+}
+table.summary tr.header td.history {
+    border-bottom: 1px solid black;
+    opacity: 0.8;
+}
+table.summary tr.dmd td.history {
+    border-bottom: 1px solid black;
+    opacity: 0.6;
+}
+table.summary tr.druntime td.history {
+    border-bottom: 1px solid black;
+    opacity: 0.4;
+}
+table.summary tr.phobos td.history {
+    opacity: 0.2;
+}
+
+table.summary tr.phobos td {
+    padding-bottom: 3px;
+}
+
+table.summary td.historyPassed {
+    background: #CAFF70;
+}
+
+table.summary td.historyFailed {
+    background: #F08080;
+}
+
+table.summary td.selected {
+    border: 1px solid black;
+}
+
+table.summary td.metadata,td.header {
+    padding-left:
+    font-weight: normal;
+    text-align: left;
+}
+
+table.summary td.metadata,td.data {
+    text-align: left;
+}
+
+div.logheader {
+    margin-top: 15px;
+    border-bottom: 1px solid black;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+div.logbody {
+}
+
+iframe.logframe {
+    width: 100%;
+    scrolling: auto;
+    seamless: seamless;
+    border: 0;
+}
+

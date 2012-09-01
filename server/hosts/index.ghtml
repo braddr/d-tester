@@ -1,0 +1,101 @@
+\include{/include/test-results}
+
+\pageHeader{60}{-1}{
+    <link rel="stylesheet" href="/test-results/css/hosts.css" type="text/css">
+}
+
+<table class="hosts">
+
+<tr>
+    <th>Host</th>
+    <th>IP Address</th>
+    <th>Last Heard From</th>
+    <th>Platform</th>
+    <th>Project</th>
+    <th>Build</th>
+</tr>
+
+#\sqlexec{
+#    select id, name, ipaddr, owner_email, enabled, last_heard_from, timediff(now(), last_heard_from), (timediff(now(), last_heard_from) > "00:15:00")
+#      from build_hosts where enabled=1 order by name
+#}
+
+\sqlexec{
+    select bh.id,
+           bh.name,
+           bh.ipaddr,
+           bh.owner_email,
+           bh.last_heard_from,
+           timediff(now(), last_heard_from) time_since,
+           (timediff(now(), last_heard_from) > "00:20:00") as over_due,
+           ip.run_id,
+           ip.platform,
+           ip.r_name,
+           ip.pull_id,
+           ip.p_name,
+           ip.p_id
+      from build_hosts bh left join
+           (
+               select ptr.id as run_id,
+                      bh.ipaddr,
+                      bh.name as bh_name,
+                      platform,
+                      r.name as r_name,
+                      ghp.pull_id,
+                      p.menu_label as p_name,
+                      p.id as p_id
+                 from pull_test_runs ptr,
+                      github_pulls ghp,
+                      projects p,
+                      repositories r,
+                      repo_branches rb,
+                      build_hosts bh
+                where ghp.id = ptr.g_p_id and
+                      p.id = r.project_id and
+                      r.id = rb.repository_id and
+                      rb.id = ghp.r_b_id and
+                      bh.id = ptr.host_id and
+                      end_time is null and
+                      deleted = false
+                union
+               select tr.id,
+                      b.ipaddr,
+                      b.name,
+                      tr.platform,
+                      "branch",
+                      -1,
+                      p.menu_label,
+                      p.id
+                 from test_runs tr, build_hosts b, projects p
+                where end_time is null and
+                      deleted = false and
+                      tr.host_id = b.id and
+                      p.id = tr.project_id
+           ) as ip on (ip.ipaddr = bh.ipaddr and ip.bh_name = bh.name)
+     where bh.enabled = true
+     order by bh.name
+}
+
+
+\while{\sqlrow{h_id}{h_name}{h_ipaddr}{h_email}{h_date}{h_diff}{h_late}{ip_runid}{ip_platform}{ip_repo_name}{ip_pull_id}{p_name}{p_id}}{
+    <tr class="\if{\eq{\get{h_enabled}}{1}}{enabled}{disabled}">
+        <td>\get{h_name}</td>
+        <td>\get{h_ipaddr}</td>
+        <td \if{\eq{\get{h_late}}{1}}{class="late"}>\if{\get{h_date}}{\get{h_date}\ - \get{h_diff}}</td>
+        <td>\get{ip_platform}</td>
+        \if{\get{ip_repo_name}}{
+            <td>\get{p_name}</td>
+            <td>\if{\eq{\get{ip_repo_name}}{branch}}{
+                   <a href="/test-results/test_data.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}&logid=1">branch build</a>
+                }{
+                   <a href="/test-results/pull.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}">\get{ip_repo_name}/{\get{ip_pull_id}}</a>
+                }
+            </td>
+        }{
+            <td colspan="2">idle</td>
+        }
+    </tr>
+}
+</table>
+
+\pageFooter

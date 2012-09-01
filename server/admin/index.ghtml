@@ -1,0 +1,43 @@
+\include{/include/test-results}
+
+\htmlhead{D2 Auto-Tester}{}{}{
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+}{}{
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+}
+
+
+\set{drawMenu}{
+    <table class="projectlist" style="align: top; border:red 1px solid;"><tr><td>
+    \sqlexec{
+        select id, menu_label, name, test_pulls from projects order by name
+    }
+    \while{\sqlrow{pid}{label}{name}{test_pulls}}{
+        \if{\eq{\get{pid}}{\get{projectid}}}{\set{selected}{selected}}{\set{selected}{unselected}}
+        <div class="menu_\get{selected}" onClick="parent.location='index.ghtml?projectid=\get{pid}'"><a href="index2.ghtml?projectid=\get{pid}">\get{label}</a></div>
+        \if{\eq{\get{test_pulls}}{1}}{
+            <div class="submenu_unselected" onClick="parent.location='pulls.ghtml?projectid=\get{pid}'"><a href="pulls.ghtml?projectid=\get{pid}">Pull Requests</a></div>
+        }
+    }
+    </td></tr></table>
+}
+
+<div class="banner">D2 Auto-Tester</div>
+
+<table class="page" style="width: 100%;">
+<tr><td style="vertical-align: top; width: 250px; background:\#2E9AFE; color:black;">
+
+\drawMenu
+
+</td><td>
+
+</td></tr>
+</table>
+
+<div>
+<a href="http://d.puremagic.com/test-results/greasemonkey.ghtml">GreaseMonkey scripts</a><br>
+<a href="http://github.com/braddr/d-tester">Source of auto-tester</a>
+</div>
+
+\htmlfoot
+

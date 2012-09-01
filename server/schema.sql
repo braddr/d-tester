@@ -10,10 +10,32 @@ create table if not exists audit_entries
     key (change_date)
 );
 
+create table if not exists authorized_addresses
+(
+    id                int          not null auto_increment,
+    ipaddr            varchar(128) not null,
+    enabled           bool         not null,
+    description       varchar(128) not null,
+
+    primary key(id),
+    key(ipaddr)
+);
+
+-- note: only need addresses that are NOT tester clients
+insert into authorized_addresses values (null, "173.45.241.208",  true, "slice-1.puremagic.com");
+insert into authorized_addresses values (null, "108.171.174.178", true, "github");
+insert into authorized_addresses values (null, "173.203.140.",    true, "github");
+insert into authorized_addresses values (null, "173.45.241.",     true, "github");
+insert into authorized_addresses values (null, "207.97.227.",     true, "github");
+insert into authorized_addresses values (null, "50.57.128.",      true, "github");
+insert into authorized_addresses values (null, "192.168.10.",     true, "home network");
+insert into authorized_addresses values (null, "207.171.191.60",  true, "amazon sea firewall");
+insert into authorized_addresses values (null, "54.240.196.185",  true, "amazon sea firewall");
+
 create table if not exists github_pulls
 (
     id                int          not null auto_increment,
-    project_id        int          not null,
+    r_b_id            int          not null,
     pull_id           int          not null,
     user_id           int          not null,
     updated_at        datetime     not null,
@@ -28,7 +50,8 @@ create table if not exists github_pulls
 
     primary key(id),
     key(open, id),
-    key(project_id, open)
+    key(project_id, open),
+    unique key (repo_id, pull_id)
 );
 
 create table if not exists github_users
@@ -53,8 +76,11 @@ create table if not exists github_posts
 create table if not exists projects
 (
     id                int          not null auto_increment,
+    menu_label        varchar(128) not null,
     name              varchar(128) not null,
+    project_url       varchar(128) not null,
     test_pulls        bool         not null,
+    beta_only         bool         not null,
 
     primary key(id),
     index (name)
@@ -62,14 +88,18 @@ create table if not exists projects
 
 truncate table projects;
 
-insert into projects values (1, "D-Programming-Language");
+insert into projects values (1, "D2 master",   "D-Programming-Language", "http://dlang.org",       1, 0);
+insert into projects values (2, "GDC",         "D-Programming-GDC",      "http://gdcproject.org/", 1, 1);
+insert into projects values (3, "LDC",         "ldc-developers",         "",                       1, 1);
+insert into projects values (4, "D2 staging",  "D-Programming-Language", "http://dlang.org",       1, 0);
+insert into projects values (5, "D2 2.061",    "D-Programming-Language", "http://dlang.org",       1, 0);
 
 
 create table if not exists repositories
 (
     id                int          not null auto_increment,
-    project_id        int          not null
-    name              varchar(128),
+    project_id        int          not null,
+    name              varchar(128) not null,
 
     primary key (id),
     index (project_id)
@@ -130,8 +160,11 @@ create table if not exists build_hosts
     name              varchar(128) not null,
     ipaddr            varchar(128) not null,
     owner_email       varchar(128) not null,
+    enabled           bool         not null,
+    last_heard_from   datetime,
 
-    primary key(id)
+    primary key(id),
+    key(ipaddr)
 );
 
 create table if not exists build_host_capabilities
@@ -178,10 +211,9 @@ insert into test_types values (11, "merge phobos");
 create table if not exists test_runs
 (
     id                int          not null auto_increment,
-    project_id        int          not null,
-    reporter_ip       varchar(15)  not null,
-    reporter_name     varchar(128) not null,
+    host_id           int          not null,
     platform          varchar(32)  not null,
+    project_id        int          not null,
     start_time        datetime     not null,
     end_time          datetime,
     rc                int,
@@ -212,7 +244,6 @@ create table if not exists pull_test_runs
     id                int          not null auto_increment,
     g_p_id            int          not null,
 
-    pull_id           int          not null,
     host_id           int          not null,
     platform          varchar(32)  not null,
     sha               varchar(256) not null,
@@ -232,10 +263,8 @@ create table if not exists pull_test_data
     id                int       not null auto_increment,
     test_run_id       int       not null,
     test_type_id      int       not null,
-
     start_time        datetime  not null,
     end_time          datetime,
-
     rc                tinyint   not null,
 
     primary key(id),

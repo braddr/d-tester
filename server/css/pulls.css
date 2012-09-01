@@ -1,0 +1,92 @@
+table.pullmeta {
+}
+
+tr.testrow td {
+    text-align: center;
+}
+
+tr.testrow td.header {
+    text-align: left;
+}
+
+tr.testrow td.logshown {
+    border: 2px solid black;
+}
+
+tr.pass, td.pass {
+    background: #CAFF70;
+}
+tr.fail, td.fail {
+    background: #F08080;
+}
+
+table.onepull {
+}
+
+iframe.logframe {
+    width: 100%;
+    scrolling: auto;
+    seamless: seamless;
+    border: 0;
+}
+
+table.authtable {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 4em;
+}
+
+table.pulltable {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table.pulltable td.sec {
+   height: 7em;
+   vertical-align: top;
+}
+
+tr.pullrow td {
+    text-align: center;
+}
+
+tr.pullrow td.header {
+    text-align: left;
+}
+
+td.old {
+    opacity: 0.4;
+}
+
+table.pulltable div.rotate {
+    width: 2em;
+    transform:rotate(90deg);
+    -ms-transform:rotate(90deg);     /* IE 9 */
+    -moz-transform:rotate(90deg);    /* Firefox */
+    -webkit-transform:rotate(90deg); /* Safari and Chrome */
+    -o-transform:rotate(90deg);      /* Opera */
+} 
+
+table.pullruns {
+    margin-top: 10px;
+    border: 1px solid black;
+    border-spacing: 0px;
+}
+
+table.pullruns td {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+table.pullruns td.result {
+    text-align: center;
+}
+
+table.pullruns td.deleted {
+    text-align: center;
+}
+
+table.pullruns tr.newsha > td {
+    padding-top: 10px;
+    border-top: 1px solid black;
+}

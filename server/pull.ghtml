@@ -1,25 +1,18 @@
 \include{/include/test-results}
+\set{page_type}{pulls}
 
-\htmlhead{AutoTester -- Pulls}{}{}{
-  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-  <meta http-equiv="refresh" content="60">
-  <link rel="stylesheet" href="pull-tester1.css" type="text/css">
-  #\jsInHeader
-}{}{
-  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-}  # {\if{\op{\get{dataid}}{V}}{\ onLoad='return fireMyPopup(\get{dataid});'}}
+\validateURLParameter{projectid}
+\validateURLParameter{runid}
 
+\pageHeader{60}{\get{projectid}}{
+    <link rel="stylesheet" href="/test-results/css/pulls.css" type="text/css">
+}{\ onload="resizeFrame(document.getElementById('logframe'));"}
 
-\if{\not{\get{runid}}}{
-    error, missing runid parameter
-    \exit
-}
-\if{
-    \not{\op{\get{runid}}{V}}
-}{
-    error, invalid runid parameter: \htmlquote{\get{runid}}
-    \exit
-}
+<script type="text/javascript">
+    function resizeFrame(f) \{
+        f.style.height = (f.contentWindow.document.body.scrollHeight + 30) + "px";
+    \}
+</script>
 
 \sqlexec{
     select ptr.id, g_p_id, r.name, r.id, ghp.pull_id, bh.ipaddr, bh.name, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
@@ -34,8 +27,7 @@
     unknown runid
 }{
 
-<a href="pulls.ghtml">Back to Pulls</a><br>
-<a href="pull-history.ghtml?repoid=\get{repo_id}&pullid=\get{pull_id}">Pull Test History</a>
+<a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\get{repo_id}&amp;pullid=\get{pull_id}">Pull Test History</a>
 <table class="pullmeta" border=1>
   <tr>
     <th>Run ID</th><td>\get{id}</td>
@@ -56,7 +48,7 @@
   </tr><tr>
     <th>Result Code</th><td>\get{rc}</td>
   </tr><tr>
-    <th>Deleted</th><td>\get{deleted}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_pull_run.ghtml?runid=\get{runid}">deprecate</a>}</td>
+    <th>Deleted</th><td>\get{deleted}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_pull_run.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}">deprecate</a>}</td>
   </tr>
 </table>
 
@@ -95,7 +87,7 @@
   \if{\eq{\get{logid}}{\1}}{\set{extraclass}{logshown}}{\set{extraclass}{}}
   \if{\get{test_\1_et}}{
     \processRC{\get{test_\1_rc}}
-    <td class="testcell \get{class} \get{extraclass}"><a href="pull.ghtml?runid=\get{runid}&logid=\1">\get{text}<br>\get{test_\1_dur}</a></td>
+    <td class="testcell \get{class} \get{extraclass}"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\1">\get{text}<br>\get{test_\1_dur}</a></td>
   }{
     \if{\get{test_\1_id}}{
       <td class="testcell running \get{extraclass}">R<br>\get{test_\1_dur}+</td>
@@ -109,12 +101,12 @@
     <tr class="testrow header">
         <th>checkout</th>
         <th>merge</th>
-        <th>build dmd</th>
-        <th>build druntime</th>
-        <th>build phobos</th>
-        <th>test dmd</th>
-        <th>test druntime</th>
-        <th>test phobos</th>
+        <th>build&nbsp;dmd</th>
+        <th>build&nbsp;druntime</th>
+        <th>build&nbsp;phobos</th>
+        <th>test&nbsp;dmd</th>
+        <th>test&nbsp;druntime</th>
+        <th>test&nbsp;phobos</th>
     </tr>
     <tr class="testrow results">
         \showrc{1}
@@ -137,25 +129,14 @@
 </table>
 
 \if{\and{\get{logid}}{\op{\get{logid}}{V}}}{
+
 Log:<br>
-
-\set{file_1}{checkout}
-\set{file_2}{dmd-build}
-\set{file_3}{druntime-build}
-\set{file_4}{phobos-build}
-\set{file_5}{druntime-unittest}
-\set{file_6}{phobos-unittest}
-\set{file_7}{dmd-unittest}
-\set{file_8}{phobos-html}
-\set{file_9}{dmd-merge}
-\set{file_10}{druntime-merge}
-\set{file_11}{phobos-merge}
-
-<pre>
-\htmlquote{\fileread{/test-results/pull-logs/pull-\get{runid}/\get{file_\get{logid}}.log}}
-</pre>
-}
+<iframe class="logframe" id="logframe" src="pull-logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\get{logid}"></iframe>
 
 }
 
-\htmlfoot
+
+}
+
+\pageFooter
+

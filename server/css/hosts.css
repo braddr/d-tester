@@ -1,0 +1,33 @@
+table.hosts {
+    background: #F0F0F0;
+    border: 1px black solid;
+    border-radius: 5px 5px 5px 5px;
+    border-spacing: 0px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table.hosts th {
+    border-bottom: 1px solid black;
+    vertical-align: top;
+    padding-left:   15px;
+    padding-right:  15px;
+    padding-top:    2px;
+    padding-bottom: 2px;
+}
+
+table.hosts td {
+    vertical-align: top;
+    padding-left:   15px;
+    padding-right:  15px;
+    padding-top:    2px;
+    padding-bottom: 2px;
+}
+
+table.hosts tr:nth-child(even) {
+    background: #fff;
+}
+
+table.hosts td.late {
+    font-weight: bold;
+}

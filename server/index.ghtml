@@ -1,27 +1,23 @@
 \include{/include/test-results}
 
-\htmlhead{D2 Auto-Tester}{}{}{
-  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-  <meta http-equiv="refresh" content="60">
-  <link rel="stylesheet" href="tester3.css" type="text/css">
-  #\jsInHeader
-}{}{
-  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-}  # {\if{\op{\get{dataid}}{V}}{\ onLoad='return fireMyPopup(\get{dataid});'}}
+# if the request doesn't specify a project id, for now default to "D2 master"
+\if{\get{projectid}}{}{\set{projectid}{1}}
+\validateURLParameter{projectid}
 
-# build list of test types
-\sqlexec{select id, name from test_types order by id}
-\set{i}{1}
-\while{\sqlrow{type_\get{i}_id}{type_\get{i}_name}}{
-    \inc{i}
+\pageHeader{60}{\get{projectid}}{
+    <link rel="stylesheet" href="/test-results/css/index.css" type="text/css">
 }
-\set{numtypes}{\i}
+
+# get number of test types
+\sqlexec{select count(*) from test_types}
+\ignore{\sqlrow{numtesttypes}}
+\inc{numtesttypes}
 
 # no inputs, clears a result set
 \set{resetResultSet}{\quote{
     \set{i}{1}
     \while{
-        \op{\numtypes}{>}{\i}
+        \op{\numtesttypes}{>}{\i}
     }{
         \set{result_id}{}
         \set{result_start}{}
@@ -45,6 +41,21 @@
         \set{history_sum_\i}{}
 
         \inc{i}
+    }
+}}
+
+# \1 == index into history data
+# \2 == platform
+# \3 == style
+\set{historyBox}{\quote{
+    \if{\op{\get{index}}{>}{\1}}{
+        <td class="\if{\op{\get{history_sum_\1}}{>}{0}}{
+            {history historyFailed}
+        }{
+            {history historyPassed}
+        }\if{\3}{\ \3}" title="\get{history_st_\1}" onClick="window.location.href='test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{history_id_\1}&amp;logid=1'"></td>
+    }{
+        <td class="history\if{\3}{\ \3}">U</td>
     }
 }}
 
@@ -82,73 +93,96 @@
     }
 }}
 
-# \1 == index into history data
-# \2 == platform
-\set{historyBox}{\quote{
-    <td class="\if{\op{\get{history_sum_\1}}{>}{0}}{
-        {history historyFailed}
-    }{
-        {history historyPassed}
-    }" title="\get{history_st_\1}" onClick="window.location.href='platform-history.ghtml?os=\2'"></td>
+# \1 == testtype
+# \2 == label
+# \3 == style
+\set{drawOneTest}{\quote{
+    <td class="result \resultClass{\1} \3" title="\get{result_dur_\1}">
+        \href{\2}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=\1}</td>
 }}
 
 # render the html for one result set
 # \1 == platform
 \set{showResultSet}{\quote{
-    <table class="summary">
-        <tr class="time">
-            <td colspan="3" class="time">\get{result_start} (\get{result_duration})</td>
-            \historyBox{1}{\1}
-        </tr>
-        <tr class="data header">
-            <td class="result \resultClass{1} checkout">
-                \href{checkout}{test_data.ghtml?runid=\get{result_id}&amp;logid=1}</td>
-            <td class="build">build</td>
-            <td class="test">test</td>
-            \historyBox{2}{\1}
-        </tr>
-        <tr class="data dmd">
-            <td>dmd</td>
-            <td class="result \resultClass{2} build" title="\get{result_dur_2}">
-                \href{\resultText{2}}{test_data.ghtml?runid=\get{result_id}&amp;logid=2}</td>
-            <td class="result \resultClass{7} test"  title="\get{result_dur_7}">
-                \href{\resultText{7}}{test_data.ghtml?runid=\get{result_id}&amp;logid=7}</td>
-            \historyBox{3}{\1}
-        </tr>
-        <tr class="data druntime">
-            <td>druntime</td>
-            <td class="result \resultClass{3} build" title="\get{result_dur_3}">
-                \href{\resultText{3}}{test_data.ghtml?runid=\get{result_id}&amp;logid=3}</td>
-            <td class="result \resultClass{5} test"  title="\get{result_dur_5}">
-                \href{\resultText{5}}{test_data.ghtml?runid=\get{result_id}&amp;logid=5}</td>
-            \historyBox{4}{\1}
-        </tr>
-        <tr class="data phobos">
-            <td>phobos</td>
-            <td class="result \resultClass{4} build" title="\get{result_dur_4}">
-                \href{\resultText{4}}{test_data.ghtml?runid=\get{result_id}&amp;logid=4}</td>
-            <td class="result \resultClass{6} test"  title="\get{result_dur_6}">
-                \href{\resultText{6}}{test_data.ghtml?runid=\get{result_id}&amp;logid=6}</td>
-            \historyBox{5}{\1}
-        </tr>
-    </table>
+    \if{\get{result_start}}{
+        <table class="summary">
+            <tr class="time">
+                <td colspan="3" class="time topleft">\get{result_start} (\get{result_duration})</td>
+                \historyBox{1}{\1}{topright}
+            </tr>
+            <tr class="data header">
+                \drawOneTest{1}{checkout}{checkout}
+                <td class="build">build</td>
+                <td class="test">test</td>
+                \historyBox{2}{\1}
+            </tr>
+            <tr class="data dmd">
+                <td>dmd</td>
+                \drawOneTest{2}{\resultText{2}}{build}
+                \drawOneTest{7}{\resultText{7}}{test}
+                \historyBox{3}{\1}
+            </tr>
+            <tr class="data druntime">
+                <td>druntime</td>
+                \drawOneTest{3}{\resultText{3}}{build}
+                \drawOneTest{5}{\resultText{5}}{test}
+                \historyBox{4}{\1}
+            </tr>
+            <tr class="data phobos">
+                <td class="bottomleft">phobos</td>
+                \drawOneTest{4}{\resultText{4}}{build}
+                \drawOneTest{6}{\resultText{6}}{test}
+                \historyBox{5}{\1}{bottomright}
+            </tr>
+        </table>
+    }{
+        <table class="summary pending">
+            <tr class="time">
+                <td colspan="3" class="time topleft">X</td>
+                \historyBox{0}{\1}{topright}
+            </tr>
+            <tr class="data header">
+                <td class="checkout">X</td>
+                <td class="build"></td>
+                <td class="test"></td>
+                \historyBox{1}{\1}
+            </tr>
+            <tr class="data dmd">
+                <td>X</td>
+                <td class="build">Pending</td>
+                <td class="test"></td>
+                \historyBox{2}{\1}
+            </tr>
+            <tr class="data druntime">
+                <td>X</td>
+                <td class="build"></td>
+                <td class="test"></td>
+                \historyBox{3}{\1}
+            </tr>
+            <tr class="data phobos">
+                <td class="bottomleft">X</td>
+                <td class="build"></td>
+                <td class="test"></td>
+                \historyBox{4}{\1}{bottomright}
+            </tr>
+        </table>
+    }
 }}
 
 # \1 == platform
-# uses \runmin and \runmax and \type_* from global scope
 \set{draw}{\quote{
     \resetResultSet
 
     \sqlexec{
         select tr.id, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.platform
           from test_runs tr
-         where tr.platform = "\sqlquote{\1}" and tr.project_id = 1
+         where tr.platform = "\sqlquote{\1}" and tr.deleted = false and project_id = \get{projectid}
          order by tr.start_time desc, tr.id desc
          limit 1
     }
-    \set{haverow}{\sqlrow{result_id}{result_start}{result_end}{result_duration}{result_platform}}
+    \ignore{\sqlrow{result_id}{result_start}{result_end}{result_duration}{result_platform}}
 
-    \if{\haverow}{
+    \if{\get{result_id}}{
         # get details of most recent run
         \sqlexec{
             select td.id, td.test_type_id, td.start_time, td.end_time, timediff(ifnull(td.end_time,now()), td.start_time), td.rc
@@ -162,28 +196,26 @@
             \set{result_dur_\get{tdtid}}{\get{tddur}}
             \set{result_id_\get{tdtid}}{\get{tdid}}
         }
-
-        \sqlexec{
-            select tr.id, tr.start_time, sum(td.rc)
-              from test_runs tr, test_data td
-             where tr.id = td.test_run_id and tr.platform = "\sqlquote{\1}" and tr.project_id = 1
-             group by tr.start_time, tr.id
-             order by tr.start_time desc, tr.id desc
-             limit 6
-        }
-        \set{index}{0}
-        \while{\sqlrow{trid}{trstart}{trsum}}{
-            \set{history_id_\get{index}}{\trid}
-            \set{history_st_\get{index}}{\trstart}
-            \set{history_sum_\get{index}}{\trsum}
-            \inc{index}
-        }
-
-        \showResultSet{\1}
-
-    }{
-        No results yet.
     }
+
+    \sqlexec{
+        select tr.id, tr.start_time, sum(td.rc)
+          from test_runs tr, test_data td
+         where tr.id = td.test_run_id and tr.platform = "\sqlquote{\1}" and tr.project_id = \get{projectid}
+         group by tr.start_time, tr.id
+         order by tr.start_time desc, tr.id desc
+         limit 6
+    }
+    \set{index}{0}
+    \while{\sqlrow{trid}{trstart}{trsum}}{
+        \set{history_id_\get{index}}{\trid}
+        \set{history_st_\get{index}}{\trstart}
+        \set{history_sum_\get{index}}{\trsum}
+        \inc{index}
+    }
+
+    \showResultSet{\1}
+
     \resetResultSet
 }}
 
@@ -191,15 +223,12 @@
 # \2 == platform
 # \3 == title
 \set{buildHeader}{\quote{
-    <th title="\3"><a href="/test-results/platform-history.ghtml?os=\2">\1 \if{\shouldRun{\2}}{\ &mdash; Build Pending}</a></th>
+    <th title="\3"><a href="/test-results/platform-history.ghtml?projectid=\get{projectid}&amp;os=\2">\1</a></th>
 }}
 
-<div class="banner">D2 Auto-Tester</div>
-
-<div class="links" style="text-align:right; margin-top: -20px;">
-<a href="http://d.puremagic.com/test-results/pulls.ghtml">Pull Auto Tester</a><br>
-</div>
-
+\if{\not{\get{projectid}}}{
+   Pick a project!
+}{
 <table class="runs">
 
 <tr>
@@ -251,11 +280,6 @@
 </tr>
 
 </table>
+}
 
-<div>
-<a href="http://d.puremagic.com/test-results/greasemonkey.ghtml">GreaseMonkey scripts</a><br>
-<a href="http://github.com/braddr/d-tester">Source of auto-tester</a>
-</div>
-
-\htmlfoot
-
+\pageFooter

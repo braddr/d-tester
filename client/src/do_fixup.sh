@@ -14,8 +14,11 @@ echo -e "\tapplying fixups to checked out source"
 
 # need a conf files so that dmd can find the imports and libs from within the test
 case "$2" in
-    Darwin_32)
+    Darwin_32|Darwin_64_32)
         cp src/dmd-darwin.conf $1/dmd/src/dmd.conf
+        ;;
+    Darwin_32_64|Darwin_64_64)
+        cp src/dmd-darwin-64.conf $1/dmd/src/dmd.conf
         ;;
     FreeBSD_32)
         cp src/dmd-freebsd.conf $1/dmd/src/dmd.conf

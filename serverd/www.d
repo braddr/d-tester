@@ -1,8 +1,5 @@
 module www;
 
-import core.stdc.stdlib;
-import core.stdc.string;
-
 /* Convert a single hex digit to its value 0-15,
    either lower or upper case.  No error checking. */
 
@@ -36,6 +33,10 @@ void http_decode (ref char[] s)
     }
     s.length = t - s.ptr;
 }
+
+/+
+import core.stdc.stdlib;
+import core.stdc.string;
 
 /* quote all <, >, and & in text... generates malloc... should be free'd */
 
@@ -99,3 +100,5 @@ char *quote_html (const char *s)
 
     return qq;
 }
++/
+

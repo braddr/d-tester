@@ -1,5 +1,6 @@
 module mysql;
 
+import config;
 import utils;
 
 import core.memory;
@@ -80,7 +81,7 @@ bool sql_init()
         return false;
     }
 
-    MYSQL* m = mysql_real_connect(&mysql, servername.ptr, "dwebsite", "fn0rd3", "dwebsite", 3306, null, CLIENT_REMEMBER_OPTIONS);
+    MYSQL* m = mysql_real_connect(&mysql, toStringz(c.db_host), toStringz(c.db_user), toStringz(c.db_passwd), toStringz(c.db_db), 3306, null, CLIENT_REMEMBER_OPTIONS);
     if (!m)
     {
         exiterr();

@@ -4,7 +4,7 @@ import serverd;
 import utils;
 import www;
 
-import core.stdc.string;
+import core.stdc.string : strlen;
 
 import std.algorithm;
 import std.conv;

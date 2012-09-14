@@ -1,0 +1,5 @@
+*.o
+*.sw*
+update-pulls-*
+serverd-prod*
+serverd-fastcgi*

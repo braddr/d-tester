@@ -1,5 +1,6 @@
 module serverd;
 
+import config;
 import mysql;
 import utils;
 import setup;
@@ -7,17 +8,14 @@ import www;
 
 import p_finish_run;
 
-import p_update_pulls;
 import p_get_runnable_pull;
 import p_finish_pull_run;
 import p_start_pull_test;
 import p_finish_pull_test;
 
-import core.stdc.stdlib;
-import core.stdc.string;
-
 import std.array;
 import std.format;
+import std.process;
 import std.range;
 import std.stdio;
 import std.string;
@@ -61,8 +59,6 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
         "/finish_run"        : &p_finish_run.run,
 
         // pull request apis
-        "/update_pulls"      : &p_update_pulls.run,      // sync state with github
-
         "/get_runnable_pull" : &p_get_runnable_pull.run, // for a given platform, select a pull to build
         "/finish_pull_run"   : &p_finish_pull_run.run,   // mark a pull build as complete
 
@@ -127,6 +123,15 @@ int main(string[] args)
 {
     writelog("start app");
 
+    string filename = std.process.getenv("SERVERD_CONFIG");
+    if (filename == "")
+    {
+        writelog("using default config path");
+        filename = "/home/www-data/d.puremagic.com/d-tester/config.json";
+    }
+
+    load_config(filename);
+
     if (!sql_init())
     {
         writelog("failed to initialize sql connection, exiting");
@@ -155,21 +160,6 @@ int main(string[] args)
     }
 
     writelog("shutting down");
-
-    /+
-    sql_exec("select id, start_time from test_runs limit 10");
-    const(char)[][] row;
-    size_t i = 0;
-    while ((row = sql_row()) != [])
-    {
-        writefln("row %s:", i);
-        foreach(j, col; row)
-        {
-            writefln("    %s: %s", j, col);
-        }
-        ++i;
-    }
-    +/
 
     sql_shutdown();
 

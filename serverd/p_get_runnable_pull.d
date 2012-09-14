@@ -1,6 +1,7 @@
 module p_get_runnable_pull;
 
 import mysql;
+static import p_finish_pull_run;
 import serverd;
 import utils;
 
@@ -13,8 +14,8 @@ alias string[] sqlrow;
 void loadAllRequests(ref sqlrow[string] openPulls)
 {
     // get set of pull requests that need to have runs
-    //               0      1              2       3           4            5                6            7
-    sql_exec("select gp.id, gp.project_id, p.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at from github_pulls gp, projects p, github_users u where gp.open and gp.project_id = p.id and gp.user_id = u.id and u.trusted and gp.id != 48");
+    //               0      1              2       3           4            5                6            7              8
+    sql_exec("select gp.id, gp.project_id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date from github_pulls gp, repositories r, github_users u where gp.open and gp.project_id = r.id and gp.user_id = u.id and u.trusted and gp.id != 48");
     sqlrow[] rows = sql_rows();
 
     foreach(ref row; rows) { openPulls[row[0]] = row; }
@@ -35,7 +36,7 @@ void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls
         if (pull == null)
             continue; // happens when there's multiple runs for the same pull.  After the head matching run is processed, the rest will not find a match.
 
-        //writelog("  project: %s, pull_id: %s, head_sha: %s, last_sha: %s", (*pull)[2], (*pull)[3], (*pull)[4], row[2]);
+        //writelog("  repo: %s, pull_id: %s, head_sha: %s, last_sha: %s", (*pull)[2], (*pull)[3], (*pull)[4], row[2]);
         if ((*pull)[4] == row[2])
             openPulls.remove(row[1]);
     }
@@ -72,7 +73,7 @@ sqlrow selectOnePull_byNewest(ref sqlrow[string] openPulls)
 {
     // create map of update -> id -- subject to time collisions resulting in loosing runs
     sqlrow[string] sorted;
-    foreach(key, row; openPulls) { sorted[row[7]] = row; }
+    foreach(key, row; openPulls) { sorted[row[8]] = row; }
 
     // sort and get the most recent
     string key = (sorted.keys.sort.reverse)[0];
@@ -134,9 +135,17 @@ sqlrow selectOnePull(ref sqlrow[string] openPulls)
     }
 }
 
-sqlrow recordRunStart(string raddr, string platform, sqlrow pull)
+sqlrow recordRunStart(string raddr, string rname, string platform, sqlrow pull)
 {
-    sql_exec(text("insert into pull_test_runs (id, g_p_id, pull_id, reporter_ip, platform, sha, start_time, deleted) values (null, ", pull[0], ", ", pull[3], ", \"", sql_quote(raddr), "\", \"", sql_quote(platform), "\", \"", pull[4], "\", now(), false)"));
+    sql_exec(text("insert into pull_test_runs (id, g_p_id, pull_id, reporter_ip, reporter_name, platform, sha, start_time, deleted) values (null, ",
+                  pull[0], ", ",
+                  pull[3], ", "
+                  "\"", sql_quote(raddr),    "\", "
+                  "\"", sql_quote(rname),    "\", "
+                  "\"", sql_quote(platform), "\", "
+                  "\"", pull[4],             "\", "
+                  "now(), "
+                  "false)"));
     sql_exec("select last_insert_id()");
     sqlrow lastidrow = sql_row();
 
@@ -163,6 +172,11 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
 
     string hostname = lookup(userhash, "hostname");
+    if (hostname.empty)
+    {
+        outstr.put("bad input: missing hostname\n");
+        return;
+    }
     //if (!hostname.empty && hostname == "diamond")
     //{
     //    outstr.put("skip\n");
@@ -178,10 +192,11 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     {
         sqlrow pull = selectOnePull(openPulls);
 
-        sqlrow runid = recordRunStart(raddr, platform, pull);
+        sqlrow runid = recordRunStart(raddr, hostname, platform, pull);
 
-        writelog("building: %s\n", pull);
-        formattedWrite(outstr, "%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4]);  // runid, project, url, ref, sha
+        writelog("  building: %s", pull);
+        formattedWrite(outstr, "%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4]);  // runid, repo, url, ref, sha
+        p_finish_pull_run.updateGithub(runid[0], outstr);
     }
     else
         outstr.put("skip\n");

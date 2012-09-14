@@ -106,25 +106,23 @@ bool loadCommitDate(string repo, Pull p)
 
 void updatePull(string repo, Pull* k, Pull p)
 {
-    if (k.updated_at != p.updated_at)
+    if (k.updated_at != p.updated_at || !k.open)
     {
-        writelog("  updating repo %s pull %s:", repo, p.pull_id);
+        writelog("  %s repo %s pull %s:", (k.open ? "updating" : "reopening"), repo, p.pull_id);
         writelog("    updated_at: before: %s - after: %s", k.updated_at.toISOExtString(), p.updated_at.toISOExtString());
-        sql_exec(text("update github_pulls set updated_at = '", p.updated_at.toISOExtString(), "' where id = ", k.id));
-        writelog(text("    sql: update github_pulls set updated_at = '", p.updated_at.toISOExtString(), "' where id = ", k.id));
+        sql_exec(text("update github_pulls set open = 1, updated_at = '", p.updated_at.toISOExtString(), "' where id = ", k.id));
 
-        if ((!p.open && k.open) || p.base_sha != k.base_sha || p.head_sha != k.head_sha || p.base_git_url != k.base_git_url || p.head_git_url != k.head_git_url)
+        if (!k.open || p.base_sha != k.base_sha || p.head_sha != k.head_sha || p.base_git_url != k.base_git_url || p.head_git_url != k.head_git_url)
         {
             if (!loadCommitDate(repo, p)) return;
 
             writelog("    head_date:  before: %s - after: %s", k.head_date.toISOExtString(), p.head_date.toISOExtString());
             sql_exec(text("update github_pulls set head_date = '", p.head_date.toISOExtString(), "' where id = ", k.id));
-            writelog(text("    sql: update github_pulls set head_date = '", p.head_date.toISOExtString(), "' where id = ", k.id));
 
             writelog("    sha changes:");
             writelog("      before: base: %s, head: %s", k.base_sha, k.head_sha);
             writelog("      after : base: %s, head: %s", p.base_sha, p.head_sha);
-            sql_exec(text("update github_pulls set open=true, "
+            sql_exec(text("update github_pulls set "
                         "base_git_url='", p.base_git_url, "', base_ref='", p.base_ref, "', base_sha='", p.base_sha, "', "
                         "head_git_url='", p.head_git_url, "', head_ref='", p.head_ref, "', head_sha='", p.head_sha, "' where id = ", k.id));
 
@@ -160,8 +158,7 @@ void processPull(string repoid, string reponame, Pull* k, Pull p)
             // reopened pull request
             auto row = rows[0];
             if (row[11] == "") row[11] = row[4]; // use temporarily until loadCommitDate can get the right value
-            writelog("reopen: row[0] = %s, row[4] = %s, row[11] = %s", row[0], row[4], row[11]);
-            auto newP = new Pull(to!ulong(row[0]), to!ulong(row[1]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), true, row[5], row[6], row[7], row[8], row[9], row[10], SysTime.fromISOExtString(row[11]));
+            auto newP = new Pull(to!ulong(row[0]), to!ulong(row[1]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), false, row[5], row[6], row[7], row[8], row[9], row[10], SysTime.fromISOExtString(row[11]));
             updatePull(reponame, &newP, p);
         }
 

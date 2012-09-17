@@ -1,30 +1,31 @@
 \include{/include/test-results}
 
 \set{draw}{\quote{
-    \set{projectid}{0}
+    \set{repoid}{0}
     \set{pullid}{0}
     \set{tok}{\strtok{\get{ref}}{/}}
     \while{\get{tok}}{
-        \if{\eq{\get{tok}}{dmd}}{\set{projectid}{1}}
-        \if{\eq{\get{tok}}{druntime}}{\set{projectid}{2}}
-        \if{\eq{\get{tok}}{phobos}}{\set{projectid}{3}}
+        \if{\eq{\get{tok}}{dmd}}{\set{repoid}{1}}
+        \if{\eq{\get{tok}}{druntime}}{\set{repoid}{2}}
+        \if{\eq{\get{tok}}{phobos}}{\set{repoid}{3}}
         \if{\op{\get{tok}}{V}}{\set{pullid}{\get{tok}}}
         \set{tok}{\strtok{}{/}}
     }
     \sqlexec{
-        select id from github_pulls where pull_id = \get{pullid} and project_id = \get{projectid}
+        select id from github_pulls where pull_id = \get{pullid} and project_id = \get{repoid}
     }
     \if{\sqlrow{gp_id}}{
 
         \{
-            "historyURL" : "http://d.puremagic.com/test-results/pull-history.ghtml?projectid=\get{projectid}&pullid=\get{pullid}",
+            "historyURL" : "http://d.puremagic.com/test-results/pull-history.ghtml?repoid=\get{repoid}&pullid=\get{pullid}",
             "results"    : [
 
                 \sqlexec{
                     select id, rc, deleted, ptr.platform
                          from pull_test_runs ptr,
                               (select platform, max(start_time) as st from pull_test_runs where g_p_id = \get{gp_id} group by platform) maxes
-                        where ptr.platform = maxes.platform and
+                        where g_p_id = \get{gp_id} and
+                              ptr.platform = maxes.platform and
                               ptr.start_time = maxes.st
                      order by ptr.platform
                 }

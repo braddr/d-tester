@@ -41,9 +41,9 @@
 
 \set{firstrow}{1}
 \sqlexec{
-  select gu.username, gu.id, gp.id, p.name, gp.pull_id
-    from github_pulls gp, github_users gu, projects p
-   where gp.user_id = gu.id and gu.trusted = 0 and gp.open=1 and gp.project_id = p.id
+  select gu.username, gu.id, gp.id, r.name, gp.pull_id
+    from github_pulls gp, github_users gu, repositories r
+   where gp.user_id = gu.id and gu.trusted = 0 and gp.open=1 and gp.project_id = r.id
    order by 1, 2
 }
 \while{\sqlrow{gu_username}{gu_id}{gp_id}{p_name}{gp_pullid}}{
@@ -70,13 +70,13 @@
 
 \sqlexec{
   select ptr.id,
-         p.name,
+         r.name,
          ghp.pull_id,
          ptr.platform,
          ptr.start_time,
          ptr.rc,
          ptr.deleted
-    from projects       p,
+    from repositories   r,
          github_pulls   ghp,
          github_users   u,
          pull_test_runs ptr,
@@ -85,11 +85,11 @@
          maxes.platform = ptr.platform and
          maxes.st = ptr.start_time and
          ptr.g_p_id = ghp.id and
-         ghp.project_id = p.id and
+         ghp.project_id = r.id and
          ghp.user_id = u.id and
          u.trusted
           and ptr.start_time > date_sub(now(), interval 1 week)
-   order by p.name, ghp.pull_id, ptr.platform
+   order by r.name, ghp.pull_id, ptr.platform
 }
 \while{\sqlrow{ptr_id}{p_name}{pull_id}{ptr_platform}{ptr_start_time}{ptr_rc}{ptr_deleted}}{
   \set{\get{p_name}_\get{pull_id}_\get{ptr_platform}_id}{\get{ptr_id}}
@@ -97,7 +97,7 @@
   \set{\get{p_name}_\get{pull_id}_\get{ptr_platform}_deleted}{\eq{\get{ptr_deleted}}{1}}
 }
 
-# \1 == project name
+# \1 == repo name
 # \2 == pull id
 # \3 == platform
 \set{drawcol}{\quote{
@@ -113,32 +113,34 @@
   }
 }}
 
-# \1 == project name (dmd, druntime, phobos)
-# \2 == project id
+# \1 == repo name (dmd, druntime, phobos)
+# \2 == repo id
 # \3 == pull id
 # \4 == userid
 # \5 == ref
 # \6 == updated_at
+# \7 == head_date
 \set{drawrow}{\quote{
   <tr class="pullrow">
     <td class="pullcell header"><a href="https://github.com/D-Programming-Language/\1/pull/\3">\1/\3</a></td>
-    <td class="pullcell header"><a href="pull-history.ghtml?projectid=\2&pullid=\3">\4/\5</a></td>
-    <td class="pullcell header">\6</td>
+    <td class="pullcell header"><a href="pull-history.ghtml?repoid=\2&pullid=\3">\4/\5</a></td>
+    #<td class="pullcell header">\6</td>
+    <td class="pullcell header">\7</td>
     \drawcol{\1}{\3}{FreeBSD_32}
     \drawcol{\1}{\3}{FreeBSD_64}
     \drawcol{\1}{\3}{Linux_32}
     \drawcol{\1}{\3}{Linux_64_64}
     \drawcol{\1}{\3}{Linux_32_64}
     \drawcol{\1}{\3}{Linux_64_32}
-    #\drawcol{\1}{\3}{Darwin_32}
-    #\drawcol{\1}{\3}{Darwin_64_64}
-    #\drawcol{\1}{\3}{Darwin_32_64}
-    #\drawcol{\1}{\3}{Darwin_64_32}
+    \drawcol{\1}{\3}{Darwin_32}
+    \drawcol{\1}{\3}{Darwin_64_64}
+    \drawcol{\1}{\3}{Darwin_32_64}
+    \drawcol{\1}{\3}{Darwin_64_32}
     \drawcol{\1}{\3}{Win_32}
   </tr>
 }}
 
-# \1 == project name (dmd, druntime, phobos)
+# \1 == repo name (dmd, druntime, phobos)
 # \2 == pull id
 # \3 == platform
 \set{getastate}{\quote{
@@ -160,7 +162,7 @@
   }
 }}
 
-# \1 == project name (dmd, druntime, phobos)
+# \1 == repo name (dmd, druntime, phobos)
 # \2 == pull id
 \set{getstate}{\quote{
   \set{result}{old}
@@ -171,12 +173,16 @@
   \set{ss5}{\getastate{\1}{\2}{Linux_64_64}}
   \set{ss6}{\getastate{\1}{\2}{Linux_32_64}}
   \set{ss7}{\getastate{\1}{\2}{Linux_64_32}}
+  \set{ss8}{\getastate{\1}{\2}{Darwin_32}}
+  \set{ss9}{\getastate{\1}{\2}{Darwin_64_64}}
+  \set{ss10}{\getastate{\1}{\2}{Darwin_32_64}}
+  \set{ss11}{\getastate{\1}{\2}{Darwin_64_32}}
   \set{i}{1}
-  \while{\op{8}{>}{\get{i}}}{
+  \while{\op{12}{>}{\get{i}}}{
     \if{
       \eq{\get{ss\i}}{failed}
     }{
-      \set{i}{7}
+      \set{i}{11}
       \set{result}{hasfailures}
     }{
       \if{
@@ -191,14 +197,14 @@
 }}
 
 \sqlexec{
-  select p.name, p.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at
-    from projects p, github_pulls ghp, github_users u
-   where ghp.project_id = p.id and ghp.open and ghp.user_id = u.id and u.trusted
-   #order by p.name, ghp.updated_at desc
+  select r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date
+    from repositories r, github_pulls ghp, github_users u
+   where ghp.project_id = r.id and ghp.open and ghp.user_id = u.id and u.trusted
+   #order by r.name, ghp.updated_at desc
    order by 1, 3 desc
 }
-\while{\sqlrow{p_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}}{
-  \set{rowoutput}{\drawrow{\get{p_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}}
+\while{\sqlrow{p_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}}{
+  \set{rowoutput}{\drawrow{\get{p_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}}
   \set{name}{\get{p_name}_\getstate{\get{p_name}}{\get{ghp_pull_id}}}
   \set{\get{name}}{\get{\get{name}} \get{rowoutput}}
 }
@@ -208,31 +214,32 @@
 <tr class="pullheaders">
 <th>GitHub page</th>
 <th>Test History</th>
-<th>Last Updated</th>
-\buildHeader{FreeBSD 32}{FreeBSD_32}{FreeBSD with a 32 bit dmd binary and 32 bit libraries}
-\buildHeader{FreeBSD 64}{FreeBSD_64}{FreeBSD with a 64 bit dmd binary and 64 bit libraries}
-\buildHeader{Linux 32}{Linux_32}{Linux with a 32 bit dmd binary and 32 bit libraries}
-\buildHeader{Linux 64}{Linux_64_64}{Linux with a 64 bit dmd binary and 64 bit libraries}
-\buildHeader{Linux 32/64}{Linux_32_64}{Linux with a 32 bit dmd binary and 64 bit libraries}
-\buildHeader{Linux 64/32}{Linux_64_32}{Linux with a 64 bit dmd binary and 32 bit libraries}
-#\buildHeader{OSX 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit libraries}
-#\buildHeader{OSX 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit libraries}
-#\buildHeader{OSX 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit libraries}
-#\buildHeader{OSX 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit libraries}
-\buildHeader{Windows 32}{Win_32}{Windows with a 32 bit dmd binary and 32 bit libraries}
+#<th>Last Updated</th>
+<th>Last Committed</th>
+\buildHeader{F 32}{FreeBSD_32}{FreeBSD with a 32 bit dmd binary and 32 bit libraries}
+\buildHeader{F 64}{FreeBSD_64}{FreeBSD with a 64 bit dmd binary and 64 bit libraries}
+\buildHeader{L 32}{Linux_32}{Linux with a 32 bit dmd binary and 32 bit libraries}
+\buildHeader{L 64}{Linux_64_64}{Linux with a 64 bit dmd binary and 64 bit libraries}
+\buildHeader{L 32/64}{Linux_32_64}{Linux with a 32 bit dmd binary and 64 bit libraries}
+\buildHeader{L 64/32}{Linux_64_32}{Linux with a 64 bit dmd binary and 32 bit libraries}
+\buildHeader{O 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit libraries}
+\buildHeader{O 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit libraries}
+\buildHeader{O 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit libraries}
+\buildHeader{O 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit libraries}
+\buildHeader{W 32}{Win_32}{Windows with a 32 bit dmd binary and 32 bit libraries}
 </tr>
 
-<tr class="secheader"><td colspan="10">Has Passes</td></tr>
+<tr class="secheader"><td colspan="14">Has Passes</td></tr>
 \get{dmd_haspasses}
 \get{druntime_haspasses}
 \get{phobos_haspasses}
 
-<tr class="secheader"><td colspan="10">Has Failures</td></tr>
+<tr class="secheader"><td colspan="14">Has Failures</td></tr>
 \get{dmd_hasfailures}
 \get{druntime_hasfailures}
 \get{phobos_hasfailures}
 
-<tr class="secheader"><td colspan="10">Old results, pending testing</td></tr>
+<tr class="secheader"><td colspan="14">Old results, pending testing</td></tr>
 \get{dmd_old}
 \get{druntime_old}
 \get{phobos_old}

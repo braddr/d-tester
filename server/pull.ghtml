@@ -22,23 +22,23 @@
 }
 
 \sqlexec{
-    select ptr.id, g_p_id, p.name, ghp.project_id, ghp.pull_id, reporter_ip, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
-      from pull_test_runs ptr, github_pulls ghp, projects p
-      where ptr.id = \get{runid} and ptr.g_p_id = ghp.id and ghp.project_id = p.id
+    select ptr.id, g_p_id, r.name, ghp.project_id, ghp.pull_id, reporter_ip, reporter_name, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
+      from pull_test_runs ptr, github_pulls ghp, repositories r
+      where ptr.id = \get{runid} and ptr.g_p_id = ghp.id and ghp.project_id = r.id
 }
-\if{\not{\sqlrow{id}{g_p_id}{pname}{pid}{pull_id}{reporter_ip}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}}{
+\if{\not{\sqlrow{id}{g_p_id}{repo_name}{pid}{pull_id}{reporter_ip}{reporter_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}}{
     unknown runid
 }{
 
 <a href="pulls.ghtml">Back to Pulls</a><br>
-<a href="pull-history.ghtml?projectid=\get{pid}&pullid=\get{pull_id}">Pull Test History</a>
+<a href="pull-history.ghtml?repoid=\get{pid}&pullid=\get{pull_id}">Pull Test History</a>
 <table class="pullmeta" border=1>
   <tr>
     <th>Run ID</th><td>\get{id}</td>
   </tr><tr>
-    <th>Pull</th><td><a href="https://github.com/D-Programming-Language/\get{pname}/pull/\get{pull_id}">\get{pname}/\get{pull_id}</a></td>
+    <th>Pull</th><td><a href="https://github.com/D-Programming-Language/\get{repo_name}/pull/\get{pull_id}">\get{repo_name}/\get{pull_id}</a></td>
   </tr><tr>
-    <th>Reporter IP</th><td>\get{reporter_ip}</td>
+    <th>Reporter</th><td>\get{reporter_name} (\get{reporter_ip})</td>
   </tr><tr>
     <th>Platform</th><td>\get{platform}</td>
   </tr><tr>

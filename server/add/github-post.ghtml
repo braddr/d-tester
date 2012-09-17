@@ -15,4 +15,5 @@ Content-type: text/plain
 #
 \sqlexec{insert into github_posts (post_time, body) values (now(), "\sqlquote{\get{payload}}")}
 \sqlexec{update pull_test_runs set deleted=true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted=false}
+\sqlexec{update test_runs set deleted=true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted=false}
 

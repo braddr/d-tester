@@ -4,6 +4,7 @@ Content-type: text/plain
 
 \set{validate}{\quote{
     \if{\not{\get{os}}}{os}
+    \if{\not{\get{hostname}}}{hostname}
 }}#
 #
 \if{\not{\checksecurity}}{
@@ -11,15 +12,18 @@ Content-type: text/plain
     \exit
 }#
 #
-\if{\eq{\get{hostname}}{diamond}}{
-skip
-\exit
+\sqlexec{
+    select tr.id from test_runs tr where tr.deleted = 0 and tr.reporter_name = "\sqlquote{\get{hostname}}" and tr.end_time is null
 }#
-#
+\if{\sqlrow{trid}}{
+    \sqlexec{update test_runs set deleted = 1 where id = \get{trid}}#
+    \ignore{\sqlrow{rid}}#
+}#
+##
 \if{\get{force}\shouldRun{\get{os}}}{
 \sqlexec{
-    insert into test_runs (start_time, reporter_ip, platform)
-    values (now(), "\sqlquote{\get{REMOTE_ADDR}}", "\sqlquote{\get{os}}")
+    insert into test_runs (start_time, reporter_ip, reporter_name, platform, deleted)
+    values (now(), "\sqlquote{\get{REMOTE_ADDR}}", "\sqlquote{\get{hostname}}", "\sqlquote{\get{os}}", false)
 }#
 \sqlexec{select last_insert_id()}#
 \ignore{\sqlrow{newid}}#

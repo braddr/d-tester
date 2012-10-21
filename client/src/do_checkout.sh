@@ -25,7 +25,7 @@ fi
 echo "Checking out dmd:" >> $top/$1/checkout.log 2>&1
 if [ ! -d $top/source/dmd ]; then
     cd $top/source
-    git clone git://github.com/D-Programming-Language/dmd.git dmd >> $top/$1/checkout.log 2>&1
+    git clone https://github.com/D-Programming-Language/dmd.git dmd >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo -e "\terror checking out dmd"
         exit 1
@@ -46,7 +46,7 @@ echo >> $top/$1/checkout.log 2>&1
 echo "Checkout out druntime:" >> $top/$1/checkout.log 2>&1
 if [ ! -d $top/source/druntime ]; then
     cd $top/source
-    git clone git://github.com/D-Programming-Language/druntime.git druntime >> $top/$1/checkout.log 2>&1
+    git clone https://github.com/D-Programming-Language/druntime.git druntime >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo -e "\terror checking out druntime"
         exit 1
@@ -67,7 +67,7 @@ echo >> $top/$1/checkout.log 2>&1
 echo "Checkout out phobos:" >> $top/$1/checkout.log 2>&1
 if [ ! -d $top/source/phobos ]; then
     cd $top/source
-    git clone git://github.com/D-Programming-Language/phobos.git phobos >> $top/$1/checkout.log 2>&1
+    git clone https://github.com/D-Programming-Language/phobos.git phobos >> $top/$1/checkout.log 2>&1
     if [ $? -ne 0 ]; then
         echo -e "\terror checking out phobos"
         exit 1

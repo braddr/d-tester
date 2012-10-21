@@ -53,22 +53,13 @@ function detectos
     echo $OS
 }
 
-# $1 == runid
-# $2 == rundir
-function dossh
-{
-    if [ "$1" != "test" ]; then
-        ssh dwebsite mkdir $serverlogs/$2
-    fi
-}
-
-# $1 == runid
+# $1 == testid
 # $2 == rundir
 # $3 == file
-function doscp
+function uploadlog
 {
-    if [ "$1" != "test" ]; then
-        scp -q $2/$3 dwebsite:$serverlogs/$2
+    if [ "$runid" != "test" ]; then
+        curl -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_pull?testid=$1"
     fi
 }
 
@@ -103,7 +94,7 @@ function execute_one_test
         fi
     done
 
-    doscp $runid $rundir checkout.log
+    uploadlog $testid $rundir checkout.log
     callcurl $f "testid=$testid&rc=$rc"
     if [ $rc -ne 0 ]; then
         run_rc=1
@@ -112,7 +103,7 @@ function execute_one_test
 
     src/do_fixup.sh "$rundir" "$OS"
     rc=$?
-    doscp $runid $rundir checkout.log
+    #uploadlog $testid $rundir checkout.log
     if [ $rc -ne 0 ]; then
         run_rc=1
         return
@@ -133,7 +124,7 @@ function execute_one_test
         testid=$(callcurl $s "runid=$runid&type=$typeid")
         src/do_pull.sh "$rundir" "$OS" "$4" "$5" "$6"
         rc=$?
-        doscp $runid $rundir $4-merge.log
+        uploadlog $testid $rundir $4-merge.log
         callcurl $f "testid=$testid&rc=$rc"
         if [ $rc -ne 0 ]; then
             run_rc=1;
@@ -144,7 +135,7 @@ function execute_one_test
     testid=$(callcurl $s "runid=$runid&type=2")
     src/do_build_dmd.sh "$rundir" "$OS"
     rc=$?
-    doscp $runid $rundir dmd-build.log
+    uploadlog $testid $rundir dmd-build.log
     callcurl $f "testid=$testid&rc=$rc"
     if [ $rc -ne 0 ]; then
         run_rc=1
@@ -154,7 +145,7 @@ function execute_one_test
     testid=$(callcurl $s "runid=$runid&type=3")
     src/do_build_druntime.sh "$rundir" "$OS"
     rc=$?
-    doscp $runid $rundir druntime-build.log
+    uploadlog $testid $rundir druntime-build.log
     callcurl $f "testid=$testid&rc=$rc"
     if [ $rc -ne 0 ]; then
         run_rc=1
@@ -164,7 +155,7 @@ function execute_one_test
     testid=$(callcurl $s "runid=$runid&type=4")
     src/do_build_phobos.sh "$rundir" "$OS"
     rc=$?
-    doscp $runid $rundir phobos-build.log
+    uploadlog $testid $rundir phobos-build.log
     callcurl $f "testid=$testid&rc=$rc"
     if [ $rc -ne 0 ]; then
         run_rc=1
@@ -174,7 +165,7 @@ function execute_one_test
     testid=$(callcurl $s "runid=$runid&type=5")
     src/do_test_druntime.sh "$rundir" "$OS"
     rc=$?
-    doscp $runid $rundir druntime-unittest.log
+    uploadlog $testid $rundir druntime-unittest.log
     callcurl $f "testid=$testid&rc=$rc"
     if [ $rc -ne 0 ]; then
         run_rc=1
@@ -184,7 +175,7 @@ function execute_one_test
     testid=$(callcurl $s "runid=$runid&type=6")
     src/do_test_phobos.sh "$rundir" "$OS"
     rc=$?
-    doscp $runid $rundir phobos-unittest.log
+    uploadlog $testid $rundir phobos-unittest.log
     callcurl $f "testid=$testid&rc=$rc"
     if [ $rc -ne 0 ]; then
         run_rc=1
@@ -194,7 +185,7 @@ function execute_one_test
     testid=$(callcurl $s "runid=$runid&type=7")
     src/do_test_dmd.sh "$rundir" "$OS" "$runmode"
     rc=$?
-    doscp $runid $rundir dmd-unittest.log
+    uploadlog $testid $rundir dmd-unittest.log
     callcurl $f "testid=$testid&rc=$rc"
     if [ $rc -ne 0 ]; then
         run_rc=1
@@ -222,7 +213,7 @@ function runtests
                 runid=test
                 rundir=test-$OS
             else
-                runid=$(callcurl start_run "os=$OS&hostname=`hostname`$extraargs")
+                runid=$(callcurl get_runnable_master "os=$OS&hostname=`hostname`$extraargs")
                 rundir=$runid
             fi
             fr=finish_run
@@ -253,7 +244,6 @@ function runtests
     if [ ! -d $rundir ]; then
         mkdir "$rundir"
     fi
-    dossh $runid $rundir
 
     execute_one_test $1 $runid $rundir $project $giturl $gitref
     echo -e "\trun_rc=$run_rc"

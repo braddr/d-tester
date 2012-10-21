@@ -18,6 +18,14 @@ function callcurl
     curl --silent "http://d.puremagic.com/test-results/add/$1.ghtml?$2"
 }
 
+function callcurlv2
+{
+    if [ "$runid" == "test" ]; then
+        return;
+    fi
+    curl --silent "http://d.puremagic.com/test-results/addv2/$1?$2"
+}
+
 function detectos
 {
     foo=`uname`
@@ -50,22 +58,13 @@ function detectos
     echo $OS
 }
 
-# $1 == runid
-# $2 == rundir
-function dossh
-{
-    if [ "$1" != "test" ]; then
-        ssh dwebsite mkdir /home/dwebsite/test-results/$2
-    fi
-}
-
-# $1 == runid
+# $1 == testid
 # $2 == rundir
 # $3 == file
-function doscp
+function uploadlog
 {
-    if [ "$1" != "test" ]; then
-        scp -q $2/$3 dwebsite:/home/dwebsite/test-results/$2
+    if [ "$runid" != "test" ]; then
+        curl -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_master?testid=$1"
     fi
 }
 
@@ -82,10 +81,10 @@ function runtests
         runid=test
         rundir=test-$OS
     elif [ "$2" == "force" ]; then
-        runid=$(callcurl start_run "os=$OS&hostname=`hostname`&force=1")
+        runid=$(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`&force=1")
         rundir=$runid
     else
-        runid=$(callcurl start_run "os=$OS&hostname=`hostname`")
+        runid=$(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`")
         rundir=$runid
     fi
 
@@ -101,7 +100,6 @@ function runtests
     if [ ! -d $rundir ]; then
         mkdir "$rundir"
     fi
-    dossh $runid $rundir
 
     testid=$(callcurl start_test "runid=$runid&type=1")
 
@@ -113,53 +111,53 @@ function runtests
             sleep 60
         fi
     done
-    doscp $runid $rundir checkout.log
+    uploadlog $testid $rundir checkout.log
     callcurl finish_test "testid=$testid&rc=$rc"
     if [ $rc -eq 0 ]; then
 
         src/do_fixup.sh "$rundir" "$OS"
-        doscp $runid $rundir checkout.log
+        #uploadlog $testid $rundir checkout.log
 
         testid=$(callcurl start_test "runid=$runid&type=2")
         src/do_build_dmd.sh "$rundir" "$OS"
         build_dmd_rc=$?
-        doscp $runid $rundir dmd-build.log
+        uploadlog $testid $rundir dmd-build.log
         callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
 
         testid=$(callcurl start_test "runid=$runid&type=3")
         src/do_build_druntime.sh "$rundir" "$OS"
         build_druntime_rc=$?
-        doscp $runid $rundir druntime-build.log
+        uploadlog $testid $rundir druntime-build.log
         callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
 
         testid=$(callcurl start_test "runid=$runid&type=4")
         src/do_build_phobos.sh "$rundir" "$OS"
         build_phobos_rc=$?
-        doscp $runid $rundir phobos-build.log
+        uploadlog $testid $rundir phobos-build.log
         callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
 
         testid=$(callcurl start_test "runid=$runid&type=5")
         src/do_test_druntime.sh "$rundir" "$OS"
         test_druntime_rc=$?
-        doscp $runid $rundir druntime-unittest.log
+        uploadlog $testid $rundir druntime-unittest.log
         callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
 
         testid=$(callcurl start_test "runid=$runid&type=6")
         src/do_test_phobos.sh "$rundir" "$OS"
         test_phobos_rc=$?
-        doscp $runid $rundir phobos-unittest.log
+        uploadlog $testid $rundir phobos-unittest.log
         callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
 
         testid=$(callcurl start_test "runid=$runid&type=7")
         src/do_test_dmd.sh "$rundir" "$OS"
         test_dmd_rc=$?
-        doscp $runid $rundir dmd-unittest.log
+        uploadlog $testid $rundir dmd-unittest.log
         callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
 
         #testid=$(callcurl start_test "runid=$runid&type=8")
         #src/do_html_phobos.sh "$rundir" "$OS"
         #html_dmd_rc=$?
-        #doscp $runid $rundir phobos-html.log
+        #uploadlog $testid $rundir phobos-html.log
         # todo: should be condition on test mode
         #rsync --archive --compress --delete $rundir/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
         #callcurl finish_test "testid=$testid&rc=$html_dmd_rc"

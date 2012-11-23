@@ -32,8 +32,8 @@ case "$2" in
     Linux_32_64|Linux_64_64)
         cp src/dmd-linux-64.conf $1/dmd/src/dmd.conf
         ;;
-    Win_32)
-        cp src/sc.ini $1/dmd/src
+    Win_32|Win_64)
+        cp src/sc$2.ini $1/dmd/src/sc.ini
 
         # move minit.obj to be newer than minit.asm
         touch $1/druntime/src/rt/minit.obj

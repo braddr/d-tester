@@ -42,6 +42,11 @@ case "$2" in
         makefile=win32.mak
         EXTRA_ARGS=""
         ;;
+    Win_64)
+        makefile=win64.mak
+        EXTRA_ARGS=""
+        MODEL=64
+        ;;
     *)
         echo "unknown os: $2"
         exit 1;

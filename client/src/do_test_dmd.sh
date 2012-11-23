@@ -39,6 +39,10 @@ case "$2" in
     Win_32)
         makecmd=/usr/bin/make
         ;;
+    Win_64)
+        makecmd=/usr/bin/make
+        MODEL=64
+        ;;
     *)
         echo "unknown os: $2"
         exit 1;

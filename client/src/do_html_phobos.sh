@@ -47,6 +47,11 @@ case "$2" in
         makefile=win32.mak
         DD=DOC
         ;;
+    Win_64)
+        DR=DRUNTIME
+        makefile=win64.mak
+        DD=DOC
+        ;;
     *)
         echo "unknown os: $2"
         exit 1;

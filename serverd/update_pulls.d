@@ -516,7 +516,7 @@ void backfill_pulls()
     processPull(repoid, reponame, &k, p);
     }
 
-    sql_exec("update github_pulls set open=1 where open=0 and create_date is null limit 10");
+    sql_exec("update github_pulls set open=1 where open=0 and create_date is null and base_ref = \"master\" and id not in (8) limit 10");
 }
 
 int main(string[] args)

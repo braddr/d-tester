@@ -16,6 +16,8 @@ struct MYSQL { ubyte[1272] junk; } // sizeof on 64 bit linux from the c header
 struct MYSQL_RES;
 alias char** MYSQL_ROW;
 
+alias string[] sqlrow;
+
 enum mysql_option
 {
     MYSQL_OPT_CONNECT_TIMEOUT, MYSQL_OPT_COMPRESS, MYSQL_OPT_NAMED_PIPE,

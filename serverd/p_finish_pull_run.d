@@ -1,55 +1,18 @@
 module p_finish_pull_run;
 
+import config;
 import mysql;
 import serverd;
 import utils;
+import validate;
 
 import std.conv;
 import std.format;
 import std.range;
 
-alias string[] sqlrow;
-
-bool validateNumber(string runid)
+bool validate_runState(string runid, ref string hostid, Appender!string outstr)
 {
-    try
-    {
-        auto id = to!size_t(runid);
-        return true;
-    }
-    catch(Throwable)
-    {
-        return false;
-    }
-}
-
-bool validate(ref string raddr, ref string rid, Appender!string outstr)
-{
-    auto tmpout = appender!string();
-    if (!auth_check(raddr, tmpout))
-    {
-        outstr.put(tmpout.data);
-        return false;
-    }
-
-    if (rid.empty)
-    {
-        formattedWrite(outstr, "bad input: missing runid\n");
-        return false;
-    }
-
-    if (!validateNumber(rid))
-    {
-        formattedWrite(outstr, "bad input: %s is not a valid runid\n", sql_quote(rid));
-        return false;
-    }
-
-    // no longer need in it's raw form, so let's sql_quote it.  That it passes the number
-    // validation means this really ought to be a complete no-op, but doesn't hurt.
-
-    rid = sql_quote(rid);
-
-    if (!sql_exec(text("select id, end_time from pull_test_runs where id=", rid)))
+    if (!sql_exec(text("select id, host_id, end_time from pull_test_runs where id = ", runid)))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -59,22 +22,37 @@ bool validate(ref string raddr, ref string rid, Appender!string outstr)
 
     if (rows.length != 1)
     {
-        formattedWrite(outstr, "bad input: should be exactly one row, runid: ", rid, "\n");
+        formattedWrite(outstr, "bad input: should be exactly one row, runid: ", runid, "\n");
         return false;
     }
 
-    if (rows[0][1] != "")
+    if (rows[0][2] != "")
     {
-        formattedWrite(outstr, "bad input: run already complete, runid: ", rid, "\n");
+        formattedWrite(outstr, "bad input: run already complete, runid: ", runid, "\n");
         return false;
     }
+
+    hostid = rows[0][1];
 
     return true;
 }
 
-bool updateGithub(string rid, Appender!string outstr)
+bool validateInput(ref string raddr, ref string runid, ref string hostid, Appender!string outstr)
 {
-    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id from github_pulls ghp, repositories r, pull_test_runs ptr where ptr.id = ", rid, " and ptr.g_p_id = ghp.id and ghp.project_id = r.id")))
+    if (!validate_raddr(raddr, outstr))
+        return false;
+    if (!validate_id(runid, "runid", outstr))
+        return false;
+
+    if (!validate_runState(runid, hostid, outstr))
+        return false;
+
+    return true;
+}
+
+bool updateGithub(string runid, Appender!string outstr)
+{
+    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id from github_pulls ghp, repositories r, pull_test_runs ptr where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.repo_id = r.id")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -88,7 +66,7 @@ bool updateGithub(string rid, Appender!string outstr)
     }
     if (rows.length > 1)
     {
-        formattedWrite(outstr, "found more than one associated pull? runid=", rid, "\n");
+        formattedWrite(outstr, "found more than one associated pull? runid=", runid, "\n");
         return false;
     }
 
@@ -116,7 +94,8 @@ bool updateGithub(string rid, Appender!string outstr)
         else
             ++numinprogress;
     }
-    numpending = 11 - numpass - numfail - numinprogress;
+    numpending = 10 - numpass - numfail - numinprogress;
+    if (numpending < 0) numpending = 0;
 
     string url = text("https://api.github.com/repos/D-Programming-Language/", reponame, "/statuses/", sha);
     string payload;
@@ -134,6 +113,7 @@ bool updateGithub(string rid, Appender!string outstr)
     if (numfail > 0)       { status = "failure"; appenddesc(text("Fail: ",        numfail));       }
     if (numinprogress > 0) { status = "pending"; appenddesc(text("In Progress: ", numinprogress)); }
     if (numpending > 0)    { status = "pending"; appenddesc(text("Pending: ",     numpending));    }
+    if (numfail > 0)       { status = "failure"; }
 
     string requestpayload = text(
         `{`
@@ -145,7 +125,7 @@ bool updateGithub(string rid, Appender!string outstr)
 
     writelog("  request body: %s", requestpayload);
 
-    if (!runCurlPOST(curl, payload, headers, url, requestpayload))
+    if (!runCurlPOST(curl, payload, headers, url, requestpayload, c.github_user, c.github_passwd))
     {
         writelog("  failed to update github");
         return false;
@@ -179,11 +159,13 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     outstr.put("Content-type: text/plain\n\n");
 
     string raddr = lookup(hash, "REMOTE_ADDR");
+    string hostid;
     string runid = lookup(userhash, "runid");
 
-    if (!validate(raddr, runid, outstr))
+    if (!validateInput(raddr, runid, hostid, outstr))
         return;
 
+    updateHostLastCheckin(hostid);
     updateStore(runid, outstr);
     updateGithub(runid, outstr);
 }

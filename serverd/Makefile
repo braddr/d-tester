@@ -8,7 +8,7 @@ LIBS=-L-lmysqlclient -L-lcurl
 
 COMMON_SRC=mysql.d config.d utils.d
 
-SERVERD_SRC=serverd.d p_*.d setup.d www.d
+SERVERD_SRC=serverd.d p_*.d setup.d validate.d www.d
 UPDATE_SRC=update_pulls.d
 
 serverd: $(SERVERD_SRC) $(COMMON_SRC)
@@ -23,3 +23,5 @@ update-pulls: $(UPDATE_SRC) $(COMMON_SRC)
 clean:
 	rm -f *.o serverd serverd-fastcgi update-pulls
 
+upload:
+	scp serverd-fastcgi root@slice-1:/tmp

@@ -8,12 +8,18 @@ import www;
 
 import p_finish_run;
 
+import p_get_runnable_master;
+import p_upload_master;
+
 import p_get_runnable_pull;
 import p_finish_pull_run;
 import p_start_pull_test;
 import p_finish_pull_test;
+import p_upload_pull;
 
 import std.array;
+import std.datetime;
+import std.file;
 import std.format;
 import std.process;
 import std.range;
@@ -55,8 +61,10 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
         "/dump"              : &p_dump,
         "/test-results/addv2/dump"              : &p_dump,
 
-        // master checkins -- not used yet
-        "/finish_run"        : &p_finish_run.run,
+        // master checkins
+        "/get_runnable_master" : &p_get_runnable_master.run, // for a given platform, see if it's time to run
+        //"/finish_run"        : &p_finish_run.run,
+        "/upload_master"       : &p_upload_master.run,       // for a specific test, receive the resulting log
 
         // pull request apis
         "/get_runnable_pull" : &p_get_runnable_pull.run, // for a given platform, select a pull to build
@@ -64,6 +72,7 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
 
         "/start_pull_test"   : &p_start_pull_test.run,   // start a test phase for a pull request build
         "/finish_pull_test"  : &p_finish_pull_test.run,  // finish a test phase
+        "/upload_pull"        : &p_upload_pull.run,      // for a specific test, receive the resulting log
     ];
 
     if (uri.startsWith("/test-results/addv2"))
@@ -147,11 +156,19 @@ int main(string[] args)
 
     version (FASTCGI)
     {
+        SysTime exeDate = timeLastModified(args[0]);
+
         writelog("start fcgi loop");
 
         while (!shutdown && FCGX_Accept(&fcgi_in, &fcgi_out, &fcgi_err, &fcgi_envp) >= 0)
         {
             processRequest();
+
+            if (timeLastModified(args[0]) != exeDate)
+            {
+                writelog("new binary detected");
+                shutdown = true;
+            }
         }
     }
     else

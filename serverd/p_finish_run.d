@@ -3,66 +3,55 @@ module p_finish_run;
 import mysql;
 import serverd;
 import utils;
+import validate;
 
 import std.conv;
 import std.format;
 import std.range;
 
-alias string[] sqlrow;
-
-bool validNumber(string rid)
+bool validate_runState(string runid, ref string hostid, Appender!string outstr)
 {
-    try
-    {
-        size_t id = to!size_t(rid);
-        return true;
-    }
-    catch(ConvException)
-    {}
-
-    return false;
-}
-
-bool validate(ref string raddr, ref string rid, Appender!string outstr)
-{
-    if (!auth_check(raddr, outstr)) return false;
-
-    if (rid.empty)
-    {
-        formattedWrite(outstr, "bad input: missing runid\n");
-        return false;
-    }
-
-    if (!validNumber(rid))
-    {
-        formattedWrite(outstr, "bad input: %s is not a valid runid\n", sql_quote(rid));
-        return false;
-    }
-
-    // no longer need in it's raw form, so let's sql_quote it.  That it passes the number
-    // validation means this really ought to be a complete no-op, but doesn't hurt.
-
-    rid = sql_quote(rid);
-
-    if (!sql_exec(text("select id from test_runs where id=", rid)))
+    if (!sql_exec(text("select id, hostid, end_time from test_runs where id=", runid)))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow row = sql_row();
-    if (row == [])
+    sqlrow[] rows = sql_rows();
+
+    if (rows.length != 1)
     {
-        formattedWrite(outstr, "error: no such runid: ", rid);
+        formattedWrite(outstr, "bad input: should be exactly one row, runid: ", runid, "\n");
         return false;
     }
+
+    if (rows[0][2] != "")
+    {
+        formattedWrite(outstr, "bad input: run already complete, runid: ", runid);
+        return false;
+    }
+
+    hostid = rows[0][1];
 
     return true;
 }
 
-bool storeResults(string rid, Appender!string outstr)
+bool validateInput(ref string raddr, ref string hostid, ref string runid, Appender!string outstr)
 {
-    if (!sql_exec(text("update test_runs set end_time=now() where id=", rid)))
+    if (!validate_raddr(raddr, outstr))
+        return false;
+    if (!validate_id(runid, "runid", outstr))
+        return false;
+
+    if (!validate_runState(runid, hostid, outstr))
+        return false;
+
+    return true;
+}
+
+bool storeResults(string runid, Appender!string outstr)
+{
+    if (!sql_exec(text("update test_runs set end_time=now() where id=", runid)))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -76,11 +65,13 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     formattedWrite(outstr, "Content-type: text/plain\n\n");
 
     string raddr = lookup(hash, "REMOTE_ADDR");
-    string rid = lookup(userhash, "runid");
+    string runid = lookup(userhash, "runid");
+    string hostid;
 
-    if (!validate(raddr, rid, outstr))
+    if (!validateInput(raddr, hostid, runid, outstr))
         return;
 
-    if (!storeResults(rid, outstr))
+    updateHostLastCheckin(hostid);
+    if (!storeResults(runid, outstr))
         return;
 }

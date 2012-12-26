@@ -4,18 +4,18 @@ import mysql;
 static import p_finish_pull_run;
 import serverd;
 import utils;
+import validate;
 
 import std.conv;
+import std.file;
 import std.format;
 import std.range;
-
-alias string[] sqlrow;
 
 void loadAllRequests(ref sqlrow[string] openPulls)
 {
     // get set of pull requests that need to have runs
     //               0      1              2       3           4            5                6            7              8
-    sql_exec("select gp.id, gp.project_id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date from github_pulls gp, repositories r, github_users u where gp.open and gp.project_id = r.id and gp.user_id = u.id and u.trusted and gp.id != 48");
+    sql_exec("select gp.id, gp.repo_id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date from github_pulls gp, repositories r, github_users u where gp.open=true and gp.repo_id = r.id and gp.user_id = u.id and u.trusted");
     sqlrow[] rows = sql_rows();
 
     foreach(ref row; rows) { openPulls[row[0]] = row; }
@@ -24,7 +24,7 @@ void loadAllRequests(ref sqlrow[string] openPulls)
 void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls)
 {
     // get set of past tests for this platform and the above set of pull requests
-    sql_exec(text("select ptr.id, ptr.g_p_id, ptr.sha from pull_test_runs ptr, github_pulls ghp where ptr.platform='", sql_quote(platform), "' and ptr.g_p_id = ghp.id and ghp.open=true and ptr.deleted=false"));
+    sql_exec(text("select ptr.id, ptr.g_p_id, ptr.sha from pull_test_runs ptr, github_pulls ghp where ptr.platform='", platform, "' and ptr.g_p_id = ghp.id and ghp.open=true and ptr.deleted=false"));
     sqlrow[] rows = sql_rows();
 
     // for each past test, remove entries from openPulls where there exists a run that matches the pull id and it's head ref
@@ -135,21 +135,39 @@ sqlrow selectOnePull(ref sqlrow[string] openPulls)
     }
 }
 
-sqlrow recordRunStart(string raddr, string rname, string platform, sqlrow pull)
+sqlrow recordRunStart(string hostid, string platform, sqlrow pull)
 {
-    sql_exec(text("insert into pull_test_runs (id, g_p_id, pull_id, reporter_ip, reporter_name, platform, sha, start_time, deleted) values (null, ",
-                  pull[0], ", ",
-                  pull[3], ", "
-                  "\"", sql_quote(raddr),    "\", "
-                  "\"", sql_quote(rname),    "\", "
-                  "\"", sql_quote(platform), "\", "
-                  "\"", pull[4],             "\", "
-                  "now(), "
-                  "false)"));
+    sql_exec(text("insert into pull_test_runs (id, g_p_id, host_id, platform, sha, start_time, deleted) values (null, ",
+                  pull[0], ", ", hostid, ", \"", platform, "\", \"", pull[4], "\", now(), false)"));
     sql_exec("select last_insert_id()");
     sqlrow lastidrow = sql_row();
 
     return lastidrow;
+}
+
+void tryToCleanup(string hostid)
+{
+    sql_exec(text("select ptr.id, r.name, ghp.pull_id from pull_test_runs ptr, repositories r, github_pulls ghp "
+                  "where ptr.g_p_id = ghp.id and ghp.repo_id = r.id and ptr.deleted = 0 and ptr.host_id = ", hostid,
+                  " and ptr.end_time is null"));
+    sqlrow[] rows = sql_rows();
+    foreach (row; rows)
+    {
+        writelog("  cleaning up in progress run: %s/%s", row[1], row[2]);
+        sql_exec(text("update pull_test_runs set deleted = 1 where id = ", row[0]));
+    }
+}
+
+bool validateInput(ref string raddr, ref string rname, ref string hostid, ref string platform, Appender!string outstr)
+{
+    if (!validate_raddr(raddr, outstr))
+        return false;
+    if (!validate_platform(platform, outstr))
+        return false;
+    if (!validate_knownhost(raddr, rname, hostid, outstr))
+        return false;
+
+    return true;
 }
 
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
@@ -157,31 +175,22 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     outstr.put("Content-type: text/plain\n\n");
 
     string raddr = lookup(hash, "REMOTE_ADDR");
-    auto tmpout = appender!string();
-    if (!auth_check(raddr, tmpout))
-    {
-        outstr.put(tmpout.data);
-        return;
-    }
-
+    string rname = lookup(userhash, "hostname");
+    string hostid;
     string platform = lookup(userhash, "os");
-    if (platform.empty)
+
+    if (!validateInput(raddr, rname, hostid, platform, outstr))
+        return;
+
+    updateHostLastCheckin(hostid);
+
+    if (exists("/tmp/serverd.suspend"))
     {
-        outstr.put("bad input: missing os\n");
+        outstr.put("skip\n");
         return;
     }
 
-    string hostname = lookup(userhash, "hostname");
-    if (hostname.empty)
-    {
-        outstr.put("bad input: missing hostname\n");
-        return;
-    }
-    //if (!hostname.empty && hostname == "diamond")
-    //{
-    //    outstr.put("skip\n");
-    //    return;
-    //}
+    tryToCleanup(hostid);
 
     sqlrow[string] openPulls;
     loadAllRequests(openPulls);
@@ -192,7 +201,14 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     {
         sqlrow pull = selectOnePull(openPulls);
 
-        sqlrow runid = recordRunStart(raddr, hostname, platform, pull);
+        sqlrow runid = recordRunStart(hostid, platform, pull);
+
+        try
+        {
+            string path = "/home/dwebsite/pull-results/pull-" ~ runid[0];
+            mkdir(path);
+        }
+        catch(Exception e) { writelog("  caught exception: %s", e); }
 
         writelog("  building: %s", pull);
         formattedWrite(outstr, "%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4]);  // runid, repo, url, ref, sha

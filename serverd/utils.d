@@ -5,6 +5,7 @@ import core.vararg;
 
 import std.algorithm;
 import std.array;
+import std.conv;
 import std.datetime;
 import std.format;
 import std.process;
@@ -13,6 +14,10 @@ import std.stdio;
 import std.string;
 
 import etc.c.curl;
+
+import mysql;
+
+static const char* USERAGENT = "Auto-Tester. http://d.puremagic.com/test-results/  contact: braddr@puremagic.com";
 
 void writelog(S...)(S s)
 {
@@ -62,34 +67,38 @@ bool auth_check(string raddr, Appender!string outstr)
 
 bool check_addr(string addr)
 {
-    static string[] prefixes = [
-        //"24.16.98.20",    // comcast home connection, 9/22/2011
-        //"24.16.96.64",    // comcast home connection, 1/25/2012
-        "24.16.98.44",    // comcast home connection, 4/4/2012
-        //"71.231.121.195", // comcast home connection
-        "173.45.241.208", // slice-1
-        "76.244.44.56",   // sean's mac mini
-        "207.97.227.",    // github
-        "173.203.140.",   // github
-        "173.45.241.",    // github
-        "192.168.10.",    // home network
-        "107.21.106.218", // ec2 pull tester, windows
-        "107.21.116.243", // ec2 pull tester, linux
-        "107.21.200.190", // ec2 pull tester, freebsd
-        "107.21.155.214", // ec2 pull tester, linux -- bradrob@amzn account
-        "23.23.186.223",  // ec2 pull tester, freebsd32 -- bradrob@amzn account
-    ];
-
-    foreach(c; prefixes)
+    static bool check_set(sqlrow[] rows, string addr)
     {
-        size_t l = c.length;
-        if (addr.length < l)
-            l = addr.length;
-        if (addr[0 .. l] == c)
-            return true;
+        foreach(row; rows)
+        {
+            size_t l = row[0].length;
+            if (addr.length < l)
+                l = addr.length;
+            if (addr[0 .. l] == row[0])
+                return true;
+        }
+
+        return false;
     }
 
+    sql_exec("select ipaddr from authorized_addresses where enabled = 1");
+    sqlrow[] rows = sql_rows();
+
+    if (check_set(rows, addr))
+        return true;
+
+    sql_exec(text("select ipaddr from build_hosts where enabled = 1 and ipaddr = \"", addr, "\""));
+    rows = sql_rows();
+
+    if (check_set(rows, addr))
+        return true;
+
     return false;
+}
+
+void updateHostLastCheckin(string hostid)
+{
+    sql_exec(text("update build_hosts set last_heard_from = now() where id = ", hostid));
 }
 
 extern(C) size_t handleBodyData(char *ptr, size_t size, size_t nmemb, void *userdata)
@@ -127,7 +136,7 @@ extern(C) size_t handleRequestBodyData(void *ptr, size_t size, size_t nmemb, voi
     return 0;
 }
 
-bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url)
+bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url, string userid = null, string passwd = null)
 {
     int tries;
     while (tries < 3)
@@ -139,11 +148,20 @@ bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url
 
         curl_easy_setopt(curl, CurlOption.httpget, 1);
 
+        curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
+
         curl_easy_setopt(curl, CurlOption.writefunction, &handleBodyData);
         curl_easy_setopt(curl, CurlOption.file, &payload);
 
         curl_easy_setopt(curl, CurlOption.headerfunction, &handleHeaderData);
         curl_easy_setopt(curl, CurlOption.writeheader, &headers);
+
+        if (userid && passwd)
+        {
+            curl_easy_setopt(curl, CurlOption.httpauth, CurlAuth.basic);
+            curl_easy_setopt(curl, CurlOption.username, toStringz(userid));
+            curl_easy_setopt(curl, CurlOption.password, toStringz(passwd));
+        }
 
         curl_easy_setopt(curl, CurlOption.verbose, 0);
 
@@ -168,7 +186,7 @@ bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url
     return false;
 }
 
-bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload)
+bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
 {
     int tries;
     while (tries < 1)
@@ -180,9 +198,14 @@ bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responsehe
 
         curl_easy_setopt(curl, CurlOption.post, 1L);
 
-        curl_easy_setopt(curl, CurlOption.username, toStringz("braddr"));
-        curl_easy_setopt(curl, CurlOption.password, toStringz("adg1Qet"));
-        curl_easy_setopt(curl, CurlOption.httpauth, CurlAuth.basic);
+        curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
+
+        if (user && passwd)
+        {
+            curl_easy_setopt(curl, CurlOption.httpauth, CurlAuth.basic);
+            curl_easy_setopt(curl, CurlOption.username, toStringz(user));
+            curl_easy_setopt(curl, CurlOption.password, toStringz(passwd));
+        }
 
         string rpay = requestpayload; // copy original string since rpay is altered during the send
         curl_easy_setopt(curl, CurlOption.infile, cast(void*)&rpay);

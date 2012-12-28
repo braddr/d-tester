@@ -14,8 +14,8 @@ import std.range;
 void loadAllRequests(ref sqlrow[string] openPulls)
 {
     // get set of pull requests that need to have runs
-    //               0      1              2       3           4            5                6            7              8
-    sql_exec("select gp.id, gp.repo_id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date from github_pulls gp, repositories r, github_users u where gp.open=true and gp.repo_id = r.id and gp.user_id = u.id and u.trusted");
+    //               0      1     2       3           4            5                6            7              8
+    sql_exec("select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date from github_pulls gp, repositories r, repo_branches rb, github_users u where gp.open=true and gp.r_b_id = rb.id and rb.repository_id = r.id and gp.user_id = u.id and u.trusted");
     sqlrow[] rows = sql_rows();
 
     foreach(ref row; rows) { openPulls[row[0]] = row; }
@@ -147,9 +147,14 @@ sqlrow recordRunStart(string hostid, string platform, sqlrow pull)
 
 void tryToCleanup(string hostid)
 {
-    sql_exec(text("select ptr.id, r.name, ghp.pull_id from pull_test_runs ptr, repositories r, github_pulls ghp "
-                  "where ptr.g_p_id = ghp.id and ghp.repo_id = r.id and ptr.deleted = 0 and ptr.host_id = ", hostid,
-                  " and ptr.end_time is null"));
+    sql_exec(text("select ptr.id, r.name, ghp.pull_id "
+                  "from pull_test_runs ptr, repositories r, repo_branches rb, github_pulls ghp "
+                  "where ptr.g_p_id = ghp.id and "
+                  "  ghp.r_b_id = rb.id and "
+                  "  rb.repository_id = r.id and "
+                  "  ptr.deleted = 0 and "
+                  "  ptr.host_id = ", hostid, " and "
+                  "  ptr.end_time is null"));
     sqlrow[] rows = sql_rows();
     foreach (row; rows)
     {

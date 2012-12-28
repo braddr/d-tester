@@ -52,29 +52,32 @@ class Repository
     ulong id;
     ulong project_id;
     string name;
-    RepoBranch[string] branches;
+    RepoBranch branch;
 
     this(ulong _id, ulong _pid, string _name)
     {
         id         = _id;
         project_id = _pid;
         name       = _name;
-        branches   = loadRepoBranches(id);
+
+        RepoBranch[string] branches = loadRepoBranches(id);
+        assert(branches.length == 1);
+
+        branch = branches[branches.keys[0]];
     }
 }
 
 Repository[string] loadRepositories(ulong pid)
 {
-    sql_exec(text("select id, project_id, name from repositories"));
+    sql_exec(text("select id, name from repositories where project_id = ", pid));
 
     sqlrow[] rows = sql_rows();
 
     Repository[string] repositories;
     foreach (row; rows)
     {
-        auto r = new Repository(to!ulong(row[0]), to!ulong(row[1]), row[2]);
-        string key = to!string(row[1]) ~ ":" ~ row[2];
-        repositories[key] = r;
+        auto r = new Repository(to!ulong(row[0]), pid, row[1]);
+        repositories[row[1]] = r;
     }
 
     return repositories;
@@ -105,8 +108,8 @@ Project[ulong] loadProjects()
     Project[ulong] projects;
     foreach (row; rows)
     {
-        auto r = new Project(to!ulong(row[0]), row[1], (row[2] == "1"));
-        projects[to!ulong(row[0])] = r;
+        auto p = new Project(to!ulong(row[0]), row[1], (row[2] == "1"));
+        projects[to!ulong(row[0])] = p;
     }
 
     return projects;
@@ -115,7 +118,6 @@ Project[ulong] loadProjects()
 class Pull
 {
     ulong   id;
-    ulong   repo_id;
     ulong   r_b_id;
     ulong   pull_id;
     ulong   user_id;
@@ -131,10 +133,9 @@ class Pull
     SysTime create_date;
     SysTime close_date;
 
-    this(ulong _id, ulong _repo_id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, string _base_git_url, string _base_ref, string _base_sha, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date)
+    this(ulong _id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, string _base_git_url, string _base_ref, string _base_sha, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date)
     {
         id           = _id;
-        repo_id      = _repo_id;
         r_b_id       = _r_b_id;
         pull_id      = _pull_id;
         user_id      = _user_id;
@@ -154,8 +155,9 @@ class Pull
 
 string getPullColumns()
 {
-    //      0   1        2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15
-    return "id, repo_id, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, r_b_id";
+    // field 1 is unused now (was repo_id)
+    //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15
+    return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, r_b_id";
 }
 
 Pull makePullFromRow(sqlrow row)
@@ -170,7 +172,7 @@ Pull makePullFromRow(sqlrow row)
     if (row[15] == "") row[15] = "0";
 
     //writelog("row[0] = %s, row[4] = %s, row[11] = %s, row[12] = %s, row[13] = %s, row[14] = %s", row[0], row[4], row[11], row[12], row[13], row[14]);
-    return new Pull(to!ulong(row[0]), to!ulong(row[1]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), row[5], row[6], row[7], row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]));
+    return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), row[5], row[6], row[7], row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]));
 }
 
 bool[string] loadUsers()
@@ -206,9 +208,9 @@ bool checkUser(ulong uid, string uname)
     return *found;
 }
 
-Pull loadPullFromGitHub(string repoid, string reponame, ulong pullid)
+Pull loadPullFromGitHub(Project proj, Repository repo, ulong pullid)
 {
-    string url = text("https://api.github.com/repos/D-Programming-Language/", reponame, "/pulls/", pullid);
+    string url = text("https://api.github.com/repos/", proj.name, "/", repo.name, "/pulls/", pullid);
     string payload;
     string[] headers;
 
@@ -229,12 +231,12 @@ Pull loadPullFromGitHub(string repoid, string reponame, ulong pullid)
         return null;
     }
 
-    return makePullFromJson(jv, repoid, reponame);
+    return makePullFromJson(jv, proj, repo);
 }
 
-bool loadCommitFromGitHub(string reponame, Pull p)
+bool loadCommitFromGitHub(Project proj, Repository repo, Pull p)
 {
-    string url = text("https://api.github.com/repos/D-Programming-Language/", reponame, "/commits/", p.head_sha);
+    string url = text("https://api.github.com/repos/", proj.name, "/", repo.name, "/commits/", p.head_sha);
     string payload;
     string[] headers;
 
@@ -262,7 +264,7 @@ bool loadCommitFromGitHub(string reponame, Pull p)
     return true;
 }
 
-void updatePull(string reponame, Pull* k, Pull p)
+void updatePull(Project proj, Repository repo, Pull* k, Pull p)
 {
     bool headerPrinted = false;
     void printHeader()
@@ -271,7 +273,7 @@ void updatePull(string reponame, Pull* k, Pull p)
         headerPrinted = true;
 
         string oper = (k.open != p.open) ? (p.open ? "reopening" : "closing") : "updating";
-        writelog("  %s %s/%s:", oper, reponame, p.pull_id);
+        writelog("  %s %s/%s/%s:", oper, proj.name, repo.name, p.pull_id);
     }
 
     bool clearOldResults = false;
@@ -280,7 +282,11 @@ void updatePull(string reponame, Pull* k, Pull p)
     if (!k.open || k.head_sha != p.head_sha)
     {
         printHeader();
-        if (!loadCommitFromGitHub(reponame, p)) return; // don't update anything in the db if we can't get the current commit date
+        if (!loadCommitFromGitHub(proj, repo, p))
+        {
+            // don't update anything in the db if we can't get the current commit date
+            return;
+        }
         headDateAccurate = true;
     }
 
@@ -362,23 +368,23 @@ void updatePull(string reponame, Pull* k, Pull p)
     }
 }
 
-void processPull(string repoid, string reponame, Pull* k, Pull p)
+void processPull(Project proj, Repository repo, Pull* k, Pull p)
 {
-    //writelog("  processPull: %s/%s", p.repo_id, p.pull_id);
+    //writelog("  processPull: %s/%s/%s", proj.name, repo.name, p.pull_id);
     if (k is null)
     {
         // try to load specific pull to see if this is a re-opened request
-        sql_exec(text("select ", getPullColumns(), " from github_pulls where repo_id = ", repoid, " and pull_id = ", p.pull_id));
+        sql_exec(text("select ", getPullColumns(), " from github_pulls where r_b_id = ", repo.branch.id, " and pull_id = ", p.pull_id));
         sqlrow[] rows = sql_rows();
 
         if (rows == [])
         {
-            if (!loadCommitFromGitHub(reponame, p)) return;
+            if (!loadCommitFromGitHub(proj, repo, p)) return;
 
             // new pull request
-            writelog("  opening %s/%s", reponame, p.pull_id);
+            writelog("  opening %s/%s/%s", proj.name, repo.name, p.pull_id);
             // TODO: replace second null with p.r_b_id after r_b_id has a meaningful value
-            string sqlcmd = text("insert into github_pulls values (null, ", repoid, ", null, ", p.pull_id, ", ", p.user_id, ", '", p.create_date.toISOExtString(), "', ");
+            string sqlcmd = text("insert into github_pulls values (null, ", repo.id, ", ", repo.branch.id, ", ", p.pull_id, ", ", p.user_id, ", '", p.create_date.toISOExtString(), "', ");
 
             if (p.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
                 sqlcmd ~= "null";
@@ -396,16 +402,16 @@ void processPull(string repoid, string reponame, Pull* k, Pull p)
         {
             // reopened pull request
             Pull newP = makePullFromRow(rows[0]);
-            updatePull(reponame, &newP, p);
+            updatePull(proj, repo, &newP, p);
         }
     }
     else
     {
-        updatePull(reponame, k, p);
+        updatePull(proj, repo, k, p);
     }
 }
 
-Pull makePullFromJson(const JSONValue obj, string repoid, string reponame)
+Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
 {
     ulong  uid     = obj.object["user"].object["id"].integer;
     string uname   = obj.object["user"].object["login"].str;
@@ -417,12 +423,12 @@ Pull makePullFromJson(const JSONValue obj, string repoid, string reponame)
 
     if (base.type != JSON_TYPE.OBJECT || base.object.length() == 0)
     {
-        writelog("%s/%s: base is null, skipping", reponame, pullid);
+        writelog("%s/%s/%s: base is null, skipping", proj.name, repo.name, pullid);
         return null;
     }
     if (head.type != JSON_TYPE.OBJECT || head.object.length() == 0)
     {
-        writelog("%s/%s: head is null, skipping", reponame, pullid);
+        writelog("%s/%s/%s: head is null, skipping", proj.name, repo.name, pullid);
         return null;
     }
 
@@ -431,19 +437,19 @@ Pull makePullFromJson(const JSONValue obj, string repoid, string reponame)
 
     if (b_repo.type != JSON_TYPE.OBJECT || b_repo.object.length() == 0)
     {
-        writelog("%s/%s: base.repo is null, skipping", reponame, pullid);
+        writelog("%s/%s/%s: base.repo is null, skipping", proj.name, repo.name, pullid);
         return null;
     }
     if (h_repo.type != JSON_TYPE.OBJECT || h_repo.object.length() == 0)
     {
-        writelog("%s/%s: head.repo is null, skipping", reponame, pullid);
+        writelog("%s/%s/%s: head.repo is null, skipping", proj.name, repo.name, pullid);
         return null;
     }
 
     string base_ref = base.object["ref"].str;
-    if (base_ref != "master")
+    if (base_ref != repo.branch.name)
     {
-        writelog("%s/%s: pull is for %s, not master", reponame, pullid, base_ref);
+        //writelog("%s/%s/%s: pull is for %s, not %s", proj.name, repo.name, pullid, base_ref, repo.branch.name);
         return null;
     }
 
@@ -460,12 +466,9 @@ Pull makePullFromJson(const JSONValue obj, string repoid, string reponame)
     if (closed_at  == "") { closed_at  = "2000-01-01T00:00:00Z"; }
     // writelog("%s %s %s", updated_at, created_at, closed_at);
 
-    ulong r_b_id = 0; // TODO: fill in r_b_id from json data via repositories and repo_branches
-
     auto p = new Pull(
             0, // our id not known from github data
-            to!ulong(repoid),
-            r_b_id,
+            repo.branch.id,
             obj.object["number"].integer,
             uid,
             SysTime.fromISOExtString(updated_at),
@@ -483,15 +486,15 @@ Pull makePullFromJson(const JSONValue obj, string repoid, string reponame)
     return p;
 }
 
-bool processProject(Pull[ulong] knownpulls, string repoid, string reponame, const ref JSONValue jv)
+bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const ref JSONValue jv)
 {
     foreach(ref const JSONValue obj; jv.array)
     {
-        Pull p = makePullFromJson(obj, repoid, reponame);
+        Pull p = makePullFromJson(obj, proj, repo);
         if (!p) continue;
 
         Pull* tmp = p.pull_id in knownpulls;
-        processPull(repoid, reponame, tmp, p);
+        processPull(proj, repo, tmp, p);
 
         knownpulls.remove(p.pull_id);
     }
@@ -527,76 +530,70 @@ string findNextLink(string[] headers)
 
 void update_pulls(Project[ulong] projects)
 {
-    if (!sql_exec("select id, name from repositories where id in (1, 2, 3)"))
-    {
-        writelog("Error loading list of repos");
-        return;
-    }
-
-    // 0 == id, 1 == name
-    sqlrow[] repos = sql_rows();
-
 projloop:
-    foreach(repo; repos)
+    foreach(pk, pv; projects)
     {
-        writelog("processing pulls for repo %s", repo);
-
-        sql_exec(text("select ", getPullColumns()," from github_pulls where repo_id = ", repo[0], " and open = true"));
-        sqlrow[] rows = sql_rows();
-        Pull[ulong] knownpulls;
-        foreach(row; rows)
+        foreach (rk, rv; pv.repositories)
         {
-            Pull p = makePullFromRow(row);
-            knownpulls[to!ulong(row[2])] = p;
-        }
+            writelog("processing pulls for %s/%s branch %s", pv.name, rv.name, rv.branch.name);
 
-        string url = text("https://api.github.com/repos/D-Programming-Language/", repo[1], "/pulls?state=open&per_page=100");
-        while (url)
-        {
-            string payload;
-            string[] headers;
-
-            if (!runCurlGET(curl, payload, headers, url, c.github_user, c.github_passwd) || payload.length == 0)
+            sql_exec(text("select ", getPullColumns()," from github_pulls where r_b_id = ", rv.branch.id, " and open = true"));
+            sqlrow[] rows = sql_rows();
+            Pull[ulong] knownpulls;
+            foreach(row; rows)
             {
-                writelog("  failed to load pulls, skipping repo");
-                continue projloop;
+                Pull p = makePullFromRow(row);
+                knownpulls[to!ulong(row[2])] = p;
             }
 
-            JSONValue jv;
-            try
+            string url = text("https://api.github.com/repos/", pv.name, "/", rv.name, "/pulls?state=open&per_page=100");
+            while (url)
             {
-                jv = parseJSON(payload);
-            }
-            catch (JSONException e)
-            {
-                writelog("  error parsing github json response: %s\n", e.toString);
-                break;
+                string payload;
+                string[] headers;
+
+                if (!runCurlGET(curl, payload, headers, url, c.github_user, c.github_passwd) || payload.length == 0)
+                {
+                    writelog("  failed to load pulls, skipping repo");
+                    continue projloop;
+                }
+
+                JSONValue jv;
+                try
+                {
+                    jv = parseJSON(payload);
+                }
+                catch (JSONException e)
+                {
+                    writelog("  error parsing github json response: %s\n", e.toString);
+                    break;
+                }
+
+                if (jv.type != JSON_TYPE.ARRAY)
+                {
+                    writelog("  github pulls data malformed: %s\n", payload);
+                    break;
+                }
+
+                if (!processProject(knownpulls, pv, rv, jv))
+                {
+                    writelog("  failed to process project, skipping repo");
+                    continue projloop;
+                }
+
+                url = findNextLink(headers);
             }
 
-            if (jv.type != JSON_TYPE.ARRAY)
+            //writelog("closing pulls");
+            // any elements left in knownpulls means they're no longer open, so mark closed
+            foreach(k; knownpulls.keys)
             {
-                writelog("  github pulls data malformed: %s\n", payload);
-                break;
-            }
-
-            if (!processProject(knownpulls, repo[0], repo[1], jv))
-            {
-                writelog("  failed to process project, skipping repo");
-                continue projloop;
-            }
-
-            url = findNextLink(headers);
-        }
-
-        //writelog("closing pulls");
-        // any elements left in knownpulls means they're no longer open, so mark closed
-        foreach(k; knownpulls.keys)
-        {
-            Pull p = loadPullFromGitHub(repo[0], repo[1], k);
-            if (p)
-            {
-                Pull* tmp = k in knownpulls;
-                processPull(repo[0], repo[1], tmp, p);
+                Pull p = loadPullFromGitHub(pv, rv, k);
+                if (p)
+                {
+                    Pull* tmp = k in knownpulls;
+                    processPull(pv, rv, tmp, p);
+                }
             }
         }
     }
@@ -620,6 +617,8 @@ void backfill_pulls()
         "1306, 1316, 1321, 1322, 1331, 1340, 1342, 1349, 1350, 1351, 1352, 1360, "
         "1478, 1479, 1480, 1491, "
         "2382";
+
+
 
     // resetting to open where we don't het have a create_date to force a re-populate from github
     // TODO: build a better mechanism than having to open the request
@@ -648,7 +647,7 @@ int main(string[] args)
     // loads the tree of Project -> Repository -> RepoBranch
     Project[ulong] projects = loadProjects();
 
-    backfill_pulls();
+    //backfill_pulls();
     update_pulls(projects);
 
     writelog("shutting down");

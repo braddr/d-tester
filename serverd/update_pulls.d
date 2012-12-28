@@ -17,10 +17,106 @@ import std.stdio;
 CURL* curl;
 alias string[] sqlrow;
 
+class RepoBranch
+{
+    ulong   id;
+    ulong   repo_id;
+    string  name;
+
+    this(ulong _id, ulong _rid, string _name)
+    {
+        id      = _id;
+        repo_id = _rid;
+        name    = _name;
+    }
+}
+
+RepoBranch[string] loadRepoBranches(ulong repo_id)
+{
+    sql_exec(text("select id, name from repo_branches where repository_id = ", repo_id));
+
+    sqlrow[] rows = sql_rows();
+
+    RepoBranch[string] repo_branches;
+    foreach (row; rows)
+    {
+        auto rb = new RepoBranch(to!ulong(row[0]), repo_id, row[1]);
+        repo_branches[row[1]] = rb;
+    }
+
+    return repo_branches;
+}
+
+class Repository
+{
+    ulong id;
+    ulong project_id;
+    string name;
+    RepoBranch[string] branches;
+
+    this(ulong _id, ulong _pid, string _name)
+    {
+        id         = _id;
+        project_id = _pid;
+        name       = _name;
+        branches   = loadRepoBranches(id);
+    }
+}
+
+Repository[string] loadRepositories(ulong pid)
+{
+    sql_exec(text("select id, project_id, name from repositories"));
+
+    sqlrow[] rows = sql_rows();
+
+    Repository[string] repositories;
+    foreach (row; rows)
+    {
+        auto r = new Repository(to!ulong(row[0]), to!ulong(row[1]), row[2]);
+        string key = to!string(row[1]) ~ ":" ~ row[2];
+        repositories[key] = r;
+    }
+
+    return repositories;
+}
+
+class Project
+{
+    ulong  id;
+    string name;
+    bool   test_pulls;
+    Repository[string] repositories;
+
+    this(ulong _id, string _name, bool _test_pulls)
+    {
+        id = _id;
+        name = _name;
+        test_pulls = _test_pulls;
+        repositories = loadRepositories(id);
+    }
+}
+
+Project[ulong] loadProjects()
+{
+    sql_exec(text("select id, name, test_pulls from projects"));
+
+    sqlrow[] rows = sql_rows();
+
+    Project[ulong] projects;
+    foreach (row; rows)
+    {
+        auto r = new Project(to!ulong(row[0]), row[1], (row[2] == "1"));
+        projects[to!ulong(row[0])] = r;
+    }
+
+    return projects;
+}
+
 class Pull
 {
     ulong   id;
     ulong   repo_id;
+    ulong   r_b_id;
     ulong   pull_id;
     ulong   user_id;
     SysTime updated_at;
@@ -35,10 +131,11 @@ class Pull
     SysTime create_date;
     SysTime close_date;
 
-    this(ulong _id, ulong _repo_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, string _base_git_url, string _base_ref, string _base_sha, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date)
+    this(ulong _id, ulong _repo_id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, string _base_git_url, string _base_ref, string _base_sha, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date)
     {
         id           = _id;
         repo_id      = _repo_id;
+        r_b_id       = _r_b_id;
         pull_id      = _pull_id;
         user_id      = _user_id;
         updated_at   = _updated_at;
@@ -57,8 +154,8 @@ class Pull
 
 string getPullColumns()
 {
-    //      0   1        2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14
-    return "id, repo_id, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open";
+    //      0   1        2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15
+    return "id, repo_id, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, r_b_id";
 }
 
 Pull makePullFromRow(sqlrow row)
@@ -69,8 +166,11 @@ Pull makePullFromRow(sqlrow row)
     if (row[12] == "" || row[12] == "0000-00-00T00:00:00Z") row[12] = "2000-01-01T00:00:00Z";
     if (row[13] == "" || row[13] == "0000-00-00T00:00:00Z") row[13] = "2000-01-01T00:00:00Z";
 
+    // TODO: remove once r_b_id data is backfilled
+    if (row[15] == "") row[15] = "0";
+
     //writelog("row[0] = %s, row[4] = %s, row[11] = %s, row[12] = %s, row[13] = %s, row[14] = %s", row[0], row[4], row[11], row[12], row[13], row[14]);
-    return new Pull(to!ulong(row[0]), to!ulong(row[1]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), row[5], row[6], row[7], row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]));
+    return new Pull(to!ulong(row[0]), to!ulong(row[1]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), row[5], row[6], row[7], row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]));
 }
 
 bool[string] loadUsers()
@@ -277,7 +377,8 @@ void processPull(string repoid, string reponame, Pull* k, Pull p)
 
             // new pull request
             writelog("  opening %s/%s", reponame, p.pull_id);
-            string sqlcmd = text("insert into github_pulls values (null, ", repoid, ", ", p.pull_id, ", ", p.user_id, ", '", p.create_date.toISOExtString(), "', ");
+            // TODO: replace second null with p.r_b_id after r_b_id has a meaningful value
+            string sqlcmd = text("insert into github_pulls values (null, ", repoid, ", null, ", p.pull_id, ", ", p.user_id, ", '", p.create_date.toISOExtString(), "', ");
 
             if (p.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
                 sqlcmd ~= "null";
@@ -359,9 +460,12 @@ Pull makePullFromJson(const JSONValue obj, string repoid, string reponame)
     if (closed_at  == "") { closed_at  = "2000-01-01T00:00:00Z"; }
     // writelog("%s %s %s", updated_at, created_at, closed_at);
 
+    ulong r_b_id = 0; // TODO: fill in r_b_id from json data via repositories and repo_branches
+
     auto p = new Pull(
             0, // our id not known from github data
             to!ulong(repoid),
+            r_b_id,
             obj.object["number"].integer,
             uid,
             SysTime.fromISOExtString(updated_at),
@@ -421,9 +525,9 @@ string findNextLink(string[] headers)
     return null;
 }
 
-void update_pulls()
+void update_pulls(Project[ulong] projects)
 {
-    if (!sql_exec("select id, name from repositories"))
+    if (!sql_exec("select id, name from repositories where id in (1, 2, 3)"))
     {
         writelog("Error loading list of repos");
         return;
@@ -500,23 +604,26 @@ projloop:
 
 void backfill_pulls()
 {
-    version (none)
-    {
-    string repoid = "1";
-    string reponame = "dmd";
-    ulong pullid = 1;
+    string ids_with_no_repo =
+        "8, "
+        "105, 137, "
+        "203, 204, 206, 241, 257, 268, "
+        "301, 314, 316, 323, 328, "
+        "401, 425, 430, 495, "
+        "505, 519, 540, "
+        "679, "
+        "720, 726, 758, 777, "
+        "810, 856, "
+        "1009, 1027, 1042, 1060, 1072, 1074, "
+        "1137, 1144, 1153, "
+        "1230, 1294, "
+        "1306, 1316, 1321, 1322, 1331, 1340, 1342, 1349, 1350, 1351, 1352, 1360, "
+        "1478, 1479, 1480, 1491, "
+        "2382";
 
-    sql_exec(text("select ", getPullColumns(), " from github_pulls where repo_id = ", repoid, " and pull_id = ", pullid));
-    sqlrow[] rows = sql_rows();
-
-    Pull k = makePullFromRow(rows[0]);
-
-    Pull p = loadPullFromGitHub(repoid, reponame, pullid);
-
-    processPull(repoid, reponame, &k, p);
-    }
-
-    sql_exec("update github_pulls set open=1 where open=0 and create_date is null and base_ref = \"master\" and id not in (8) limit 10");
+    // resetting to open where we don't het have a create_date to force a re-populate from github
+    // TODO: build a better mechanism than having to open the request
+    sql_exec(text("update github_pulls set open=1 where open=0 and create_date is null and base_ref = \"master\" and id not in (", ids_with_no_repo, ") limit 10"));
 }
 
 int main(string[] args)
@@ -538,8 +645,11 @@ int main(string[] args)
         return 1;
     }
 
+    // loads the tree of Project -> Repository -> RepoBranch
+    Project[ulong] projects = loadProjects();
+
     backfill_pulls();
-    update_pulls();
+    update_pulls(projects);
 
     writelog("shutting down");
 

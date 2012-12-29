@@ -63,6 +63,8 @@ function update_repo()
             echo -e "\terror cloning out $2/$3"
             exit 1
         fi
+        cd $top/source/$2/$3.git
+        git remote add origin https://github.com/$2/$3.git >> $1 2>&1
     fi
 
     cd $top/source/$2/$3.git

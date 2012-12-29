@@ -11,11 +11,19 @@ import std.file;
 import std.format;
 import std.range;
 
-void loadAllRequests(ref sqlrow[string] openPulls)
+void loadAllOpenRequests(ref sqlrow[string] openPulls)
 {
     // get set of pull requests that need to have runs
     //               0      1     2       3           4            5                6            7              8
-    sql_exec("select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date from github_pulls gp, repositories r, repo_branches rb, github_users u where gp.open=true and gp.r_b_id = rb.id and rb.repository_id = r.id and gp.user_id = u.id and u.trusted");
+    sql_exec("select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date "
+             "from github_pulls gp, repositories r, repo_branches rb, github_users u "
+             "where gp.open = true and "
+             "  gp.r_b_id = rb.id and "
+             "  rb.repository_id = r.id and "
+             "  gp.user_id = u.id and "
+             "  u.trusted = true"
+             " and r.project_id = 1" // temporary until pull testing is ready
+             );
     sqlrow[] rows = sql_rows();
 
     foreach(ref row; rows) { openPulls[row[0]] = row; }
@@ -24,7 +32,12 @@ void loadAllRequests(ref sqlrow[string] openPulls)
 void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls)
 {
     // get set of past tests for this platform and the above set of pull requests
-    sql_exec(text("select ptr.id, ptr.g_p_id, ptr.sha from pull_test_runs ptr, github_pulls ghp where ptr.platform='", platform, "' and ptr.g_p_id = ghp.id and ghp.open=true and ptr.deleted=false"));
+    sql_exec(text("select ptr.id, ptr.g_p_id, ptr.sha "
+                  "from pull_test_runs ptr, github_pulls ghp "
+                  "where ptr.platform='", platform, "' and "
+                  "ptr.g_p_id = ghp.id and "
+                  "ghp.open = true and "
+                  "ptr.deleted = false"));
     sqlrow[] rows = sql_rows();
 
     // for each past test, remove entries from openPulls where there exists a run that matches the pull id and it's head ref
@@ -198,7 +211,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     tryToCleanup(hostid);
 
     sqlrow[string] openPulls;
-    loadAllRequests(openPulls);
+    loadAllOpenRequests(openPulls);
 
     filterAlreadyCompleteRequests(platform, openPulls);
 

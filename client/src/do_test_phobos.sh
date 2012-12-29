@@ -47,7 +47,7 @@ case "$2" in
         makefile=win64.mak
         EXTRA_ARGS=""
         MODEL=64
-        # cp ../../../win32libs/dmd2/windows/bin/*.dll .
+        cp ../../../win64libs/dmd2/windows/bin/* .
         ;;
     *)
         echo "unknown os: $2"

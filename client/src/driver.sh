@@ -90,7 +90,7 @@ function runtests
         runid=${data[0]}
         data=(${data[@]:1})
         rundir=$runid
-        if [ ${#data[*]} > 0 ]; then
+        if [ ${#data[*]} != 0 ]; then
             branch=${data[0]}
             data=(${data[@]:1})
         else

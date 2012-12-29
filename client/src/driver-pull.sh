@@ -87,7 +87,7 @@ function execute_one_test
 
     rc=1
     while [ $rc -ne 0 ]; do
-        src/do_checkout.sh "$rundir" "$OS"
+        src/do_checkout.sh "$rundir" "$OS" "master"
         rc=$?
         if [ $rc -ne 0 ]; then
             sleep 60

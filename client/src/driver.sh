@@ -77,15 +77,25 @@ function runtests
 {
     OS=$1
 
+    if [ "$2" == "force" ]; then
+        extraargs="&force=1"
+    fi
+
     if [ "$2" == "test" ]; then
         runid=test
         rundir=test-$OS
-    elif [ "$2" == "force" ]; then
-        runid=$(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`&force=1")
-        rundir=$runid
+        branch=staging
     else
-        runid=$(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`")
+        data=($(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`&supportprojects=true$extraargs"));
+        runid=${data[0]}
+        data=(${data[@]:1})
         rundir=$runid
+        if [ ${#data[*]} > 0 ]; then
+            branch=${data[0]}
+            data=(${data[@]:1})
+        else
+            branch=master
+        fi
     fi
 
     if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" ]; then
@@ -94,7 +104,7 @@ function runtests
         return
     else
         pretest
-        echo "Starting run $runid."
+        echo "Starting run $runid, platform $OS, branch $branch."
     fi
 
     if [ ! -d $rundir ]; then
@@ -105,7 +115,7 @@ function runtests
 
     rc=1
     while [ $rc -ne 0 ]; do
-        src/do_checkout.sh "$rundir" "$OS"
+        src/do_checkout.sh "$rundir" "$OS" "$branch"
         rc=$?
         if [ $rc -ne 0 ]; then
             sleep 60

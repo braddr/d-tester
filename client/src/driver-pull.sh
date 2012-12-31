@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#set -x
+# set -x
 shopt -s extglob
 
 # start_run.ghtml?os=##              --> new run id, optional addition: force=1
@@ -87,7 +87,7 @@ function execute_one_test
 
     rc=1
     while [ $rc -ne 0 ]; do
-        src/do_checkout.sh "$rundir" "$OS" "master"
+        src/do_checkout.sh "$rundir" "$OS" "$branch"
         rc=$?
         if [ $rc -ne 0 ]; then
             sleep 60
@@ -219,13 +219,14 @@ function runtests
             fr=finish_run
             ;;
         pull)
-            data=($(callcurl get_runnable_pull "os=$OS&hostname=`hostname`$extraargs"));
+            data=($(callcurl get_runnable_pull "os=$OS&hostname=`hostname`$extraargs&supportprojects=true"));
             runid=${data[0]}
             project=${data[1]}
             giturl=${data[2]}
             gitref=${data[3]}
             # note, sha not used
             sha=${data[4]}
+            branch=${data[5]}
             rundir=pull-$runid
             fr=finish_pull_run
             ;;
@@ -238,7 +239,7 @@ function runtests
     fi
 
     pretest
-    echo -e "\nStarting run $runid ($OS)."
+    echo -e "\nStarting run $runid ($OS), $project, $branch, $gitref."
     run_rc=0
 
     if [ ! -d $rundir ]; then

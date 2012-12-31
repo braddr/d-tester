@@ -11,19 +11,21 @@ import std.file;
 import std.format;
 import std.range;
 
-void loadAllOpenRequests(ref sqlrow[string] openPulls)
+void loadAllOpenRequests(ref sqlrow[string] openPulls, bool supportprojects)
 {
     // get set of pull requests that need to have runs
-    //               0      1     2       3           4            5                6            7              8
-    sql_exec("select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date "
-             "from github_pulls gp, repositories r, repo_branches rb, github_users u "
-             "where gp.open = true and "
-             "  gp.r_b_id = rb.id and "
-             "  rb.repository_id = r.id and "
-             "  gp.user_id = u.id and "
-             "  u.trusted = true"
-             " and r.project_id = 1" // temporary until pull testing is ready
-             );
+    //                 0      1     2       3           4            5                6            7              8             9
+    string q = "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name "
+               "from github_pulls gp, repositories r, repo_branches rb, github_users u "
+               "where gp.open = true and "
+               "  gp.r_b_id = rb.id and "
+               "  rb.repository_id = r.id and "
+               "  gp.user_id = u.id and "
+               "  u.trusted = true";
+
+    if (!supportprojects) q ~= " and r.project_id = 1";
+
+    sql_exec(q);
     sqlrow[] rows = sql_rows();
 
     foreach(ref row; rows) { openPulls[row[0]] = row; }
@@ -196,6 +198,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string rname = lookup(userhash, "hostname");
     string hostid;
     string platform = lookup(userhash, "os");
+    bool supportprojects = lookup(userhash, "supportprojects") == "true";
 
     if (!validateInput(raddr, rname, hostid, platform, outstr))
         return;
@@ -211,7 +214,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     tryToCleanup(hostid);
 
     sqlrow[string] openPulls;
-    loadAllOpenRequests(openPulls);
+    loadAllOpenRequests(openPulls, supportprojects);
 
     filterAlreadyCompleteRequests(platform, openPulls);
 
@@ -229,7 +232,11 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         catch(Exception e) { writelog("  caught exception: %s", e); }
 
         writelog("  building: %s", pull);
-        formattedWrite(outstr, "%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4]);  // runid, repo, url, ref, sha
+        // runid, repo, url, ref, sha
+        formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4]);
+        if (supportprojects)
+            formattedWrite(outstr, "%s\n", pull[9]);
+
         p_finish_pull_run.updateGithub(runid[0], outstr);
     }
     else

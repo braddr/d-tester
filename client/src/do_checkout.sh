@@ -69,7 +69,7 @@ function update_repo()
 
     cd $top/source/$2/$3.git
     echo "Fetching updates to $2/$3:" >> $1
-    git fetch origin >> $1 2>&1
+    git remote update >> $1 2>&1
     if [ $? -ne 0 ]; then
         echo -e "\terror updating $2/$3"
         exit 1

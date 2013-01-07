@@ -181,6 +181,7 @@
 \set{FreeBSD_64_32}{FreeBSD 64/32}
 \set{Darwin_32}{OSX 32}
 \set{Win_32}{Windows 32}
+\set{Win_64}{Windows 64}
 
 <div class="banner"><a href="index.ghtml">D Auto-Tester</a> &ndash; History for \get{\get{os}}</div>
 

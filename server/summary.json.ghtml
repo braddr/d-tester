@@ -59,4 +59,5 @@ Content-type: application/json
     \draw{Darwin_32_64}{OSX 32/64},
     \draw{Darwin_64_32}{OSX 64/32},
     \draw{Win_32}{Windows 32}
+    \draw{Win_64}{Windows 64}
 ]

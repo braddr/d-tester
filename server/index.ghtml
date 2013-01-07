@@ -142,7 +142,7 @@
     \sqlexec{
         select tr.id, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.platform
           from test_runs tr
-         where tr.platform = "\sqlquote{\1}"
+         where tr.platform = "\sqlquote{\1}" and tr.project_id = 1
          order by tr.start_time desc, tr.id desc
          limit 1
     }
@@ -166,7 +166,7 @@
         \sqlexec{
             select tr.id, tr.start_time, sum(td.rc)
               from test_runs tr, test_data td
-             where tr.id = td.test_run_id and tr.platform = "\sqlquote{\1}"
+             where tr.id = td.test_run_id and tr.platform = "\sqlquote{\1}" and tr.project_id = 1
              group by tr.start_time, tr.id
              order by tr.start_time desc, tr.id desc
              limit 6
@@ -203,10 +203,10 @@
 <table class="runs">
 
 <tr>
-\buildHeader{FreeBSD 32}{FreeBSD_32}{FreeBSD with a 32 bit dmd binary and 32 bit libraries}
-\buildHeader{FreeBSD 64}{FreeBSD_64}{FreeBSD with a 64 bit dmd binary and 64 bit libraries}
-#\buildHeader{FreeBSD 32/64}{FreeBSD_32_64}{FreeBSD with a 32 bit dmd binary and 64 bit libraries}
-#\buildHeader{FreeBSD 64/32}{FreeBSD_64_32}{FreeBSD with a 64 bit dmd binary and 32 bit libraries}
+\buildHeader{FreeBSD 32}{FreeBSD_32}{FreeBSD with a 32 bit dmd binary and 32 bit output}
+\buildHeader{FreeBSD 64}{FreeBSD_64}{FreeBSD with a 64 bit dmd binary and 64 bit output}
+#\buildHeader{FreeBSD 32/64}{FreeBSD_32_64}{FreeBSD with a 32 bit dmd binary and 64 bit output}
+#\buildHeader{FreeBSD 64/32}{FreeBSD_64_32}{FreeBSD with a 64 bit dmd binary and 32 bit output}
 </tr>
 <tr>
 <td>\draw{FreeBSD_32}</td>
@@ -216,10 +216,10 @@
 </tr>
 
 <tr>
-\buildHeader{Linux 32}{Linux_32}{Linux with a 32 bit dmd binary and 32 bit libraries}
-\buildHeader{Linux 64}{Linux_64_64}{Linux with a 64 bit dmd binary and 64 bit libraries}
-\buildHeader{Linux 32/64}{Linux_32_64}{Linux with a 32 bit dmd binary and 64 bit libraries}
-\buildHeader{Linux 64/32}{Linux_64_32}{Linux with a 64 bit dmd binary and 32 bit libraries}
+\buildHeader{Linux 32}{Linux_32}{Linux with a 32 bit dmd binary and 32 bit output}
+\buildHeader{Linux 64}{Linux_64_64}{Linux with a 64 bit dmd binary and 64 bit output}
+\buildHeader{Linux 32/64}{Linux_32_64}{Linux with a 32 bit dmd binary and 64 bit output}
+\buildHeader{Linux 64/32}{Linux_64_32}{Linux with a 64 bit dmd binary and 32 bit output}
 </tr>
 <tr>
 <td>\draw{Linux_32}</td>
@@ -229,10 +229,10 @@
 </tr>
 
 <tr>
-\buildHeader{OSX 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit libraries}
-\buildHeader{OSX 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit libraries}
-\buildHeader{OSX 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit libraries}
-\buildHeader{OSX 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit libraries}
+\buildHeader{OSX 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit output}
+\buildHeader{OSX 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit output}
+\buildHeader{OSX 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit output}
+\buildHeader{OSX 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit output}
 </tr>
 <tr>
 <td>\draw{Darwin_32}</td>
@@ -242,10 +242,12 @@
 </tr>
 
 <tr>
-\buildHeader{Windows 32}{Win_32}{Windows with a 32 bit dmd binary and 32 bit libraries}
+\buildHeader{Windows 32}{Win_32}{Windows with a 32 bit dmd binary and 32 bit output}
+\buildHeader{Windows 64}{Win_64}{Windows with a 32 bit dmd binary and 64 bit output}
 </tr>
 <tr>
 <td>\draw{Win_32}</td>
+<td>\draw{Win_64}</td>
 </tr>
 
 </table>

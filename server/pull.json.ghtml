@@ -12,7 +12,12 @@
         \set{tok}{\strtok{}{/}}
     }
     \sqlexec{
-        select id from github_pulls where pull_id = \get{pullid} and project_id = \get{repoid}
+        select ghp.id
+          from github_pulls ghp, repositories r, repo_branches rb
+         where ghp.pull_id = \get{pullid} and
+               r.id = \get{repoid} and
+               rb.id = ghp.r_b_id and
+               rb.repository_id = r.id
     }
     \if{\sqlrow{gp_id}}{
 

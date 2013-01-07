@@ -9,9 +9,6 @@
   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 }  # {\if{\op{\get{dataid}}{V}}{\ onLoad='return fireMyPopup(\get{dataid});'}}
 
-# if there's a projectid parameter, it's from an out of date url move the value to repoid
-\if{\get{projectid}}{\set{repoid}{\get{projectid}}}
-
 \if{\not{\get{repoid}}}{
     error, missing repoid parameter
     \exit
@@ -34,18 +31,21 @@
 }
 
 \sqlexec{
-    select ghp.id, ghp.project_id, ghp.pull_id, ghp.user_id, u.username, ghp.updated_at, ghp.open, ghp.base_git_url, ghp.base_ref, ghp.base_sha, ghp.head_git_url, ghp.head_ref, ghp.head_sha, ghp.head_date
-      from github_pulls ghp, github_users u
+    select ghp.id, ghp.r_b_id, ghp.pull_id, ghp.user_id, u.username, ghp.updated_at, ghp.open, ghp.base_git_url, ghp.base_ref, ghp.base_sha, ghp.head_git_url, ghp.head_ref, ghp.head_sha, ghp.head_date
+      from github_pulls ghp, github_users u, repositories r, repo_branches rb
      where ghp.pull_id = \get{pullid} and
-           ghp.project_id = \get{repoid} and
+           r.id = \get{repoid} and
+           r.project_id = 1 and
+           rb.repository_id = r.id and
+           ghp.r_b_id = rb.id and
            ghp.user_id = u.id
 }
-\if{\not{\sqlrow{ghp_id}{ghp_project_id}{ghp_pull_id}{ghp_user_id}{username}{ghp_updated_at}{ghp_open}{ghp_base_git_url}{ghp_base_ref}{ghp_base_sha}{ghp_head_git_url}{ghp_head_ref}{ghp_head_sha}{ghp_head_date}}}{
+\if{\not{\sqlrow{ghp_id}{ghp_r_b_id}{ghp_pull_id}{ghp_user_id}{username}{ghp_updated_at}{ghp_open}{ghp_base_git_url}{ghp_base_ref}{ghp_base_sha}{ghp_head_git_url}{ghp_head_ref}{ghp_head_sha}{ghp_head_date}}}{
     error, invalid repoid + pullid pair
     \exit
 }
 
-\sqlexec{select name from repositories where id=\get{repoid}}
+\sqlexec{select name from repositories where id=\get{repoid} and project_id = 1}
 \ignore{\sqlrow{repo_name}}
 
 <a href="pulls.ghtml">Back to Pulls</a>
@@ -98,13 +98,14 @@
 \set{prevsha}{}
 
 \sqlexec{
-    select ptr.id, reporter_ip, reporter_name, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
-      from pull_test_runs ptr
-     where ptr.g_p_id = \get{ghp_id}
+    select ptr.id, bh.ipaddr, bh.name, ptr.platform, ptr.sha, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
+      from pull_test_runs ptr, build_hosts bh
+     where ptr.g_p_id = \get{ghp_id} and
+           ptr.host_id = bh.id
      order by start_time desc
      limit 100
 }
-\while{\sqlrow{run_id}{reporter_ip}{reporter_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}{
+\while{\sqlrow{run_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}{
 
   \processRC{\get{rc}}
   <tr class="pulltestrun \get{class} \if{\not{\eq{\get{prevsha}}{\get{sha}}}}{\set{prevsha}{\get{sha}}newsha}">
@@ -115,8 +116,8 @@
     <td class="result">\get{text}</td>
     <td class="deleted">\get{deleted}</td>
     <td class="sha">\get{sha}</td>
-    <td class="ip">\get{reporter_ip}</td>
-    <td class="ip">\get{reporter_name}</td>
+    <td class="ip">\get{bh_ipaddr}</td>
+    <td class="ip">\get{bh_name}</td>
   </tr>
 
 }

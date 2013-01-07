@@ -1,0 +1,155 @@
+\include{/include/html_fmt}
+
+\set{checksecurity}{\quote{
+    \sqlexec{
+        select ipaddr from build_hosts where enabled = 1 and ipaddr = "\get{REMOTE_ADDR}"
+    }
+    \if{\sqlrow{ipaddr}}{
+        {true}
+    }{
+        \sqlexec{
+            select ipaddr from authorized_addresses where enabled = 1
+        }
+        \while{\sqlrow{ipaddr}}{
+            \eq{\strindex{\get{REMOTE_ADDR}}{\get{ipaddr}}}{0}
+        }
+    }
+}}
+
+\set{shouldRun}{\quote{
+    \set{needbuild}{true}
+    \sqlexec{select id from test_runs where platform = "\sqlquote{\1}" and deleted=false and platform = \get{platformid}}
+    \while{\sqlrow{id}}{\set{needbuild}{}}
+    \get{needbuild}
+}}
+
+# \1 == parameter name
+\set{validateURLParameter}{\quote{
+    \if{\not{\get{\1}}}{
+        missing \1
+        \exit
+    }
+    \if{\not{\op{\get{\1}}{V}}}{
+        \1 is not a number
+        \exit
+    }
+}}
+
+# \1 == parameter name
+\set{validateURLParameterString}{\quote{
+    \if{\not{\get{\1}}}{
+        missing \1
+        \exit
+    }
+    \if{\not{\eq{\get{\1}}{\htmlquote{\get{\1}}}}}{
+        \1 contains elements that require html quoting
+        \exit
+    }
+}}
+
+# \1 == value1
+# \2 == value2
+\set{isMenuSelected}{\quote{
+    \if{
+        \eq{\1}{\2}
+    }{
+        {selected}
+    }{
+        {unselected}
+    }
+}}
+
+# \1 == project id, or 'admin'
+\set{drawPageMenu}{\quote{
+    <table class="page_menu">
+
+    <tr><td>
+    \sqlexec{
+        select id, menu_label, name, test_pulls, beta_only from projects order by menu_label
+    }
+    \while{\sqlrow{pid}{label}{name}{test_pulls}}{
+        \if{
+            \not{\eq{\get{beta_only}}{1}}
+            \eq{\get{SERVERNAME}}{d-beta.puremagic.com}
+        }{
+            <div class="page_menu_\isMenuSelected{\1}{\get{pid}}" onClick="parent.location='/test-results/?projectid=\get{pid}'">
+                <a href="/test-results/?projectid=\get{pid}">\get{label}</a>
+            </div>
+            \if{
+                \eq{\get{projectid}}{\get{pid}}
+            }{
+                \if{
+                    \get{show_history_submenu}
+                }{
+                    <div class="page_submenu">
+                        <div class="page_menu_\get{show_history_submenu}" onClick="parent.location='/test-results/platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}'"><a href="/test-results/platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}">\get{os} History</a></div>
+                    </div>
+                }
+
+                \if{
+                    \eq{\get{test_pulls}}{1}
+                }{
+                    <div class="page_submenu">
+                        <div class="page_menu_\isMenuSelected{\1|\get{page_type}}{\get{pid}|pulls}" onClick="parent.location='/test-results/pulls.ghtml?projectid=\get{pid}'">
+                            <a href="/test-results/pulls.ghtml?projectid=\get{pid}">Pull Requests</a>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    }
+    <div class="page_menu_spacer"></div>
+    <div class="page_menu_\isMenuSelected{\1}{-1}" onClick="parent.location='/test-results/hosts/'"><a href="/test-results/hosts/">Build Host Status</a></div>
+    #<div class="page_menu_\isMenuSelected{\1}{-2}" onClick="parent.location='/test-results/create-project.ghtml'"><a href="/test-results/create-project.ghtml">Create New Project</a></div>
+    </td></tr>
+
+    <tr><td class="page_menupushtop"></td></tr>
+    </table>
+}}
+
+# \1 == auto-refresh interval, blank == never
+# \2 == project id, or 'admin'
+# \3 == extra head block text
+# \4 == extra body tag elements
+\set{pageHeader}{\quote{
+    \htmlhead{D2 Auto-Tester}{}{}{
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+        \if{\1}{
+            <meta http-equiv="refresh" content="\1">
+        }
+        <link rel="stylesheet" href="/test-results/css/global.css" type="text/css">
+        \if{\3}{\3}
+    }{}{
+        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+    }{\4}
+
+    # header
+    <div class="page_banner">Auto-Tester</div>
+
+    <table class="page">
+
+    # menu
+    <tr><td class="page_menu">
+        \drawPageMenu{\2}
+    </td>
+
+    # open tag for body
+    <td class="page_body">
+}}
+
+\set{pageFooter}{\quote{
+    # close tag for body
+    </td></tr>
+
+    <tr colspan="2"><td class="page_menufoot"><div class="copy">&copy; 2013 PureMagic Software</div></td></tr>
+
+    #<div>
+    #<a href="http://d.puremagic.com/test-results/greasemonkey.ghtml">GreaseMonkey scripts</a><br>
+    #<a href="http://github.com/braddr/d-tester">Source of auto-tester</a>
+    #</div>
+
+    </table>
+
+    \htmlfoot
+}}
+

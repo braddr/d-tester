@@ -67,7 +67,7 @@
     \sqlexec{
         select id, menu_label, name, test_pulls, beta_only from projects order by menu_label
     }
-    \while{\sqlrow{pid}{label}{name}{test_pulls}}{
+    \while{\sqlrow{pid}{label}{name}{test_pulls}{beta_only}}{
         \if{
             \not{\eq{\get{beta_only}}{1}}
             \eq{\get{SERVERNAME}}{d-beta.puremagic.com}

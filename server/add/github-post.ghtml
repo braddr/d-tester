@@ -6,14 +6,21 @@ Content-type: text/plain
     unauthorized: \get{REMOTE_ADDR}
     \exit
 }#
-\if{\strindex{\get{payload}}{refs/heads/dmd-1.x}}{
-    \exit
+\set{r_b_id}{}#
+\set{project_id}{}#
+\if{\strindex{\get{payload}}{refs/heads/master}}{
+    \set{r_b_id}{1, 2, 3}
+    \set{project_id}{1}
 }#
-\if{\strindex{\get{payload}}{refs/heads/phobos-1.x}}{
+\if{\strindex{\get{payload}}{refs/heads/staging}}{
+    \set{r_b_id}{4, 5, 6}
+    \set{project_id}{4}
+}#
+\if{\not{\get{r_b_id}}}{
     \exit
 }#
 #
 \sqlexec{insert into github_posts (post_time, body) values (now(), "\sqlquote{\get{payload}}")}
-\sqlexec{update pull_test_runs set deleted=true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted=false}
-\sqlexec{update test_runs set deleted=true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted=false}
+\sqlexec{update pull_test_runs set deleted=true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted=false and g_p_id in (select id from github_pulls where r_b_id in (\get{r_b_id})) }
+\sqlexec{update test_runs set deleted=true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted=false and project_id = \get{project_id}}
 

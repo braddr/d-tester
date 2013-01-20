@@ -1,0 +1,319 @@
+\include{/include/test-results}
+
+\validateURLParameter{projectid}
+
+# \1 == month number
+\set{fixmonth}{\quote{
+    \if{\op{10}{>}{\1}}{0\1}{\1}
+}}
+
+# \1 == value to check for null
+# \2 == if !blank, use previous value, else use 0
+\set{ifnullsave}{0}
+\set{ifnull}{\quote{
+    \if{\1}{\set{ifnullsave}{\1}\1}{\if{\2}{\get{ifnullsave}}{0}}
+}}
+
+\sqlexec{
+    select p.menu_label
+      from projects p
+     where p.id = \get{projectid}
+}
+\while{\sqlrow{p.menu_label}}{}
+
+\set{cOneLoadDataTable}{\quote{
+    # build i -> epoch map
+    # build rdate_epoch -> i map
+    \sqlexec{
+        select unix_timestamp(subdate(date(close_date), weekday(close_date)))
+         from github_pulls ghp, repositories r, repo_branches rb
+        where ghp.r_b_id = rb.id and
+              rb.repository_id = r.id and
+              r.project_id = \get{projectid} and
+              ghp.open = false and
+              ghp.close_date is not null and
+              ghp.close_date > now() - interval 1 year
+        group by 1
+        order by 1
+    }
+    \set{i}{0}
+    \while{\sqlrow{epoch}}{
+        \set{date_\get{i}}{\get{epoch}}
+        \set{rdate_\get{epoch}}{\i}
+        \inc{i}
+    }
+
+    # build repo_i -> count map
+    \sqlexec{
+        select r.name, unix_timestamp(subdate(date(close_date), weekday(close_date))), count(*)
+          from github_pulls  ghp,
+               repositories  r,
+               repo_branches rb
+         where ghp.r_b_id = rb.id and
+               rb.repository_id = r.id and
+               r.project_id = \get{projectid} and
+               ghp.open = false and
+               ghp.close_date is not null and
+               ghp.close_date > now() - interval 1 year
+         group by r.id, 2
+         order by 1, 2
+    }
+    \while{\sqlrow{name}{epoch}{count}}{
+        \set{ii}{\get{rdate_\get{epoch}}}
+        \set{\get{name}_\get{ii}}{\get{count}}
+    }
+}}
+
+\set{cTwoLoadDataTable}{\quote{
+    # build i -> epoch map
+    # build rdate_epoch -> i map
+    \sqlexec{
+        select unix_timestamp(subdate(date(create_date), weekday(create_date)))
+         from github_pulls ghp, repositories r, repo_branches rb
+        where ghp.r_b_id = rb.id and
+              rb.repository_id = r.id and
+              r.project_id = \get{projectid} and
+              ghp.open = false and
+              ghp.create_date is not null and
+              ghp.create_date > now() - interval 1 year
+        group by 1
+        order by 1
+    }
+    \set{i}{0}
+    \while{\sqlrow{epoch}}{
+        \set{date_\get{i}}{\get{epoch}}
+        \set{rdate_\get{epoch}}{\i}
+        \inc{i}
+    }
+
+    # build repo_i -> count map
+    \sqlexec{
+        select r.name, unix_timestamp(subdate(date(create_date), weekday(create_date))), count(*)
+          from github_pulls  ghp,
+               repositories  r,
+               repo_branches rb
+         where ghp.r_b_id = rb.id and
+               rb.repository_id = r.id and
+               r.project_id = \get{projectid} and
+               ghp.open = false and
+               ghp.create_date is not null and
+               ghp.create_date > now() - interval 1 year
+         group by r.id, 2
+         order by 1, 2
+    }
+    \while{\sqlrow{name}{epoch}{count}}{
+        \set{ii}{\get{rdate_\get{epoch}}}
+        \set{\get{name}_\get{ii}}{\get{count}}
+    }
+}}
+
+\set{cThreeLoadDataTable}{\quote{
+    # build i -> epoch map
+    # build rdate_epoch -> i map
+    \sqlexec{
+        select unix_timestamp(subdate(date(creation_ts), weekday(creation_ts))) as epoch
+          from dbugs.products p, dbugs.components c, dbugs.bugs b
+         where b.product_id = p.id and
+               b.component_id = c.id and
+               p.name = 'D' and
+               b.creation_ts > now() - interval 1 year
+         group by 1
+         order by 1
+    }
+    \set{i}{0}
+    \while{\sqlrow{epoch}}{
+        \set{date_\get{i}}{\get{epoch}}
+        \set{rdate_\get{epoch}}{\i}
+        \inc{i}
+    }
+
+    # build repo_i -> count map
+    \sqlexec{
+        select b.bug_severity, unix_timestamp(subdate(date(creation_ts), weekday(creation_ts))) as epoch, count(*)
+          from dbugs.products p, dbugs.components c, dbugs.bugs b
+         where b.product_id = p.id and
+               b.component_id = c.id and
+               p.name = 'D' and
+               b.creation_ts > now() - interval 1 year
+         group by 1, 2
+         order by 1, 2
+    }
+    \while{\sqlrow{name}{epoch}{count}}{
+        \set{ii}{\get{rdate_\get{epoch}}}
+        \set{\get{name}_\get{ii}}{\get{count}}
+    }
+}}
+
+\set{cFourLoadDataTable}{\quote{
+    # build i -> epoch map
+    # build rdate_epoch -> i map
+    \sqlexec{
+        select unix_timestamp(subdate(date(delta_ts), weekday(delta_ts))) as epoch
+          from dbugs.products p, dbugs.components c, dbugs.bugs b
+         where b.product_id = p.id and
+               b.component_id = c.id and
+               p.name = 'D' and
+               b.bug_status in ('CLOSED', 'RESOLVED') and
+               b.delta_ts > now() - interval 1 year
+         group by 1
+         order by 1
+    }
+    \set{i}{0}
+    \while{\sqlrow{epoch}}{
+        \set{date_\get{i}}{\get{epoch}}
+        \set{rdate_\get{epoch}}{\i}
+        \inc{i}
+    }
+
+    # build repo_i -> count map
+    \sqlexec{
+        select b.bug_severity, unix_timestamp(subdate(date(delta_ts), weekday(delta_ts))) as epoch, count(*)
+          from dbugs.products p, dbugs.components c, dbugs.bugs b
+         where b.product_id = p.id and
+               b.component_id = c.id and
+               p.name = 'D' and
+               b.bug_status in ('CLOSED', 'RESOLVED') and
+               b.delta_ts > now() - interval 1 year
+         group by 1, 2
+         order by 1, 2
+    }
+    \while{\sqlrow{name}{epoch}{count}}{
+        \set{ii}{\get{rdate_\get{epoch}}}
+        \set{\get{name}_\get{ii}}{\get{count}}
+    }
+}}
+
+# \1 == column (dmd, druntime, phobos)
+# \2 == pass to ifnull (!blank = use previous value, otherwise use 0)
+# x == date
+# y == column
+\set{generateTimeSeries}{\quote{
+    # iterate from 0 .. i and extract repo_i counts into js array
+    \set{ii}{0}
+    \while{\op{\get{i}}{>}{\get{ii}}}{
+        \if{\not{\eq{\get{ii}}{0}}}{,}
+        \{ x: \get{date_\get{ii}}, y: \ifnull{\get{\1_\get{ii}}}{\2} \} #
+        \inc{ii}
+    }
+}}
+
+# \1 == prefix (must be unique across all charts)
+# \2 == title
+# \3 == pass to ifnull (!blank == use previous value, otherwise use 0)
+# \4..\N == series names
+\set{generate_chart}{\quote{
+
+<div class="chart_container" id="\1_container">
+    <div class="chart_title" id="\1_title">\2</div>
+\if{\op{\get{i}}{>}{1}}{
+    <div class="chart_yaxis" id="\1_yaxis"></div>
+    <div class="chart_chart" id="\1_chart"></div>
+    <div class="chart_controls" id="controls">
+        <div class="chart_legend" id="\1_legend"></div>
+\if{\op{\paramcount}{>}{4}}{
+        <form class="chart_form toggler" id="\1_form">
+            <input type="radio" name="offset" id="\1_lines" value="lines" checked>
+            <label class="lines" for="\1_lines">lines</label><br>
+            <input type="radio" name="offset" id="\1_stack" value="zero">
+            <label class="stack" for="\1_stack">stack</label>
+        </form>
+}
+    </div>
+}{
+    <div class="chart_empty" id="\1_empty">Sorry, only \get{i}\ data point, need at least 2</div>
+}
+</div>
+
+\if{\op{\get{i}}{>}{1}}{
+<script type="text/javascript">
+
+var \1_palette = new Rickshaw.Color.Palette();
+var \1_graph = new Rickshaw.Graph(\{
+        element: document.querySelector("\#\1_chart"),
+        width: 700,
+        height: 250,
+        renderer: 'line',
+        series: [
+    \set{snum}{4}
+    \set{sfirst}{true}
+    \while{\op{\paramcount}{>=}{\get{snum}}}{
+        \if{\get{sfirst}}{\set{sfirst}{}}{,} #
+        \{
+                name: "\param{\get{snum}}",
+                data: [ \generateTimeSeries{\param{\get{snum}}}{\3} ],
+                color: \1_palette.color()
+        \}
+        \inc{snum}
+    }
+
+        ]
+\});
+var \1_month = (new Rickshaw.Fixtures.Time()).unit('month');
+\1_month.formatter = function(d) \{ return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()] + "<br>" + d.getUTCFullYear() \}
+var x_axis = new Rickshaw.Graph.Axis.Time( \{
+        graph: \1_graph,
+        timeUnit: \1_month,
+\} );
+var \1_yaxis = new Rickshaw.Graph.Axis.Y( \{
+        graph: \1_graph,
+        orientation: 'left',
+        element: document.getElementById('\1_yaxis'),
+\} );
+var \1_legend = new Rickshaw.Graph.Legend( \{
+        element: document.querySelector('\#\1_legend'),
+        graph: \1_graph
+\} );
+
+\if{\op{\paramcount}{>}{4}}{
+    var \1_offsetForm = document.getElementById('\1_form');
+
+    \1_offsetForm.addEventListener('change', function(e) \{
+            var offsetMode = e.target.value;
+
+            if (offsetMode == 'lines') \{
+                    \1_graph.setRenderer('line');
+                    \1_graph.offset = 'zero';
+            \} else \{
+                    \1_graph.setRenderer('stack');
+                    \1_graph.offset = offsetMode;
+            \}
+            \1_graph.render();
+
+    \}, false);
+}
+
+var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
+        graph: \1_graph,
+        legend: \1_legend
+\} );
+
+\1_graph.render();
+
+    </script>
+}
+
+}}
+
+\set{page_type}{chart}
+\pageHeader{}{\get{projectid}}{
+    <link rel="stylesheet" href="/test-results/css/chart.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.1.0/rickshaw.min.css"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.0.1/d3.v3.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.1.0/rickshaw.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+}{}
+
+\cOneLoadDataTable
+\generate_chart{c1}{\get{p.menu_label}\ - Weekly Pull Closures by Repository for the last 12 months}{}{dmd}{druntime}{phobos}
+
+\cTwoLoadDataTable
+\generate_chart{c2}{\get{p.menu_label}\ - Weekly Pull Creates by Repository for the last 12 months}{}{dmd}{druntime}{phobos}
+
+\cThreeLoadDataTable
+\generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+
+\cFourLoadDataTable
+\generate_chart{c4}{Weekly Issues resolved by severity for the last 12 months}{}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+
+\pageFooter

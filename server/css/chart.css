@@ -1,0 +1,45 @@
+.chart_container {
+    background: #F0F0F0;
+    border: 1px black solid;
+    border-radius: 5px 5px 5px 5px;
+    border-spacing: 0px;
+    margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    display: inline-block;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 10px;
+}
+
+.chart_title {
+    text-align: center;
+}
+
+.chart_chart {
+    float: left;
+    padding-bottom: 35px;
+}
+
+.chart_controls {
+    float:left;
+    padding-left: 20px;
+}
+
+div.rickshaw_legend {
+    background: #f0f0f0;
+    color:      #000000;
+}
+
+.legend {
+    margin-left: 15px;
+}
+
+.chart_form {
+    margin: 2em 0 0 15px;
+    font-size: 13px;
+}
+
+.chart_yaxis {
+    float: left;
+    width: 40px;
+}

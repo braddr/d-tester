@@ -59,6 +59,27 @@
     }
 }}
 
+# \1 == url suffix
+# \2 == href text
+# \3 == css class suffix
+\set{drawOneMenu}{\quote{
+    <div class="page_menu_\3" onClick="parent.location='/test-results/\1'">
+        <a href="/test-results/\1">\2</a>
+    </div>
+}}
+
+# \1 == url suffix
+# \2 == href text
+# \3 == css class suffix
+# \4 == visibility conditional
+\set{drawSubMenu}{\quote{
+    \if{\4}{
+        <div class="page_submenu">
+            \drawOneMenu{\1}{\2}{\3}
+        </div>
+    }
+}}
+
 # \1 == project id, or 'admin'
 \set{drawPageMenu}{\quote{
     <table class="page_menu">
@@ -72,29 +93,17 @@
             \not{\eq{\get{beta_only}}{1}}
             \eq{\get{SERVERNAME}}{d-beta.puremagic.com}
         }{
-            <div class="page_menu_\isMenuSelected{\1}{\get{pid}}" onClick="parent.location='/test-results/?projectid=\get{pid}'">
-                <a href="/test-results/?projectid=\get{pid}">\get{label}</a>
-            </div>
+            \drawOneMenu{?projectid=\get{pid}}{\get{label}}{\isMenuSelected{\1}{\get{pid}}}
+
             \if{
                 \eq{\get{projectid}}{\get{pid}}
             }{
-                \if{
-                    \get{show_history_submenu}
-                }{
-                    <div class="page_submenu">
-                        <div class="page_menu_\get{show_history_submenu}" onClick="parent.location='/test-results/platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}'"><a href="/test-results/platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}">\get{os} History</a></div>
-                    </div>
-                }
+                \drawSubMenu{platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}}{\get{os} History}{\get{show_history_submenu}}{\get{show_history_submenu}}
 
-                \if{
-                    \eq{\get{test_pulls}}{1}
-                }{
-                    <div class="page_submenu">
-                        <div class="page_menu_\isMenuSelected{\1|\get{page_type}}{\get{pid}|pulls}" onClick="parent.location='/test-results/pulls.ghtml?projectid=\get{pid}'">
-                            <a href="/test-results/pulls.ghtml?projectid=\get{pid}">Pull Requests</a>
-                        </div>
-                    </div>
-                }
+                \drawSubMenu{pulls.ghtml?projectid=\get{pid}}{Pull Requests}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|pulls}}{\eq{\get{test_pulls}}{1}}
+
+                \drawSubMenu{chart.ghtml?projectid=\get{pid}}{Project Graphs}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|chart}}{true}
+
             }
         }
     }

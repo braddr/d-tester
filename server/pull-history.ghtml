@@ -1,6 +1,9 @@
 \include{/include/test-results}
 \set{page_type}{pulls}
 
+# default to project 1 so that old statuses in github continue to work
+\if{\not{\get{projectid}}}{\set{projectid}{1}}
+
 \validateURLParameter{projectid}
 \validateURLParameter{repoid}
 \validateURLParameter{pullid}

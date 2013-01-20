@@ -51,6 +51,7 @@ create table if not exists github_pulls
     primary key(id),
     key(open, id),
     key(project_id, open),
+    key(updated_at),
     unique key (repo_id, pull_id)
 );
 

@@ -98,4 +98,16 @@
 }
 </table>
 
+\sqlexec{
+    select convert_tz(max(updated_at), 'UTC', 'US/Pacific'),
+           timediff(now(), convert_tz(max(updated_at), 'UTC', 'US/Pacific')),
+          (timediff(now(), convert_tz(max(updated_at), 'UTC', 'US/Pacific'))) > "11:00"
+      from github_pulls
+}
+\ignore{\sqlrow{githublastupdate}{delta}{overdue}}
+
+<table class="github_state">
+    <th class="title">Last pull update:</th><td class="date\if{\eq{\get{overdue}}{1}}{\ late}">\get{githublastupdate}\ - \get{delta}</td>
+</table>
+
 \pageFooter

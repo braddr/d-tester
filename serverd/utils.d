@@ -236,6 +236,10 @@ bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responsehe
 
         ++tries;
         writelog("  http status code %s, retrying in %s seconds", statusCode, tries);
+        foreach(h; responseheaders)
+            writelog("header: '%s'", h);
+        writelog("body: '%s'", responsepayload);
+
         Thread.sleep(dur!("seconds")( tries ));
     }
     return false;

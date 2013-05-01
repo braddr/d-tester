@@ -163,6 +163,7 @@ int main(string[] args)
         while (!shutdown && FCGX_Accept(&fcgi_in, &fcgi_out, &fcgi_err, &fcgi_envp) >= 0)
         {
             processRequest();
+            FCGX_Finish();
 
             if (timeLastModified(args[0]) != exeDate)
             {

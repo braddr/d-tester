@@ -98,7 +98,6 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string hostid;
     string platform = lookup(userhash, "os");
     string force = lookup(userhash, "force");
-    bool supportprojects = lookup(userhash, "supportprojects") == "true";
 
     if (!validateInput(rname, raddr, hostid, platform, outstr))
         return;
@@ -107,8 +106,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     tryToCleanup(hostid);
 
     proj_branch[] projects = [ proj_branch("1", "master") ];
-    if (supportprojects)
-        projects = loadProjects(hostid);
+    projects = loadProjects(hostid);
 
     projects = projects.filter!(a => shouldDoBuild(force.length != 0, platform, a.projectid)).array;
     if (projects.length > 0)
@@ -131,8 +129,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
         writelog("  starting new master build: %s", runid);
         formattedWrite(outstr, "%s\n", runid);
-        if (supportprojects)
-            formattedWrite(outstr, "%s\n", project.branch);
+        formattedWrite(outstr, "%s\n", project.branch);
         //p_finish_pull_run.updateGithub(runid[0], outstr);
     }
     else

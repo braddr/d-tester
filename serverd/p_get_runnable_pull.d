@@ -11,23 +11,22 @@ import std.file;
 import std.format;
 import std.range;
 
-void loadAllOpenRequests(ref sqlrow[string] openPulls, bool supportprojects, string hostid)
+void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
 {
     // get set of pull requests that need to have runs
     //                 0      1     2       3           4            5                6            7              8             9
     string q = text(
                "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name "
-               "from github_pulls gp, repositories r, repo_branches rb, github_users u, build_host_project bhp "
+               "from github_pulls gp, projects p, repositories r, repo_branches rb, github_users u, build_host_projects bhp "
                "where gp.open = true and "
                "  gp.r_b_id = rb.id and "
                "  rb.repository_id = r.id and "
+               "  p.id = r.project_id and "
                "  gp.user_id = u.id and "
                "  u.trusted = true and "
                "  p.test_pulls = true and "
                "  bhp.project_id = r.project_id and "
                "  bhp.host_id = ", hostid);
-
-    if (!supportprojects) q ~= " and r.project_id = 1";
 
     sql_exec(q);
     sqlrow[] rows = sql_rows();
@@ -202,7 +201,6 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string rname = lookup(userhash, "hostname");
     string hostid;
     string platform = lookup(userhash, "os");
-    bool supportprojects = lookup(userhash, "supportprojects") == "true";
 
     if (!validateInput(raddr, rname, hostid, platform, outstr))
         return;
@@ -218,7 +216,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     tryToCleanup(hostid);
 
     sqlrow[string] openPulls;
-    loadAllOpenRequests(openPulls, supportprojects, hostid);
+    loadAllOpenRequests(openPulls, hostid);
 
     filterAlreadyCompleteRequests(platform, openPulls);
 
@@ -238,8 +236,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         writelog("  building: %s", pull);
         // runid, repo, url, ref, sha
         formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4]);
-        if (supportprojects)
-            formattedWrite(outstr, "%s\n", pull[9]);
+        formattedWrite(outstr, "%s\n", pull[9]);
 
         p_finish_pull_run.updateGithub(runid[0], outstr);
     }

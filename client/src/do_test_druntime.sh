@@ -39,6 +39,9 @@ case "$2" in
         makefile=posix.mak
         MODEL=64
         ;;
+    stub)
+        exit 0
+        ;;
     Win_32)
         makefile=win32.mak
         EXTRA_ARGS=""

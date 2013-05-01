@@ -42,6 +42,8 @@ case "$2" in
         makecmd=gmake
         MODEL=64
         ;;
+    stub)
+        ;;
     Win_32)
         DR=DRUNTIME
         makefile=win32.mak

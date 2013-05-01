@@ -38,6 +38,9 @@ case "$2" in
         makecmd=gmake
         MODEL=64
         ;;
+    stub)
+        exit 0
+        ;;
     Win_32)
         makefile=win32.mak
         EXTRA_ARGS=""

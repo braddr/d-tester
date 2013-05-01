@@ -38,6 +38,8 @@ case "$2" in
     Linux_64*)
         MODEL=64
         ;;
+    stub)
+        ;;
     Win_32)
         makefile=win32.mak
         EXTRA_ARGS=""

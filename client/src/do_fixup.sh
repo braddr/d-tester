@@ -32,6 +32,8 @@ case "$2" in
     Linux_32_64|Linux_64_64)
         cp src/dmd-linux-64.conf $1/dmd/src/dmd.conf
         ;;
+    stub)
+        ;;
     Win_32|Win_64)
         cp src/sc$2.ini $1/dmd/src/sc.ini
 

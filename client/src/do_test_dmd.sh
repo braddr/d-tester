@@ -36,6 +36,9 @@ case "$2" in
     Linux_32_64|Linux_64_64)
         MODEL=64
         ;;
+    stub)
+        exit 0
+        ;;
     Win_32)
         makecmd=/usr/bin/make
         ;;

@@ -49,12 +49,12 @@ case "$2" in
         ;;
     *)
         echo "unknown os: $2"
-        exit 1;
+        exit 1
 esac
 
 $makecmd DMD=../dmd/src/dmd MODEL=$MODEL $EXTRA_ARGS -f $makefile >> ../phobos-build.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tphobos failed to build"
-    exit 1;
+    exit 1
 fi
 

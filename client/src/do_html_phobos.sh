@@ -54,12 +54,12 @@ case "$2" in
         ;;
     *)
         echo "unknown os: $2"
-        exit 1;
+        exit 1
 esac
 
 $makecmd DDOC=$DMD $DD=$DOC DMD=$DMD MODEL=$MODEL -f $makefile html >> ../phobos-html.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tphobos html generation failed"
-    exit 1;
+    exit 1
 fi
 

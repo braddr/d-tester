@@ -45,7 +45,7 @@ case "$2" in
         ;;
     *)
         echo "unknown os: $2"
-        exit 1;
+        exit 1
 esac
 
 if [ "$3" == "pull" ]; then
@@ -63,6 +63,6 @@ fi
 
 if [ $? -ne 0 ]; then
     echo -e "\tdmd tests had failures"
-    exit 1;
+    exit 1
 fi
 

@@ -56,14 +56,14 @@ esac
 $makecmd DMD=../dmd/src/dmd MODEL=$MODEL $EXTRA_ARGS -f $makefile unittest >> ../druntime-unittest.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tdruntime unittest failed to build"
-    exit 1;
+    exit 1
 fi
 
 if [ $2 == "Win_32" ]; then
     ./unittest >> ../druntime-unittest.log 2>&1
     if [ $? -ne 0 ]; then
         echo -e "\tdruntime unittest failed to execute"
-        exit 1;
+        exit 1
     fi
 fi
 

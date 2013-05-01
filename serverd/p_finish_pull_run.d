@@ -52,7 +52,7 @@ bool validateInput(ref string raddr, ref string runid, ref string hostid, Append
 
 bool updateGithub(string runid, Appender!string outstr)
 {
-    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id from github_pulls ghp, repositories r, repo_branches rb, pull_test_runs ptr where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.r_b_id = rb.id and rb.repository_id = r.id")))
+    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, r.project_id from github_pulls ghp, repositories r, repo_branches rb, pull_test_runs ptr where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.r_b_id = rb.id and rb.repository_id = r.id")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -75,6 +75,7 @@ bool updateGithub(string runid, Appender!string outstr)
     string repoid = rows[0][2];
     string pullid = rows[0][3];
     string ghp_id = rows[0][4];
+    string projectid = rows[0][5];
 
     if (!sql_exec(text("select rc from pull_test_runs where g_p_id = ", ghp_id, " and deleted = 0")))
     {
@@ -120,7 +121,7 @@ bool updateGithub(string runid, Appender!string outstr)
             `"description" : "`, desc, `",`
             `"state" : "`, status, `",`
             `"target_url" : "http://d.puremagic.com/test-results/pull-history.ghtml?`
-                `repoid=`, repoid, `&pullid=`, pullid, `"`
+                `projectid=`, projectid, `&repoid=`, repoid, `&pullid=`, pullid, `"`
         `}`);
 
     writelog("  request body: %s", requestpayload);

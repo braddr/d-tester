@@ -219,7 +219,7 @@ function runtests
             fr=finish_run
             ;;
         pull)
-            data=($(callcurl get_runnable_pull "os=$OS&hostname=`hostname`$extraargs&supportprojects=true"));
+            data=($(callcurl get_runnable_pull "os=$OS&hostname=`hostname`$extraargs"));
             runid=${data[0]}
             project=${data[1]}
             giturl=${data[2]}

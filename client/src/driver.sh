@@ -86,7 +86,7 @@ function runtests
         rundir=test-$OS
         branch=staging
     else
-        data=($(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`&supportprojects=true$extraargs"));
+        data=($(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`$extraargs"));
         runid=${data[0]}
         data=(${data[@]:1})
         rundir=$runid

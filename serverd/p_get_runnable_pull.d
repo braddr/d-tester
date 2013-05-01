@@ -11,17 +11,21 @@ import std.file;
 import std.format;
 import std.range;
 
-void loadAllOpenRequests(ref sqlrow[string] openPulls, bool supportprojects)
+void loadAllOpenRequests(ref sqlrow[string] openPulls, bool supportprojects, string hostid)
 {
     // get set of pull requests that need to have runs
     //                 0      1     2       3           4            5                6            7              8             9
-    string q = "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name "
-               "from github_pulls gp, repositories r, repo_branches rb, github_users u "
+    string q = text(
+               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name "
+               "from github_pulls gp, repositories r, repo_branches rb, github_users u, build_host_project bhp "
                "where gp.open = true and "
                "  gp.r_b_id = rb.id and "
                "  rb.repository_id = r.id and "
                "  gp.user_id = u.id and "
-               "  u.trusted = true";
+               "  u.trusted = true and "
+               "  p.test_pulls = true and "
+               "  bhp.project_id = r.project_id and "
+               "  bhp.host_id = ", hostid);
 
     if (!supportprojects) q ~= " and r.project_id = 1";
 
@@ -214,7 +218,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     tryToCleanup(hostid);
 
     sqlrow[string] openPulls;
-    loadAllOpenRequests(openPulls, supportprojects);
+    loadAllOpenRequests(openPulls, supportprojects, hostid);
 
     filterAlreadyCompleteRequests(platform, openPulls);
 

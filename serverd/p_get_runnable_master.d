@@ -76,9 +76,9 @@ struct proj_branch
     string branch;
 }
 
-proj_branch[] loadProjects()
+proj_branch[] loadProjects(string hostid)
 {
-    sql_exec("select distinct project_id, rb.name from projects p, repositories r, repo_branches rb where r.id = rb.repository_id and p.id = r.project_id");
+    sql_exec(text("select distinct p.id, rb.name from projects p, repositories r, repo_branches rb, build_host_projects bhp where r.id = rb.repository_id and p.id = r.project_id and bhp.project_id = p.id and bhp.host_id = ", hostid));
 
     sqlrow[] rows = sql_rows();
 
@@ -108,7 +108,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     proj_branch[] projects = [ proj_branch("1", "master") ];
     if (supportprojects)
-        projects = loadProjects();
+        projects = loadProjects(hostid);
 
     projects = projects.filter!(a => shouldDoBuild(force.length != 0, platform, a.projectid)).array;
     if (projects.length > 0)

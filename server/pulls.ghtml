@@ -32,17 +32,18 @@
 
 \set{firstrow}{1}
 \sqlexec{
-  select gu.username, gu.id, gp.id, r.name, gp.pull_id
-    from github_pulls gp, github_users gu, repositories r, repo_branches rb
+  select gu.username, gu.id, gp.id, p.name, r.name, gp.pull_id
+    from github_pulls gp, github_users gu, repositories r, repo_branches rb, projects p
    where gp.user_id = gu.id and
          gu.trusted = 0 and
          gp.open = 1 and
          gp.r_b_id = rb.id and
          rb.repository_id = r.id and
-         r.project_id = \get{projectid}
+         r.project_id = p.id and
+         p.id = \get{projectid}
    order by gu.username, gu.id
 }
-\while{\sqlrow{gu_username}{gu_id}{gp_id}{p_name}{gp_pullid}}{
+\while{\sqlrow{gu_username}{gu_id}{gp_id}{project_name}{r_name}{gp_pullid}}{
   \if{\firstrow}{
     <table border=1 class="authtable">
 
@@ -57,7 +58,7 @@
   <tr>
     <td>\get{gu_username}</td>
     <td>\get{gu_id}</td>
-    <td><a href="https://github.com/D-Programming-Language/\get{p_name}/pull/\get{gp_pullid}">\get{p_name}/\get{gp_pullid}</a></td>
+    <td><a href="https://github.com/\get{project_name}/\get{r_name}/pull/\get{gp_pullid}">\get{r_name}/\get{gp_pullid}</a></td>
   </tr> 
 }
 \if{\not{\firstrow}}{
@@ -91,10 +92,10 @@
          ptr.start_time > date_sub(now(), interval 1 week)
    order by r.name, ghp.pull_id, ptr.platform
 }
-\while{\sqlrow{ptr_id}{p_name}{pull_id}{ptr_platform}{ptr_start_time}{ptr_rc}{ptr_deleted}}{
-  \set{\get{p_name}_\get{pull_id}_\get{ptr_platform}_id}{\get{ptr_id}}
-  \set{\get{p_name}_\get{pull_id}_\get{ptr_platform}_rc}{\get{ptr_rc}}
-  \set{\get{p_name}_\get{pull_id}_\get{ptr_platform}_deleted}{\eq{\get{ptr_deleted}}{1}}
+\while{\sqlrow{ptr_id}{r_name}{pull_id}{ptr_platform}{ptr_start_time}{ptr_rc}{ptr_deleted}}{
+  \set{\get{r_name}_\get{pull_id}_\get{ptr_platform}_id}{\get{ptr_id}}
+  \set{\get{r_name}_\get{pull_id}_\get{ptr_platform}_rc}{\get{ptr_rc}}
+  \set{\get{r_name}_\get{pull_id}_\get{ptr_platform}_deleted}{\eq{\get{ptr_deleted}}{1}}
 }
 
 # \1 == repo name
@@ -120,8 +121,9 @@
 # \5 == ref
 # \6 == updated_at
 # \7 == head_date
+# \8 == project name (D-Programming-Language)
 \set{drawrow}{\quote{
-    <td class="pullcell header"><a href="https://github.com/D-Programming-Language/\1/pull/\3">\1/\3</a></td>
+    <td class="pullcell header"><a href="https://github.com/\8/\1/pull/\3">\1/\3</a></td>
     <td class="pullcell header"><a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3">\4/\5</a></td>
     #<td class="pullcell header">\6</td>
     <td class="pullcell header">\7</td>
@@ -207,17 +209,17 @@
 \set{num_phobos_haspasses}{0}
 
 \sqlexec{
-    select r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date
-      from repositories r, repo_branches rb, github_pulls ghp, github_users u
-     where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.trusted and r.project_id = \get{projectid}
+    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date
+      from projects p, repositories r, repo_branches rb, github_pulls ghp, github_users u
+     where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.trusted and r.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
 }
-\while{\sqlrow{p_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}}{
+\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}}{
     # get the bucket to place the row in
-    \set{name}{\get{p_name}_\getstate{\get{p_name}}{\get{ghp_pull_id}}}
+    \set{name}{\get{r_name}_\getstate{\get{r_name}}{\get{ghp_pull_id}}}
 
     # get one row of html and store it in name_num
-    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{p_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}}
+    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{project_name}}}
 
     \inc{num_\get{name}}
 }

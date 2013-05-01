@@ -52,7 +52,7 @@ bool validateInput(ref string raddr, ref string runid, ref string hostid, Append
 
 bool updateGithub(string runid, Appender!string outstr)
 {
-    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, r.project_id from github_pulls ghp, repositories r, repo_branches rb, pull_test_runs ptr where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.r_b_id = rb.id and rb.repository_id = r.id")))
+    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, r.project_id, p.name from github_pulls ghp, repositories r, repo_branches rb, pull_test_runs ptr, projects p where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.r_b_id = rb.id and rb.repository_id = r.id and p.id = r.project_id")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -76,6 +76,7 @@ bool updateGithub(string runid, Appender!string outstr)
     string pullid = rows[0][3];
     string ghp_id = rows[0][4];
     string projectid = rows[0][5];
+    string projectname = rows[0][6];
 
     if (!sql_exec(text("select rc from pull_test_runs where g_p_id = ", ghp_id, " and deleted = 0")))
     {
@@ -98,7 +99,7 @@ bool updateGithub(string runid, Appender!string outstr)
     numpending = 10 - numpass - numfail - numinprogress;
     if (numpending < 0) numpending = 0;
 
-    string url = text("https://api.github.com/repos/D-Programming-Language/", reponame, "/statuses/", sha);
+    string url = text("https://api.github.com/repos/", projectname, "/", reponame, "/statuses/", sha);
     string payload;
     string[] headers;
 

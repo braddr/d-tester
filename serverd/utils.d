@@ -146,6 +146,8 @@ bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url
         payload = "";
         headers = [];
 
+        curl_easy_reset(curl);
+
         curl_easy_setopt(curl, CurlOption.httpget, 1);
 
         curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
@@ -189,14 +191,18 @@ bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url
 bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
 {
     int tries;
-    while (tries < 1)
+    auto fp = File("/tmp/serverd.log", "a");
+    while (tries < 3)
     {
         writelog("  post url: %s, try #%s", url, tries);
 
         responsepayload = "";
         responseheaders = [];
 
+        curl_easy_reset(curl);
+
         curl_easy_setopt(curl, CurlOption.post, 1L);
+        curl_easy_setopt(curl, CurlOption.forbid_reuse, 1L);
 
         curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
 
@@ -218,7 +224,8 @@ bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responsehe
         curl_easy_setopt(curl, CurlOption.headerfunction, &handleHeaderData);
         curl_easy_setopt(curl, CurlOption.writeheader, &responseheaders);
 
-        curl_easy_setopt(curl, CurlOption.verbose, 0);
+        curl_easy_setopt(curl, CurlOption.stderr, fp.getFP());
+        curl_easy_setopt(curl, CurlOption.verbose, 1);
 
         curl_easy_setopt(curl, CurlOption.url, toStringz(url));
         CURLcode res = curl_easy_perform(curl);
@@ -236,11 +243,12 @@ bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responsehe
 
         ++tries;
         writelog("  http status code %s, retrying in %s seconds", statusCode, tries);
-        foreach(h; responseheaders)
-            writelog("header: '%s'", h);
-        writelog("body: '%s'", responsepayload);
+        //foreach(h; responseheaders)
+        //    writelog("header: '%s'", h);
+        //writelog("body: '%s'", responsepayload);
 
         Thread.sleep(dur!("seconds")( tries ));
     }
+    curl_easy_setopt(curl, CurlOption.stderr, 0);
     return false;
 }

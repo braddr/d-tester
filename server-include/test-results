@@ -102,6 +102,8 @@
 
                 \drawSubMenu{pulls.ghtml?projectid=\get{pid}}{Pull Requests}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|pulls}}{\eq{\get{test_pulls}}{1}}
 
+                \drawSubMenu{project-info.ghtml?projectid=\get{pid}}{Project Info}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|projinfo}}{true}
+
                 \drawSubMenu{chart.ghtml?projectid=\get{pid}}{Project Graphs}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|chart}}{true}
 
             }

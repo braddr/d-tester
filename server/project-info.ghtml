@@ -1,0 +1,74 @@
+\include{/include/test-results}
+
+\validateURLParameter{projectid}
+
+\set{page_type}{projinfo}
+\pageHeader{60}{\get{projectid}}{
+    <link rel="stylesheet" href="/test-results/css/index.css" type="text/css">
+}
+
+\sqlexec{
+    select id, menu_label, name, project_url, test_pulls, beta_only
+      from projects
+     where id = \get{projectid}
+}
+\if{\sqlrow{pid}{plabel}{pname}{purl}{ptestpulls}{pbetaonly}}{
+
+    <table class="projectinfo">
+        <tr>
+            <th>id</th><td>\get{pid}</td>
+        </tr><tr>
+            <th>Menu Label</th><td>\get{plabel}</td>
+        </tr><tr>
+            <th>Github Name</th><td>\get{pname}</td>
+        </tr><tr>
+            <th>Project URL</th><td><a href="\get{purl}">\get{purl}</a></td>
+        </tr><tr>
+            <th>Test Pulls</th><td>\if{\eq{\get{ptestpulls}}{1}}{true}{false}</td>
+        </tr>
+            \if{\eq{\SERVERNAME}{d-beta.puremagic.com}}{
+                <tr>
+                    <th>Beta Only</th><td>\if{\eq{\get{pbetaonly}}{1}}{true}{false}</td>
+                </tr>
+            }
+    </table>
+
+    <table class="repoinfo">
+        <tr>
+            <th>Repository</th>
+            <th>Branch</th>
+            <th>Num Open Pulls</th>
+        </tr>
+    \sqlexec{
+        select r.id, r.name, rb.id, rb.name, ifnull(ghp_data.num, 0)
+          from repositories  r,
+               repo_branches rb
+               left join
+               (
+                   select ghp.r_b_id, count(*) as num
+                    from github_pulls  ghp,
+                         repositories  r,
+                         repo_branches rb
+                   where ghp.r_b_id = rb.id and
+                         rb.repository_id = r.id and
+                         r.project_id = \get{projectid} and
+                         ghp.open = true
+                   group by r_b_id
+               ) as ghp_data on ghp_data.r_b_id = rb.id
+         where r.id = rb.repository_id and
+               r.project_id = \get{projectid}
+    }
+    \while{\sqlrow{rid}{rname}{rbid}{rbname}{rbcount}}{
+        <tr>
+            <td>\get{rname}</td>
+            <td>\get{rbname}</td>
+            <td>\get{rbcount}</td>
+        </tr>
+    }
+    </table>
+
+}{
+    Hrm.. unknown project id: \get{projectid}
+}
+
+\pageFooter

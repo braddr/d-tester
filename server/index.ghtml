@@ -260,14 +260,14 @@
 <tr>
 \buildHeader{OSX 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit output}
 \buildHeader{OSX 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit output}
-\buildHeader{OSX 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit output}
-\buildHeader{OSX 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit output}
+#\buildHeader{OSX 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit output}
+#\buildHeader{OSX 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit output}
 </tr>
 <tr>
 <td>\draw{Darwin_32}</td>
 <td>\draw{Darwin_64_64}</td>
-<td>\draw{Darwin_32_64}</td>
-<td>\draw{Darwin_64_32}</td>
+#<td>\draw{Darwin_32_64}</td>
+#<td>\draw{Darwin_64_32}</td>
 </tr>
 
 <tr>

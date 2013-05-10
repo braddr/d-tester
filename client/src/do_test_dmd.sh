@@ -57,6 +57,8 @@ fi
 
 cd $1/dmd/test
 
+export LD_LIBRARY_PATH=../../phobos/generated/linux/release/$MODEL
+
 $makecmd MODEL=$MODEL test_results/d_do_test >> ../../dmd-unittest.log 2>&1
 if [ ! -z "$ARGS" ]; then
     $makecmd MODEL=$MODEL $EXTRA_ARGS ARGS="$ARGS" >> ../../dmd-unittest.log 2>&1

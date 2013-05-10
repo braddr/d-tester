@@ -96,9 +96,9 @@ bool check_addr(string addr)
     return false;
 }
 
-void updateHostLastCheckin(string hostid)
+void updateHostLastCheckin(string hostid, string clientver)
 {
-    sql_exec(text("update build_hosts set last_heard_from = now() where id = ", hostid));
+    sql_exec(text("update build_hosts set last_heard_from = now(), clientver = ", clientver, " where id = ", hostid));
 }
 
 extern(C) size_t handleBodyData(char *ptr, size_t size, size_t nmemb, void *userdata)

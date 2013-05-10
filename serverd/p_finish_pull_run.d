@@ -37,11 +37,13 @@ bool validate_runState(string runid, ref string hostid, Appender!string outstr)
     return true;
 }
 
-bool validateInput(ref string raddr, ref string runid, ref string hostid, Appender!string outstr)
+bool validateInput(ref string raddr, ref string runid, ref string hostid, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
         return false;
     if (!validate_id(runid, "runid", outstr))
+        return false;
+    if (!validate_clientver(clientver, outstr))
         return false;
 
     if (!validate_runState(runid, hostid, outstr))
@@ -163,11 +165,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string raddr = lookup(hash, "REMOTE_ADDR");
     string hostid;
     string runid = lookup(userhash, "runid");
+    string clientver = lookup(userhash, "cilentver");
 
-    if (!validateInput(raddr, runid, hostid, outstr))
+    if (!validateInput(raddr, runid, hostid, clientver, outstr))
         return;
 
-    updateHostLastCheckin(hostid);
+    updateHostLastCheckin(hostid, clientver);
     updateStore(runid, outstr);
     updateGithub(runid, outstr);
 }

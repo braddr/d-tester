@@ -60,11 +60,13 @@ void tryToCleanup(string hostid)
     }
 }
 
-bool validateInput(ref string rname, ref string raddr, ref string hostid, ref string platform, Appender!string outstr)
+bool validateInput(ref string rname, ref string raddr, ref string hostid, ref string platform, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
         return false;
     if (!validate_knownhost(raddr, rname, hostid, outstr))
+        return false;
+    if (!validate_clientver(clientver, outstr))
         return false;
 
     return true;
@@ -98,11 +100,14 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string hostid;
     string platform = lookup(userhash, "os");
     string force = lookup(userhash, "force");
+    string clientver = lookup(userhash, "clientver");
 
-    if (!validateInput(rname, raddr, hostid, platform, outstr))
+    if (!validateInput(rname, raddr, hostid, platform, clientver, outstr))
         return;
 
-    updateHostLastCheckin(hostid);
+    writelog("  clientver: %s\n", clientver);
+
+    updateHostLastCheckin(hostid, clientver);
     tryToCleanup(hostid);
 
     proj_branch[] projects = [ proj_branch("1", "master") ];

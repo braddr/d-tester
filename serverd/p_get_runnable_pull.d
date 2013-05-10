@@ -181,13 +181,15 @@ void tryToCleanup(string hostid)
     }
 }
 
-bool validateInput(ref string raddr, ref string rname, ref string hostid, ref string platform, Appender!string outstr)
+bool validateInput(ref string raddr, ref string rname, ref string hostid, ref string platform, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
         return false;
     if (!validate_platform(platform, outstr))
         return false;
     if (!validate_knownhost(raddr, rname, hostid, outstr))
+        return false;
+    if (!validate_clientver(clientver, outstr))
         return false;
 
     return true;
@@ -201,11 +203,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string rname = lookup(userhash, "hostname");
     string hostid;
     string platform = lookup(userhash, "os");
+    string clientver = lookup(userhash, "clientver");
 
-    if (!validateInput(raddr, rname, hostid, platform, outstr))
+    if (!validateInput(raddr, rname, hostid, platform, clientver, outstr))
         return;
 
-    updateHostLastCheckin(hostid);
+    updateHostLastCheckin(hostid, clientver);
 
     if (exists("/tmp/serverd.suspend"))
     {

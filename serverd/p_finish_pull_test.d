@@ -36,13 +36,15 @@ bool validate_testState(string testid, ref string hostid, Appender!string outstr
     return true;
 }
 
-bool validateInput(ref string raddr, ref string hostid, ref string testid, ref string rc, Appender!string outstr)
+bool validateInput(ref string raddr, ref string hostid, ref string testid, ref string rc, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
         return false;
     if (!validate_id(testid, "testid", outstr))
         return false;
     if (!validate_id(rc, "rc", outstr))
+        return false;
+    if (!validate_clientver(clientver, outstr))
         return false;
 
     if (!validate_testState(testid, hostid, outstr))
@@ -59,11 +61,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string hostid;
     string testid = lookup(userhash, "testid");
     string rc = lookup(userhash, "rc");
+    string clientver = lookup(userhash, "clientver");
 
-    if (!validateInput(raddr, hostid, testid, rc, outstr))
+    if (!validateInput(raddr, hostid, testid, rc, clientver, outstr))
         return;
 
-    updateHostLastCheckin(hostid);
+    updateHostLastCheckin(hostid, clientver);
     sql_exec(text("update pull_test_data set end_time=now(), rc=", rc, " where id=", testid));
 }
 

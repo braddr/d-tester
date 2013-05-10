@@ -117,3 +117,22 @@ bool validate_testtype(ref string type, Appender!string outstr)
     return true;
 }
 
+bool validate_clientver(ref string clientver, Appender!string outstr)
+{
+    if (clientver is null || clientver == "")
+        clientver = "0";
+
+    if (!validate_id(clientver, "clientver", outstr))
+        return false;
+
+    switch (clientver)
+    {
+        case "0":
+        case "1":
+        case "2":
+            return true;
+        default:
+            return false;
+    }
+}
+

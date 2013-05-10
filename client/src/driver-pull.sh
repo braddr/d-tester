@@ -18,7 +18,7 @@ function callcurl
     if [ "$runmode" == "trunk" ]; then
         urlsuffix=".ghtml"
     fi
-    curl --silent "$serverurl/$1$urlsuffix?clientver=1$2"
+    curl --silent "$serverurl/$1$urlsuffix?clientver=1&$2"
 }
 
 function detectos

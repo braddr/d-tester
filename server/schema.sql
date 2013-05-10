@@ -163,6 +163,7 @@ create table if not exists build_hosts
     owner_email       varchar(128) not null,
     enabled           bool         not null,
     last_heard_from   datetime,
+    clientver         int,
 
     primary key(id),
     key(ipaddr)

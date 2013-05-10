@@ -59,7 +59,7 @@ function detectos
 function uploadlog
 {
     if [ "$runid" != "test" ]; then
-        curl --silent -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_pull?testid=$1"
+        curl --silent -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_pull?clientver=1&testid=$1"
     fi
 }
 

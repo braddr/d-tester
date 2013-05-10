@@ -15,7 +15,7 @@ function callcurl
     if [ "$runid" == "test" ]; then
         return
     fi
-    curl --silent "http://d.puremagic.com/test-results/addv2/$1?$2"
+    curl --silent "http://d.puremagic.com/test-results/addv2/$1?clientver=1&$2"
 }
 
 function detectos

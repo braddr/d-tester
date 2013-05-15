@@ -13,10 +13,6 @@
 
 PARALLELISM=1
 
-# abort transfer if it drops below 1000 bytes per second for a minute
-export GIT_HTTP_LOW_SPEED_LIMIT=1000
-export GIT_HTTP_LOW_SPEED_TIME=60
-
 if [ -f configs/`hostname` ]; then
     . configs/`hostname`
 fi

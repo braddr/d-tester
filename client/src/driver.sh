@@ -60,6 +60,23 @@ function uploadlog
     fi
 }
 
+# $1 == rundir
+# $2 == OS
+# $3 == project
+# $4 == repository
+# $5 == branch
+function checkoutRepeat
+{
+    rc=1
+    while [ $rc -ne 0 ]; do
+        src/do_checkout.sh "$1" "$2" "$3" "$4" "$5"
+        rc=$?
+        if [ $rc -ne 0 ]; then
+            sleep 60
+        fi
+    done
+}
+
 # $1 == OS
 # $2 == null or "test" or "force"
 #   null: allow the service to determine if the test should run
@@ -76,18 +93,18 @@ function runtests
     if [ "$2" == "test" ]; then
         runid=test
         rundir=test-$OS
-        branch=staging
+        branch=master
+        project=D-Programming-Language
     else
         data=($(callcurl get_runnable_master "os=$OS&hostname=`hostname`$extraargs"))
         runid=${data[0]}
         data=(${data[@]:1})
         rundir=$runid
-        if [ ${#data[*]} != 0 ]; then
-            branch=${data[0]}
-            data=(${data[@]:1})
-        else
-            branch=master
-        fi
+
+        branch=${data[0]}
+        data=(${data[@]:1})
+
+        project=D-Programming-Language
     fi
 
     if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" ]; then
@@ -104,67 +121,57 @@ function runtests
     fi
 
     testid=$(callcurl start_master_test "runid=$runid&type=1")
-
-    rc=1
-    while [ $rc -ne 0 ]; do
-        src/do_checkout.sh "$rundir" "$OS" "$branch"
-        rc=$?
-        if [ $rc -ne 0 ]; then
-            sleep 60
-        fi
-    done
+    checkoutRepeat "$rundir" "$OS" "$project" "dmd" "$branch"
+    checkoutRepeat "$rundir" "$OS" "$project" "druntime" "$branch"
+    checkoutRepeat "$rundir" "$OS" "$project" "phobos" "$branch"
     uploadlog $testid $rundir checkout.log
-    callcurl finish_master_test "testid=$testid&rc=$rc"
-    if [ $rc -eq 0 ]; then
+    callcurl finish_master_test "testid=$testid&rc=0"
 
-        src/do_fixup.sh "$rundir" "$OS"
-        #uploadlog $testid $rundir checkout.log
+    src/do_fixup.sh "$rundir" "$OS"
 
-        testid=$(callcurl start_master_test "runid=$runid&type=2")
-        src/do_build_dmd.sh "$rundir" "$OS"
-        build_dmd_rc=$?
-        uploadlog $testid $rundir dmd-build.log
-        callcurl finish_master_test "testid=$testid&rc=$build_dmd_rc"
+    testid=$(callcurl start_master_test "runid=$runid&type=2")
+    src/do_build_dmd.sh "$rundir" "$OS"
+    build_dmd_rc=$?
+    uploadlog $testid $rundir dmd-build.log
+    callcurl finish_master_test "testid=$testid&rc=$build_dmd_rc"
 
-        testid=$(callcurl start_master_test "runid=$runid&type=3")
-        src/do_build_druntime.sh "$rundir" "$OS"
-        build_druntime_rc=$?
-        uploadlog $testid $rundir druntime-build.log
-        callcurl finish_master_test "testid=$testid&rc=$build_druntime_rc"
+    testid=$(callcurl start_master_test "runid=$runid&type=3")
+    src/do_build_druntime.sh "$rundir" "$OS"
+    build_druntime_rc=$?
+    uploadlog $testid $rundir druntime-build.log
+    callcurl finish_master_test "testid=$testid&rc=$build_druntime_rc"
 
-        testid=$(callcurl start_master_test "runid=$runid&type=4")
-        src/do_build_phobos.sh "$rundir" "$OS"
-        build_phobos_rc=$?
-        uploadlog $testid $rundir phobos-build.log
-        callcurl finish_master_test "testid=$testid&rc=$build_phobos_rc"
+    testid=$(callcurl start_master_test "runid=$runid&type=4")
+    src/do_build_phobos.sh "$rundir" "$OS"
+    build_phobos_rc=$?
+    uploadlog $testid $rundir phobos-build.log
+    callcurl finish_master_test "testid=$testid&rc=$build_phobos_rc"
 
-        testid=$(callcurl start_master_test "runid=$runid&type=5")
-        src/do_test_druntime.sh "$rundir" "$OS"
-        test_druntime_rc=$?
-        uploadlog $testid $rundir druntime-unittest.log
-        callcurl finish_master_test "testid=$testid&rc=$test_druntime_rc"
+    testid=$(callcurl start_master_test "runid=$runid&type=5")
+    src/do_test_druntime.sh "$rundir" "$OS"
+    test_druntime_rc=$?
+    uploadlog $testid $rundir druntime-unittest.log
+    callcurl finish_master_test "testid=$testid&rc=$test_druntime_rc"
 
-        testid=$(callcurl start_master_test "runid=$runid&type=6")
-        src/do_test_phobos.sh "$rundir" "$OS"
-        test_phobos_rc=$?
-        uploadlog $testid $rundir phobos-unittest.log
-        callcurl finish_master_test "testid=$testid&rc=$test_phobos_rc"
+    testid=$(callcurl start_master_test "runid=$runid&type=6")
+    src/do_test_phobos.sh "$rundir" "$OS"
+    test_phobos_rc=$?
+    uploadlog $testid $rundir phobos-unittest.log
+    callcurl finish_master_test "testid=$testid&rc=$test_phobos_rc"
 
-        testid=$(callcurl start_master_test "runid=$runid&type=7")
-        src/do_test_dmd.sh "$rundir" "$OS"
-        test_dmd_rc=$?
-        uploadlog $testid $rundir dmd-unittest.log
-        callcurl finish_master_test "testid=$testid&rc=$test_dmd_rc"
+    testid=$(callcurl start_master_test "runid=$runid&type=7")
+    src/do_test_dmd.sh "$rundir" "$OS"
+    test_dmd_rc=$?
+    uploadlog $testid $rundir dmd-unittest.log
+    callcurl finish_master_test "testid=$testid&rc=$test_dmd_rc"
 
-        #testid=$(callcurl start_master_test "runid=$runid&type=8")
-        #src/do_html_phobos.sh "$rundir" "$OS"
-        #html_dmd_rc=$?
-        #uploadlog $testid $rundir phobos-html.log
-        # todo: should be condition on test mode
-        #rsync --archive --compress --delete $rundir/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
-        #callcurl finish_master_test "testid=$testid&rc=$html_dmd_rc"
-
-    fi
+    #testid=$(callcurl start_master_test "runid=$runid&type=8")
+    #src/do_html_phobos.sh "$rundir" "$OS"
+    #html_dmd_rc=$?
+    #uploadlog $testid $rundir phobos-html.log
+    # todo: should be condition on test mode
+    #rsync --archive --compress --delete $rundir/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
+    #callcurl finish_master_test "testid=$testid&rc=$html_dmd_rc"
 
     callcurl finish_master_run "runid=$runid"
 

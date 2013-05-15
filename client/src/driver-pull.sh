@@ -63,11 +63,28 @@ function uploadlog
     fi
 }
 
+# $1 == rundir
+# $2 == OS
+# $3 == project
+# $4 == repository
+# $5 == branch
+function checkoutRepeat
+{
+    rc=1
+    while [ $rc -ne 0 ]; do
+        src/do_checkout.sh "$1" "$2" "$3" "$4" "$5"
+        rc=$?
+        if [ $rc -ne 0 ]; then
+            sleep 60
+        fi
+    done
+}
+
 # $1 == OS
 # $2 == runid
 # $3 == rundir
 # if runmode == pull
-#   $4 == project (dmd, druntime, phobos)
+#   $4 == repo (dmd, druntime, phobos)
 #   $5 == git url
 #   $6 == git ref
 function execute_one_test
@@ -84,26 +101,14 @@ function execute_one_test
     esac
 
     testid=$(callcurl $s "runid=$runid&type=1")
-
-    rc=1
-    while [ $rc -ne 0 ]; do
-        src/do_checkout.sh "$rundir" "$OS" "$branch"
-        rc=$?
-        if [ $rc -ne 0 ]; then
-            sleep 60
-        fi
-    done
-
+    checkoutRepeat "$rundir" "$OS" "$project" "dmd" "$branch"
+    checkoutRepeat "$rundir" "$OS" "$project" "druntime" "$branch"
+    checkoutRepeat "$rundir" "$OS" "$project" "phobos" "$branch"
     uploadlog $testid $rundir checkout.log
-    callcurl $f "testid=$testid&rc=$rc"
-    if [ $rc -ne 0 ]; then
-        run_rc=1
-        return
-    fi
+    callcurl $f "testid=$testid&rc=0"
 
     src/do_fixup.sh "$rundir" "$OS"
     rc=$?
-    #uploadlog $testid $rundir checkout.log
     if [ $rc -ne 0 ]; then
         run_rc=1
         return
@@ -221,7 +226,7 @@ function runtests
         pull)
             data=($(callcurl get_runnable_pull "os=$OS&hostname=`hostname`$extraargs"));
             runid=${data[0]}
-            project=${data[1]}
+            repo=${data[1]}
             giturl=${data[2]}
             gitref=${data[3]}
             # note, sha not used
@@ -229,6 +234,7 @@ function runtests
             branch=${data[5]}
             rundir=pull-$runid
             fr=finish_pull_run
+            project="D-Programming-Language"
             ;;
     esac
 
@@ -239,14 +245,14 @@ function runtests
     fi
 
     pretest
-    echo -e "\nStarting run $runid ($OS), $project, $branch, $gitref."
+    echo -e "\nStarting run $runid ($OS), $repo, $branch, $gitref."
     run_rc=0
 
     if [ ! -d $rundir ]; then
         mkdir "$rundir"
     fi
 
-    execute_one_test $1 $runid $rundir $project $giturl $gitref
+    execute_one_test $1 $runid $rundir $repo $giturl $gitref
     echo -e "\trun_rc=$run_rc"
 
     callcurl $fr "runid=$runid"

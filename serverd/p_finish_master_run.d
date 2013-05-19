@@ -79,7 +79,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string raddr = lookup(hash, "REMOTE_ADDR");
     string hostid;
     string runid = lookup(userhash, "runid");
-    string clientver = lookup(userhash, "cilentver");
+    string clientver = lookup(userhash, "clientver");
 
     if (!validateInput(raddr, runid, hostid, clientver, outstr))
         return;

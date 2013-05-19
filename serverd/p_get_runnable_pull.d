@@ -237,9 +237,8 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         catch(Exception e) { writelog("  caught exception: %s", e); }
 
         writelog("  building: %s", pull);
-        // runid, repo, url, ref, sha
-        formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4]);
-        formattedWrite(outstr, "%s\n", pull[9]);
+        // runid, repo, url, ref, sha, branch
+        formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4], pull[9]);
 
         p_finish_pull_run.updateGithub(runid[0], outstr);
     }

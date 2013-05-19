@@ -91,21 +91,19 @@ function runtests
     fi
 
     if [ "$2" == "test" ]; then
-        runid=test
-        rundir=test-$OS
-        branch=master
-        project=D-Programming-Language
+        data=("test" "master")
     else
         data=($(callcurl get_runnable_master "os=$OS&hostname=`hostname`$extraargs"))
-        runid=${data[0]}
-        data=(${data[@]:1})
-        rundir=$runid
-
-        branch=${data[0]}
-        data=(${data[@]:1})
-
-        project=D-Programming-Language
     fi
+    runid=${data[0]}
+    branch=${data[1]}
+
+    rundir=$runid-$OS
+    project=D-Programming-Language
+    # pairs of (repo branch)
+    repobranches=(dmd $branch druntime $branch phobos $branch)
+    # pairs of (type rb_index)
+    steps=(1 0 2 0 3 1 4 2 5 1 6 2 7 0)
 
     if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" ]; then
         echo -e -n "Skipping run...\r"
@@ -120,50 +118,34 @@ function runtests
         mkdir "$rundir"
     fi
 
-    testid=$(callcurl start_master_test "runid=$runid&type=1")
-    checkoutRepeat "$rundir" "$OS" "$project" "dmd" "$branch"
-    checkoutRepeat "$rundir" "$OS" "$project" "druntime" "$branch"
-    checkoutRepeat "$rundir" "$OS" "$project" "phobos" "$branch"
-    uploadlog $testid $rundir checkout.log
-    callcurl finish_master_test "testid=$testid&rc=0"
-
-    src/do_fixup.sh "$rundir" "$OS"
-
-    testid=$(callcurl start_master_test "runid=$runid&type=2")
-    src/do_build_dmd.sh "$rundir" "$OS"
-    build_dmd_rc=$?
-    uploadlog $testid $rundir dmd-build.log
-    callcurl finish_master_test "testid=$testid&rc=$build_dmd_rc"
-
-    testid=$(callcurl start_master_test "runid=$runid&type=3")
-    src/do_build_druntime.sh "$rundir" "$OS"
-    build_druntime_rc=$?
-    uploadlog $testid $rundir druntime-build.log
-    callcurl finish_master_test "testid=$testid&rc=$build_druntime_rc"
-
-    testid=$(callcurl start_master_test "runid=$runid&type=4")
-    src/do_build_phobos.sh "$rundir" "$OS"
-    build_phobos_rc=$?
-    uploadlog $testid $rundir phobos-build.log
-    callcurl finish_master_test "testid=$testid&rc=$build_phobos_rc"
-
-    testid=$(callcurl start_master_test "runid=$runid&type=5")
-    src/do_test_druntime.sh "$rundir" "$OS"
-    test_druntime_rc=$?
-    uploadlog $testid $rundir druntime-unittest.log
-    callcurl finish_master_test "testid=$testid&rc=$test_druntime_rc"
-
-    testid=$(callcurl start_master_test "runid=$runid&type=6")
-    src/do_test_phobos.sh "$rundir" "$OS"
-    test_phobos_rc=$?
-    uploadlog $testid $rundir phobos-unittest.log
-    callcurl finish_master_test "testid=$testid&rc=$test_phobos_rc"
-
-    testid=$(callcurl start_master_test "runid=$runid&type=7")
-    src/do_test_dmd.sh "$rundir" "$OS"
-    test_dmd_rc=$?
-    uploadlog $testid $rundir dmd-unittest.log
-    callcurl finish_master_test "testid=$testid&rc=$test_dmd_rc"
+    while [ ${#steps[@]} -gt 0 ]; do
+        testid=$(callcurl start_master_test "runid=$runid&type=${steps[0]}")
+        case ${steps[0]} in
+            1) # checkout
+                x=("${repobranches[@]}")
+                while [ ${#x[@]} -gt 0 ]; do
+                    checkoutRepeat "$rundir" "$OS" "$project" "${x[0]}" "${x[1]}"
+                    x=(${x[@]:2})
+                done
+                src/do_fixup.sh "$rundir" "$OS"
+                step_rc=$?
+                logname=checkout.log
+                ;;
+            2|3|4)
+                src/do_build_${repobranches[${steps[1]}*2]}.sh "$rundir" "$OS"
+                step_rc=$?
+                logname=${repobranches[${steps[1]}*2]}-build.log
+                ;;
+            5|6|7)
+                src/do_test_${repobranches[${steps[1]}*2]}.sh "$rundir" "$OS"
+                step_rc=$?
+                logname=${repobranches[${steps[1]}*2]}-unittest.log
+                ;;
+        esac
+        uploadlog $testid $rundir $logname
+        callcurl finish_master_test "testid=$testid&rc=$step_rc"
+        steps=(${steps[@]:2})
+    done
 
     #testid=$(callcurl start_master_test "runid=$runid&type=8")
     #src/do_html_phobos.sh "$rundir" "$OS"

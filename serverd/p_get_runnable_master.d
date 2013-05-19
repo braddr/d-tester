@@ -69,26 +69,50 @@ bool validateInput(ref string rname, ref string raddr, ref string hostid, ref st
     if (!validate_clientver(clientver, outstr))
         return false;
 
+    // TODO: validate that the host and platform match
+
     return true;
 }
 
-struct proj_branch
+struct repo_branch
 {
-    string projectid;
-    string branch;
+    string repo_id;
+    string repo_name;
+    string branch_name;
 }
 
-proj_branch[] loadProjects(string hostid)
+struct project
 {
-    sql_exec(text("select distinct p.id, rb.name from projects p, repositories r, repo_branches rb, build_host_projects bhp where r.id = rb.repository_id and p.id = r.project_id and bhp.project_id = p.id and bhp.host_id = ", hostid));
+    string project_id;
+    string project_name;
+    repo_branch[] branches;
+}
+
+project[] loadProjects(string hostid)
+{
+    sql_exec(text("select p.id, p.name, r.id, r.name, rb.name "
+                  "  from projects p, repositories r, repo_branches rb, build_host_projects bhp "
+                  " where r.id = rb.repository_id and "
+                  "       p.id = r.project_id and "
+                  "       bhp.project_id = p.id and "
+                  "       bhp.host_id = ", hostid,
+                  " order by p.id, r.id, rb.id"));
 
     sqlrow[] rows = sql_rows();
 
-    proj_branch[] results;
+    project[] projects;
+    project* proj = null;
     foreach (row; rows)
-        results ~= proj_branch(row[0], row[1]);
+    {
+        if (!proj || proj.project_id != row[0])
+        {
+            projects ~= project(row[0], row[1], []);
+            proj = &(projects[$-1]);
+        }
+        proj.branches ~= repo_branch(row[2], row[3], row[4]);
+    }
 
-    return results;
+    return projects;
 }
 
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
@@ -105,27 +129,24 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (!validateInput(rname, raddr, hostid, platform, clientver, outstr))
         return;
 
-    writelog("  clientver: %s\n", clientver);
-
     updateHostLastCheckin(hostid, clientver);
     tryToCleanup(hostid);
 
-    proj_branch[] projects = [ proj_branch("1", "master") ];
-    projects = loadProjects(hostid);
+    project[] projects = loadProjects(hostid);
 
-    projects = projects.filter!(a => shouldDoBuild(force.length != 0, platform, a.projectid)).array;
+    projects = projects.filter!(a => shouldDoBuild(force.length != 0, platform, a.project_id)).array;
     if (projects.length > 0)
     {
         size_t idx = uniform(0, projects.length);
-        proj_branch project = projects[idx];
+        project proj = projects[idx];
 
-        string runid = getNewID(platform, hostid, project.projectid);
+        string runid = getNewID(platform, hostid, proj.project_id);
         try
         {
             string path = "/home/dwebsite/test-results/" ~ runid;
             mkdir(path);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             writelog("  caught exception: %s", e);
             outstr.put("skip\n");
@@ -134,7 +155,22 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
         writelog("  starting new master build: %s", runid);
         formattedWrite(outstr, "%s\n", runid);
-        formattedWrite(outstr, "%s\n", project.branch);
+        switch (clientver)
+        {
+            case "1":
+                formattedWrite(outstr, "%s\n", proj.branches[0].branch_name);
+                break;
+            case "2":
+                formattedWrite(outstr, "%s\n", proj.project_name);
+                formattedWrite(outstr, "%s\n", platform);
+                formattedWrite(outstr, "%s\n", proj.branches.length);
+                foreach (p; proj.branches)
+                    formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
+                break;
+            default:
+                writelog("  illegal clientver: %s", clientver);
+                outstr.put("skip\n");
+        }
         //p_finish_pull_run.updateGithub(runid[0], outstr);
     }
     else

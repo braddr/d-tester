@@ -168,7 +168,7 @@ function runtests
                 logname=${repobranches[${steps[1]}*2]}-build.log
                 ;;
             5|6|7)
-                src/do_test_${repobranches[${steps[1]}*2]}.sh "$rundir" "$OS"
+                src/do_test_${repobranches[${steps[1]}*2]}.sh "$rundir" "$OS" "$runmode"
                 step_rc=$?
                 logname=${repobranches[${steps[1]}*2]}-unittest.log
                 ;;

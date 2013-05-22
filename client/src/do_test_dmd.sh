@@ -5,7 +5,7 @@
 # args:
 #    1) directory for build
 #    2) os
-#    3) runmode (trunk, pull)
+#    3) runmode (master, pull)
 
 PARALLELISM=1
 

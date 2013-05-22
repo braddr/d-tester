@@ -158,9 +158,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         switch (clientver)
         {
             case "1":
+            case "2":
                 formattedWrite(outstr, "%s\n", proj.branches[0].branch_name);
                 break;
-            case "2":
+            case "3":
                 formattedWrite(outstr, "%s\n", proj.project_name);
                 formattedWrite(outstr, "%s\n", platform);
                 formattedWrite(outstr, "%s\n", proj.branches.length);

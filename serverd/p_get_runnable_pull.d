@@ -237,8 +237,22 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         catch(Exception e) { writelog("  caught exception: %s", e); }
 
         writelog("  building: %s", pull);
-        // runid, repo, url, ref, sha, branch
-        formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n%s\n", runid[0], pull[2], pull[5], pull[6], pull[4], pull[9]);
+        // runid
+        formattedWrite(outstr, "%s\n", runid[0]);
+        switch (clientver)
+        {
+            case "1":
+                // repo, url, ref, sha, branch
+                formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", pull[2], pull[5], pull[6], pull[4], pull[9]);
+                break;
+            case "2":
+                // branch, repo, url, ref, sha
+                formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", pull[9], pull[2], pull[5], pull[6], pull[4]);
+                break;
+            default:
+                writelog("  illegal clientver: %s", clientver);
+                outstr.put("skip\n");
+        }
 
         p_finish_pull_run.updateGithub(runid[0], outstr);
     }

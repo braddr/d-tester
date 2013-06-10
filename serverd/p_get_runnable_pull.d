@@ -1,6 +1,7 @@
 module p_get_runnable_pull;
 
 import mysql;
+import master = p_get_runnable_master;
 static import p_finish_pull_run;
 import serverd;
 import utils;
@@ -14,9 +15,9 @@ import std.range;
 void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
 {
     // get set of pull requests that need to have runs
-    //                 0      1     2       3           4            5                6            7              8             9
+    //                 0      1     2       3           4            5                6            7              8             9        10
     string q = text(
-               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name "
+               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name, p.id "
                "from github_pulls gp, projects p, repositories r, repo_branches rb, github_users u, build_host_projects bhp "
                "where gp.open = true and "
                "  gp.r_b_id = rb.id and "
@@ -32,6 +33,32 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
     sqlrow[] rows = sql_rows();
 
     foreach(ref row; rows) { openPulls[row[0]] = row; }
+}
+
+master.project loadProjectById(string projectid)
+{
+    sql_exec(text("select p.id, p.name, r.id, r.name, rb.name "
+                  "  from projects p, repositories r, repo_branches rb "
+                  " where r.id = rb.repository_id and "
+                  "       p.id = r.project_id and "
+                  "       p.id = ", projectid,
+                  " order by p.id, r.id, rb.id"));
+
+    sqlrow[] rows = sql_rows();
+
+    master.project[] projects;
+    master.project* proj = null;
+    foreach (row; rows)
+    {
+        if (!proj || proj.project_id != row[0])
+        {
+            projects ~= master.project(row[0], row[1], []);
+            proj = &(projects[$-1]);
+        }
+        proj.branches ~= master.repo_branch(row[2], row[3], row[4]);
+    }
+
+    return projects[0];
 }
 
 void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls)
@@ -229,6 +256,8 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
         sqlrow runid = recordRunStart(hostid, platform, pull);
 
+        master.project proj = loadProjectById(pull[10]);
+
         try
         {
             string path = "/home/dwebsite/pull-results/pull-" ~ runid[0];
@@ -248,6 +277,36 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
             case "2":
                 // branch, repo, url, ref, sha
                 formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", pull[9], pull[2], pull[5], pull[6], pull[4]);
+                break;
+            case "3":
+                formattedWrite(outstr, "%s\n", proj.project_name);
+                formattedWrite(outstr, "%s\n", platform);
+
+                // repo, url, ref, sha
+                formattedWrite(outstr, "%s\n%s\n%s\n%s\n", pull[2], pull[5], pull[6], pull[4]);
+
+                // list of repositories
+                formattedWrite(outstr, "%s\n", proj.branches.length);
+                foreach (p; proj.branches)
+                    formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
+
+                // steps to execute
+                //     num steps
+                //     checkout(1) dummy
+                //     merge repo
+                //     build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
+                //     test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
+                formattedWrite(outstr, "16\n");
+                formattedWrite(outstr, "1 0\n");
+                switch (pull[2])
+                {
+                    case "dmd":      formattedWrite(outstr, "%s %s\n",  9, 0); break;
+                    case "druntime": formattedWrite(outstr, "%s %s\n", 10, 1); break;
+                    case "phobos":   formattedWrite(outstr, "%s %s\n", 11, 2); break;
+                    default: assert(false, "unknown repository");
+                }
+                formattedWrite(outstr, "2 0 3 1 4 2\n");
+                formattedWrite(outstr, "5 1 6 2 7 0\n");
                 break;
             default:
                 writelog("  illegal clientver: %s", clientver);

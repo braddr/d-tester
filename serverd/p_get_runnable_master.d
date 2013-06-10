@@ -164,9 +164,17 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
             case "3":
                 formattedWrite(outstr, "%s\n", proj.project_name);
                 formattedWrite(outstr, "%s\n", platform);
+
                 formattedWrite(outstr, "%s\n", proj.branches.length);
                 foreach (p; proj.branches)
                     formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
+
+                // num steps
+                // checkout(1) dummy
+                // build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
+                // test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
+                formattedWrite(outstr, "14\n");
+                formattedWrite(outstr, "1 0 2 0 3 1 4 2 5 1 6 2 7 0\n");
                 break;
             default:
                 writelog("  illegal clientver: %s", clientver);

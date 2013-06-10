@@ -15,7 +15,7 @@ function callcurl
     if [ "$runid" == "test" ]; then
         return
     fi
-    curl --silent "http://d.puremagic.com/test-results/addv2/$1?clientver=2&$2"
+    curl --silent "http://d.puremagic.com/test-results/addv2/$1?clientver=3&$2"
 }
 
 function detectos
@@ -56,7 +56,7 @@ function detectos
 function uploadlog
 {
     if [ "$runid" != "test" ]; then
-        curl --silent -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_$runmode?clientver=2&testid=$1"
+        curl --silent -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_$runmode?clientver=3&testid=$1"
     fi
 }
 
@@ -92,48 +92,45 @@ function runtests
     fi
 
     if [ "$2" == "test" ]; then
+        data=("test" "D-Programming-Language" "$OS")
         if [ "$runmode" == "pull" ]; then
-            data=("test" "master" "dmd" "https://github.com/yebblies/dmd.git" "issue4923" "unusedsha")
-        else
-            data=("test" "master")
+            data=(${data[@]} "dmd" "https://github.com/yebblies/dmd.git" "issue4923" "unusedsha")
         fi
+        data=(${data[@]} "3" "1" "dmd" "master" "2" "druntime" "master" "3" "phobos" "master")
+        if [ "$runmode" == "pull" ]; then
+            data=(${data[@]} 16 1 0 9 0)
+        else
+            data=(${data[@]} 14 1 0)
+        fi
+        data=(${data[@]} 2 0 3 1 4 2 5 1 6 2 7 0)
     else
         data=($(callcurl get_runnable_$runmode "os=$OS&hostname=`hostname`$extraargs"))
     fi
     runid=${data[0]}
-    branch=${data[1]}
+    project=${data[1]}
+    OS=${data[2]}
+    data=(${data[@]:3})
+
     if [ "$runmode" == "pull" ]; then
-        repo=${data[2]}
-        giturl=${data[3]}
-        gitref=${data[4]}
+        repo=${data[0]}
+        giturl=${data[1]}
+        gitref=${data[2]}
         # note, sha not used
-        sha=${data[5]}
+        sha=${data[3]}
+        data=(${data[@]:4})
     fi
 
+    num_rbs=${data[0]}
+    # sets of (repoid reponame branch)
+    #repobranches=(1 dmd $branch 2 druntime $branch 3 phobos $branch)
+    repobranches=(${data[@]:1:3*$num_rbs})
+    data=(${data[@]:1+3*$num_rbs})
+
+    num_steps=${data[0]}
+    steps=(${data[@]:1:$num_steps})
+    data=(${data[@]:1+$num_steps})
+
     rundir=$runmode-$runid-$OS
-    project=D-Programming-Language
-    # pairs of (repo branch)
-    repobranches=(dmd $branch druntime $branch phobos $branch)
-    # pairs of (type rb_index)
-    if [ "$runmode" == "pull" ]; then
-        case "$repo" in
-            dmd)
-                typeid=9
-                repoid=0
-                ;;
-            druntime)
-                typeid=10
-                repoid=1
-                ;;
-            phobos)
-                typeid=11
-                repoid=2
-                ;;
-        esac
-        steps=(1 0 $typeid $repoid 2 0 3 1 4 2 5 1 6 2 7 0)
-    else
-        steps=(1 0 2 0 3 1 4 2 5 1 6 2 7 0)
-    fi
 
     if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" -o "x${runid:0:17}" == "Unable to dispatch" ]; then
         echo -e -n "Skipping run ($OS)...\r"
@@ -151,13 +148,13 @@ function runtests
     run_rc=0
     while [ $run_rc -eq 0 -a ${#steps[@]} -gt 0 ]; do
         testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}")
-        reponame=${repobranches[${steps[1]}*2]}
+        reponame=${repobranches[${steps[1]}*3 + 1]}
         case ${steps[0]} in
             1) # checkout
                 x=("${repobranches[@]}")
                 while [ ${#x[@]} -gt 0 ]; do
-                    checkoutRepeat "$rundir" "$OS" "$project" "${x[0]}" "${x[1]}"
-                    x=(${x[@]:2})
+                    checkoutRepeat "$rundir" "$OS" "$project" "${x[1]}" "${x[2]}"
+                    x=(${x[@]:3})
                 done
                 src/do_fixup.sh "$rundir" "$OS"
                 step_rc=$?

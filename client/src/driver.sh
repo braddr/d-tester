@@ -151,6 +151,7 @@ function runtests
     run_rc=0
     while [ $run_rc -eq 0 -a ${#steps[@]} -gt 0 ]; do
         testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}")
+        reponame=${repobranches[${steps[1]}*2]}
         case ${steps[0]} in
             1) # checkout
                 x=("${repobranches[@]}")
@@ -163,19 +164,19 @@ function runtests
                 logname=checkout.log
                 ;;
             2|3|4)
-                src/do_build_${repobranches[${steps[1]}*2]}.sh "$rundir" "$OS"
+                src/do_build_${reponame}.sh "$rundir" "$OS"
                 step_rc=$?
-                logname=${repobranches[${steps[1]}*2]}-build.log
+                logname=${reponame}-build.log
                 ;;
             5|6|7)
-                src/do_test_${repobranches[${steps[1]}*2]}.sh "$rundir" "$OS" "$runmode"
+                src/do_test_${reponame}.sh "$rundir" "$OS" "$runmode"
                 step_rc=$?
-                logname=${repobranches[${steps[1]}*2]}-unittest.log
+                logname=${reponame}-unittest.log
                 ;;
             9|10|11)
                 src/do_pull.sh "$rundir" "$OS" "$repo" "$giturl" "$gitref"
                 step_rc=$?
-                logname=${repobranches[${steps[1]}*2]}-merge.log
+                logname=${reponame}-merge.log
                 ;;
         esac
         uploadlog $testid $rundir $logname

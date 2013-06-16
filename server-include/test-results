@@ -86,7 +86,7 @@
 
     <tr><td>
     \sqlexec{
-        select id, menu_label, name, test_pulls, beta_only from projects order by menu_label
+        select id, menu_label, name, test_pulls, beta_only from projects where enabled=true order by menu_label
     }
     \while{\sqlrow{pid}{label}{name}{test_pulls}{beta_only}}{
         \if{

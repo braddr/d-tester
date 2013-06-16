@@ -94,6 +94,7 @@ project[] loadProjects(string hostid)
                   "  from projects p, repositories r, repo_branches rb, build_host_projects bhp "
                   " where r.id = rb.repository_id and "
                   "       p.id = r.project_id and "
+                  "       p.enabled = true and "
                   "       bhp.project_id = p.id and "
                   "       bhp.host_id = ", hostid,
                   " order by p.id, r.id, rb.id"));

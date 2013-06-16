@@ -25,6 +25,7 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
                "  p.id = r.project_id and "
                "  gp.user_id = u.id and "
                "  u.trusted = true and "
+               "  p.enabled = true and "
                "  p.test_pulls = true and "
                "  bhp.project_id = r.project_id and "
                "  bhp.host_id = ", hostid);

@@ -101,7 +101,7 @@ class Project
 
 Project[ulong] loadProjects()
 {
-    sql_exec(text("select id, name, test_pulls from projects"));
+    sql_exec(text("select id, name, test_pulls from projects where enabled = true"));
 
     sqlrow[] rows = sql_rows();
 

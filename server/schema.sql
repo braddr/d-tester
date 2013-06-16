@@ -82,6 +82,7 @@ create table if not exists projects
     project_url       varchar(128) not null,
     test_pulls        bool         not null,
     beta_only         bool         not null,
+    enabled           bool         not null,
 
     primary key(id),
     index (name)

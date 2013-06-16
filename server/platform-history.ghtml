@@ -4,6 +4,19 @@
 \validateURLParameter{projectid}
 \validateURLParameterString{os}
 
+\set{Linux_32}{Linux 32}
+\set{Linux_32_64}{Linux 32/64}
+\set{Linux_64_32}{Linux 64/32}
+\set{Linux_64_64}{Linux 64}
+\set{FreeBSD_32}{FreeBSD 32}
+\set{FreeBSD_64}{FreeBSD 64}
+\set{FreeBSD_32_64}{FreeBSD 32/64}
+\set{FreeBSD_64_32}{FreeBSD 64/32}
+\set{Darwin_32}{OSX 32}
+\set{Darwin_64_64}{OSX 64}
+\set{Win_32}{Windows 32}
+\set{Win_64}{Windows 64}
+
 \pageHeader{60}{\get{projectid}}{
     <link rel="stylesheet" href="/test-results/css/history.css" type="text/css">
 }
@@ -171,18 +184,6 @@
         \resetResultSet
     }
 }}
-
-\set{Linux_32}{Linux 32}
-\set{Linux_32_64}{Linux 32/64}
-\set{Linux_64_32}{Linux 64/32}
-\set{Linux_64_64}{Linux 64}
-\set{FreeBSD_32}{FreeBSD 32}
-\set{FreeBSD_64}{FreeBSD 64}
-\set{FreeBSD_32_64}{FreeBSD 32/64}
-\set{FreeBSD_64_32}{FreeBSD 64/32}
-\set{Darwin_32}{OSX 32}
-\set{Win_32}{Windows 32}
-\set{Win_64}{Windows 64}
 
 <table class="history runs first">
 <tr>

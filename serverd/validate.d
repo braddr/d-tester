@@ -117,3 +117,20 @@ bool validate_testtype(ref string type, Appender!string outstr)
     return true;
 }
 
+bool validate_clientver(ref string clientver, Appender!string outstr)
+{
+    if (!validate_id(clientver, "clientver", outstr))
+        return false;
+
+    switch (clientver)
+    {
+        case "1":
+        case "2":
+        case "3":
+            return true;
+        default:
+            formattedWrite(outstr, "bad input: unknown clientver: %s\n", clientver);
+            return false;
+    }
+}
+

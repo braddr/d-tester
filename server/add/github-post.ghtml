@@ -8,14 +8,33 @@ Content-type: text/plain
 }#
 \set{r_b_id}{}#
 \set{project_id}{}#
-\if{\strindex{\get{payload}}{refs/heads/master}}{
-    \set{r_b_id}{1, 2, 3}
-    \set{project_id}{1}
-}#
-\if{\strindex{\get{payload}}{refs/heads/staging}}{
-    \set{r_b_id}{4, 5, 6}
-    \set{project_id}{4}
-}#
+\if{\strindex{\get{payload}}{"organization":"D-Programming-Language"}}{
+    \if{\strindex{\get{payload}}{refs/heads/master}}{
+        \set{r_b_id}{1, 2, 3}
+        \set{project_id}{1}
+    }#
+    \if{\strindex{\get{payload}}{refs/heads/staging}}{
+        \set{r_b_id}{4, 5, 6}
+        \set{project_id}{4}
+    }#
+    \if{\strindex{\get{payload}}{refs/heads/2.061}}{
+        \set{r_b_id}{7, 8, 9}
+        \set{project_id}{5}
+    }#
+    \if{\strindex{\get{payload}}{refs/heads/2.062}}{
+        \set{r_b_id}{10, 11, 12}
+        \set{project_id}{6}
+    }#
+    \if{\strindex{\get{payload}}{refs/heads/2.063}}{
+        \set{r_b_id}{14, 15, 16}
+        \set{project_id}{7}
+    }#
+}{\if{\strindex{\get{payload}}{"organization":"D-Programming-GDC"}}{
+    \if{\strindex{\get{payload}}{refs/heads/master}}{
+        \set{r_b_id}{13}
+        \set{project_id}{2}
+    }#
+}}#
 \if{\not{\get{r_b_id}}}{
     \exit
 }#

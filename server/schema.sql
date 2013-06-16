@@ -163,6 +163,7 @@ create table if not exists build_hosts
     owner_email       varchar(128) not null,
     enabled           bool         not null,
     last_heard_from   datetime,
+    clientver         int,
 
     primary key(id),
     key(ipaddr)
@@ -184,6 +185,16 @@ create table if not exists capabilities
     name              varchar(128) not null,
 
     primary key(id)
+);
+
+create table if not exists build_host_projects
+(
+    id                int          not null auto_increment,
+    project_id        int          not null,
+    host_id           int          not null,
+
+    primary key(host_id, project_id),
+    key(id)
 );
 
 create table if not exists test_types

@@ -1,4 +1,4 @@
-module p_finish_pull_test;
+module p_finish_master_test;
 
 import mysql;
 import serverd;
@@ -11,7 +11,7 @@ import std.range;
 
 bool validate_testState(string testid, ref string hostid, Appender!string outstr)
 {
-    if (!sql_exec(text("select ptd.id, ptr.host_id, ptr.end_time, ptd.end_time from pull_test_runs ptr, pull_test_data ptd where ptd.id = ", testid, " and ptd.test_run_id = ptr.id")))
+    if (!sql_exec(text("select td.id, tr.host_id, tr.end_time, td.end_time from test_runs tr, test_data td where td.id = ", testid, " and td.test_run_id = tr.id")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -67,6 +67,6 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         return;
 
     updateHostLastCheckin(hostid, clientver);
-    sql_exec(text("update pull_test_data set end_time=now(), rc=", rc, " where id=", testid));
+    sql_exec(text("update test_data set end_time=now(), rc=", rc, " where id=", testid));
 }
 

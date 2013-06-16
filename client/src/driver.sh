@@ -3,27 +3,19 @@
 # set -x
 shopt -s extglob
 
-# start_run.ghtml?os=##              --> new run id, optional addition: force=1
-# start_test.ghtml?runid=##&type=##" --> new test id
-# finish_test.ghtml?testid=7&rc=100  --> nothing
-# finish_run.ghtml?runid=##          --> nothing
+# get_runnable_master_run.ghtml?os=##       --> new run id, optional addition: force=1
+# start_master_test.ghtml?runid=##&type=##" --> new test id
+# finish_master_test.ghtml?testid=7&rc=100  --> nothing
+# finish_master_run.ghtml?runid=##          --> nothing
 
 # $1 == api
 # $2 == arguments
 function callcurl
 {
     if [ "$runid" == "test" ]; then
-        return;
+        return
     fi
-    curl --silent "http://d.puremagic.com/test-results/add/$1.ghtml?$2"
-}
-
-function callcurlv2
-{
-    if [ "$runid" == "test" ]; then
-        return;
-    fi
-    curl --silent "http://d.puremagic.com/test-results/addv2/$1?$2"
+    curl --silent "http://d.puremagic.com/test-results/addv2/$1?clientver=3&$2"
 }
 
 function detectos
@@ -64,8 +56,25 @@ function detectos
 function uploadlog
 {
     if [ "$runid" != "test" ]; then
-        curl --silent -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_master?testid=$1"
+        curl --silent -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_$runmode?clientver=3&testid=$1"
     fi
+}
+
+# $1 == rundir
+# $2 == OS
+# $3 == project
+# $4 == repository
+# $5 == branch
+function checkoutRepeat
+{
+    rc=1
+    while [ $rc -ne 0 ]; do
+        src/do_checkout.sh "$1" "$2" "$3" "$4" "$5"
+        rc=$?
+        if [ $rc -ne 0 ]; then
+            sleep 60
+        fi
+    done
 }
 
 # $1 == OS
@@ -73,6 +82,7 @@ function uploadlog
 #   null: allow the service to determine if the test should run
 #   test: do a local only test run
 #   force: tell the service to execute a run even if there haven't been changes
+#     -- force has no meaning for runmode == pull right now
 function runtests
 {
     OS=$1
@@ -81,109 +91,131 @@ function runtests
         extraargs="&force=1"
     fi
 
-    if [ "$2" == "test" ]; then
-        runid=test
-        rundir=test-$OS
-        branch=staging
-    else
-        data=($(callcurlv2 get_runnable_master "os=$OS&hostname=`hostname`&supportprojects=true$extraargs"));
-        runid=${data[0]}
-        data=(${data[@]:1})
-        rundir=$runid
-        if [ ${#data[*]} != 0 ]; then
-            branch=${data[0]}
-            data=(${data[@]:1})
-        else
-            branch=master
+    if [ "$2" == "test-DMD" ]; then
+        data=("test" "D-Programming-Language" "$OS")
+        if [ "$runmode" == "pull" ]; then
+            data=(${data[@]} "dmd" "https://github.com/yebblies/dmd.git" "issue4923" "unusedsha")
         fi
+        data=(${data[@]} "3" "1" "dmd" "master" "2" "druntime" "master" "3" "phobos" "master")
+        if [ "$runmode" == "pull" ]; then
+            data=(${data[@]} 16 1 0 9 0)
+        else
+            data=(${data[@]} 14 1 0)
+        fi
+        data=(${data[@]} 2 0 3 1 4 2 5 1 6 2 7 0)
+    elif [ "$2" == "test-GDC" ]; then
+        data=("test" "D-Programming-GDC" "$OS")
+        if [ "$runmode" == "pull" ]; then
+            # fix
+            data=(${data[@]} "dmd" "https://github.com/yebblies/dmd.git" "issue4923" "unusedsha")
+        fi
+        data=(${data[@]} "1" "13" "GDC" "master")
+        if [ "$runmode" == "pull" ]; then
+            data=(${data[@]} 8 1 0 14 0)
+        else
+            data=(${data[@]} 6 1 0)
+        fi
+        data=(${data[@]} 12 0 13 0)
+    else
+        data=($(callcurl get_runnable_$runmode "os=$OS&hostname=`hostname`$extraargs"))
+    fi
+    runid=${data[0]}
+    project=${data[1]}
+    OS=${data[2]}
+    data=(${data[@]:3})
+
+    if [ "$runmode" == "pull" ]; then
+        repo=${data[0]}
+        giturl=${data[1]}
+        gitref=${data[2]}
+        # note, sha not used
+        sha=${data[3]}
+        data=(${data[@]:4})
     fi
 
-    if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" ]; then
-        echo -e -n "Skipping run...\r"
+    num_rbs=${data[0]}
+    # sets of (repoid reponame branch)
+    #repobranches=(1 dmd $branch 2 druntime $branch 3 phobos $branch)
+    repobranches=(${data[@]:1:3*$num_rbs})
+    data=(${data[@]:1+3*$num_rbs})
+
+    num_steps=${data[0]}
+    steps=(${data[@]:1:$num_steps})
+    data=(${data[@]:1+$num_steps})
+
+    rundir=$runmode-$runid-$OS
+
+    if [ "x$runid" == "xskip" -o "x$runid" == "x" -o "x${runid:0:9}" == "x<!DOCTYPE" -o "x${runid:0:17}" == "Unable to dispatch" ]; then
+        echo -e -n "Skipping run ($OS)...\r"
         run_rc=2
         return
-    else
-        pretest
-        echo "Starting run $runid, platform $OS, branch $branch."
     fi
+
+    pretest
+    echo -e "\nStarting run $runid ($OS), project: $project"
 
     if [ ! -d $rundir ]; then
         mkdir "$rundir"
     fi
 
-    testid=$(callcurl start_test "runid=$runid&type=1")
-
-    rc=1
-    while [ $rc -ne 0 ]; do
-        src/do_checkout.sh "$rundir" "$OS" "$branch"
-        rc=$?
-        if [ $rc -ne 0 ]; then
-            sleep 60
+    run_rc=0
+    while [ $run_rc -eq 0 -a ${#steps[@]} -gt 0 ]; do
+        testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}")
+        reponame=${repobranches[${steps[1]}*3 + 1]}
+        case ${steps[0]} in
+            1) # checkout
+                x=("${repobranches[@]}")
+                while [ ${#x[@]} -gt 0 ]; do
+                    checkoutRepeat "$rundir" "$OS" "$project" "${x[1]}" "${x[2]}"
+                    x=(${x[@]:3})
+                done
+                src/do_fixup.sh "$rundir" "$OS" "$project"
+                step_rc=$?
+                logname=checkout.log
+                ;;
+            2|3|4|12)
+                src/do_build_${reponame}.sh "$rundir" "$OS"
+                step_rc=$?
+                logname=${reponame}-build.log
+                ;;
+            5|6|7|13)
+                src/do_test_${reponame}.sh "$rundir" "$OS" "$runmode"
+                step_rc=$?
+                logname=${reponame}-unittest.log
+                ;;
+            9|10|11|14)
+                src/do_pull.sh "$rundir" "$OS" "$repo" "$giturl" "$gitref"
+                step_rc=$?
+                logname=${reponame}-merge.log
+                ;;
+        esac
+        uploadlog $testid $rundir $logname
+        callcurl finish_${runmode}_test "testid=$testid&rc=$step_rc"
+        steps=(${steps[@]:2})
+        if [ "$runmode" == "pull" -a $step_rc -ne 0 ]; then
+            run_rc=1
         fi
     done
-    uploadlog $testid $rundir checkout.log
-    callcurl finish_test "testid=$testid&rc=$rc"
-    if [ $rc -eq 0 ]; then
 
-        src/do_fixup.sh "$rundir" "$OS"
-        #uploadlog $testid $rundir checkout.log
+    #testid=$(callcurl start_${runmode}_test "runid=$runid&type=8")
+    #src/do_html_phobos.sh "$rundir" "$OS"
+    #html_dmd_rc=$?
+    #uploadlog $testid $rundir phobos-html.log
+    # todo: should be condition on test mode
+    #rsync --archive --compress --delete $rundir/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
+    #callcurl finish_${runmode}_test "testid=$testid&rc=$html_dmd_rc"
 
-        testid=$(callcurl start_test "runid=$runid&type=2")
-        src/do_build_dmd.sh "$rundir" "$OS"
-        build_dmd_rc=$?
-        uploadlog $testid $rundir dmd-build.log
-        callcurl finish_test "testid=$testid&rc=$build_dmd_rc"
-
-        testid=$(callcurl start_test "runid=$runid&type=3")
-        src/do_build_druntime.sh "$rundir" "$OS"
-        build_druntime_rc=$?
-        uploadlog $testid $rundir druntime-build.log
-        callcurl finish_test "testid=$testid&rc=$build_druntime_rc"
-
-        testid=$(callcurl start_test "runid=$runid&type=4")
-        src/do_build_phobos.sh "$rundir" "$OS"
-        build_phobos_rc=$?
-        uploadlog $testid $rundir phobos-build.log
-        callcurl finish_test "testid=$testid&rc=$build_phobos_rc"
-
-        testid=$(callcurl start_test "runid=$runid&type=5")
-        src/do_test_druntime.sh "$rundir" "$OS"
-        test_druntime_rc=$?
-        uploadlog $testid $rundir druntime-unittest.log
-        callcurl finish_test "testid=$testid&rc=$test_druntime_rc"
-
-        testid=$(callcurl start_test "runid=$runid&type=6")
-        src/do_test_phobos.sh "$rundir" "$OS"
-        test_phobos_rc=$?
-        uploadlog $testid $rundir phobos-unittest.log
-        callcurl finish_test "testid=$testid&rc=$test_phobos_rc"
-
-        testid=$(callcurl start_test "runid=$runid&type=7")
-        src/do_test_dmd.sh "$rundir" "$OS"
-        test_dmd_rc=$?
-        uploadlog $testid $rundir dmd-unittest.log
-        callcurl finish_test "testid=$testid&rc=$test_dmd_rc"
-
-        #testid=$(callcurl start_test "runid=$runid&type=8")
-        #src/do_html_phobos.sh "$rundir" "$OS"
-        #html_dmd_rc=$?
-        #uploadlog $testid $rundir phobos-html.log
-        # todo: should be condition on test mode
-        #rsync --archive --compress --delete $rundir/phobos/web/2.0 dwebsite:/home/dwebsite/test-results/docs/$OS
-        #callcurl finish_test "testid=$testid&rc=$html_dmd_rc"
-
-    fi
-
-    callcurl finish_run "runid=$runid"
+    callcurl finish_${runmode}_run "runid=$runid"
+    echo -e "\trun_rc=$run_rc"
 
     if [ -d "$rundir" -a "$runid" != "test" ]; then
         rm -rf "$rundir"
     fi
-
-    run_rc=0
 }
 
 platforms=($(detectos))
+runmode=master
+
 function pretest
 {
     return
@@ -191,6 +223,11 @@ function pretest
 
 if [ -f configs/`hostname` ]; then
     . configs/`hostname`
+fi
+
+if [ "$1" == "pull" ]; then
+    runmode=pull
+    shift
 fi
 
 rc=2

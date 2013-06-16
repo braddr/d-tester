@@ -86,7 +86,7 @@
 
     <tr><td>
     \sqlexec{
-        select id, menu_label, name, test_pulls, beta_only from projects order by menu_label
+        select id, menu_label, name, test_pulls, beta_only from projects where enabled=true order by menu_label
     }
     \while{\sqlrow{pid}{label}{name}{test_pulls}{beta_only}}{
         \if{
@@ -98,7 +98,7 @@
             \if{
                 \eq{\get{projectid}}{\get{pid}}
             }{
-                \drawSubMenu{platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}}{\get{os} History}{\get{show_history_submenu}}{\get{show_history_submenu}}
+                \drawSubMenu{platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}}{\get{\get{os}}\ History}{\get{show_history_submenu}}{\get{show_history_submenu}}
 
                 \drawSubMenu{pulls.ghtml?projectid=\get{pid}}{Pull Requests}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|pulls}}{\eq{\get{test_pulls}}{1}}
 

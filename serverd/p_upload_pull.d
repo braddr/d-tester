@@ -39,11 +39,13 @@ bool validate_testState(string testid, ref string hostid, ref string testtypeid,
     return true;
 }
 
-bool validateInput(ref string raddr, ref string hostid, ref string testid, ref string runid, ref string testtypeid, Appender!string outstr)
+bool validateInput(ref string raddr, ref string hostid, ref string testid, ref string runid, ref string testtypeid, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
         return false;
     if (!validate_id(testid, "testid", outstr))
+        return false;
+    if (!validate_clientver(clientver, outstr))
         return false;
 
     if (!validate_testState(testid, hostid, testtypeid, runid, outstr))
@@ -101,16 +103,17 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     formattedWrite(outstr, "Content-type: text/plain\n\n");
 
     string raddr = lookup(hash, "REMOTE_ADDR");
-    string hostid;
     string testid = lookup(userhash, "testid");
+    string clientver = lookup(userhash, "clientver");
     string logcontents = lookup(userhash, "REQUEST_BODY");
+    string hostid;
     string runid;
     string testtypeid;
 
-    if (!validateInput(raddr, hostid, testid, runid, testtypeid, outstr))
+    if (!validateInput(raddr, hostid, testid, runid, testtypeid, clientver, outstr))
         return;
 
-    updateHostLastCheckin(hostid);
+    updateHostLastCheckin(hostid, clientver);
 
     if (!storeResults(runid, testtypeid, logcontents, outstr))
         return;

@@ -13,6 +13,7 @@
     <th>Platform</th>
     <th>Project</th>
     <th>Build</th>
+    <th>CVer</th>
 </tr>
 
 #\sqlexec{
@@ -33,7 +34,8 @@
            ip.r_name,
            ip.pull_id,
            ip.p_name,
-           ip.p_id
+           ip.p_id,
+           bh.clientver
       from build_hosts bh left join
            (
                select ptr.id as run_id,
@@ -77,7 +79,7 @@
 }
 
 
-\while{\sqlrow{h_id}{h_name}{h_ipaddr}{h_email}{h_date}{h_diff}{h_late}{ip_runid}{ip_platform}{ip_repo_name}{ip_pull_id}{p_name}{p_id}}{
+\while{\sqlrow{h_id}{h_name}{h_ipaddr}{h_email}{h_date}{h_diff}{h_late}{ip_runid}{ip_platform}{ip_repo_name}{ip_pull_id}{p_name}{p_id}{h_clientver}}{
     <tr class="\if{\eq{\get{h_enabled}}{1}}{enabled}{disabled}">
         <td>\get{h_name}</td>
         <td>\get{h_ipaddr}</td>
@@ -94,6 +96,7 @@
         }{
             <td colspan="2">idle</td>
         }
+        <td>\get{h_clientver}</td>
     </tr>
 }
 </table>

@@ -7,7 +7,7 @@ while [ 1 ]; do
 
     ./src/driver.sh
     if [ $? -eq 2 ]; then
-        ./src/driver-pull.sh pull
+        ./src/driver.sh pull
         if [ $? -eq 2 ]; then
             sleep 60
         fi

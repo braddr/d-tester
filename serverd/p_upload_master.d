@@ -71,6 +71,9 @@ string mapTTIDtoFilename(string testtypeid)
         case 9:  return "dmd-merge.log";
         case 10: return "druntime-merge.log";
         case 11: return "phobos-merge.log";
+        case 12: return "GDC-build.log";
+        case 13: return "GDC-unittest.log";
+        case 14: return "GDC-merge.log";
         default: return "";
     }
 }

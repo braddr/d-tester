@@ -37,6 +37,9 @@
 }
 \set{numtypes}{\i}
 
+\sqlexec{select name from projects where id = \get{projectid}}
+\ignore{\sqlrow{projectname}}
+
 # no inputs, clears a result set
 \set{resetResultSet}{\quote{
     \set{i}{1}
@@ -101,20 +104,27 @@
         <td class="result \resultClass{1} checkout">
             \href{\resultText{1}{\get{result_dur_1}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=1}</td>
 
-        <td class="result \resultClass{2} dmdbuild" title="\get{result_dur_2}">
-            \href{\resultText{2}{\get{result_dur_2}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=2}</td>
-        <td class="result \resultClass{7} dmdtest"  title="\get{result_dur_7}">
-            \href{\resultText{7}{\get{result_dur_7}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=7}</td>
+        \if{\eq{\get{projectname}}{D-Programming-Language}}{
+            <td class="result \resultClass{2} dmdbuild" title="\get{result_dur_2}">
+                \href{\resultText{2}{\get{result_dur_2}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=2}</td>
+            <td class="result \resultClass{7} dmdtest"  title="\get{result_dur_7}">
+                \href{\resultText{7}{\get{result_dur_7}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=7}</td>
 
-        <td class="result \resultClass{3} druntimebuild" title="\get{result_dur_3}">
-            \href{\resultText{3}{\get{result_dur_3}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=3}</td>
-        <td class="result \resultClass{5} druntimetest"  title="\get{result_dur_5}">
-            \href{\resultText{5}{\get{result_dur_5}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=5}</td>
+            <td class="result \resultClass{3} druntimebuild" title="\get{result_dur_3}">
+                \href{\resultText{3}{\get{result_dur_3}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=3}</td>
+            <td class="result \resultClass{5} druntimetest"  title="\get{result_dur_5}">
+                \href{\resultText{5}{\get{result_dur_5}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=5}</td>
 
-        <td class="result \resultClass{4} phobosbuild" title="\get{result_dur_4}">
-            \href{\resultText{4}{\get{result_dur_4}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=4}</td>
-        <td class="result \resultClass{6} phobostest"  title="\get{result_dur_6}">
-            \href{\resultText{6}{\get{result_dur_6}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=6}</td>
+            <td class="result \resultClass{4} phobosbuild" title="\get{result_dur_4}">
+                \href{\resultText{4}{\get{result_dur_4}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=4}</td>
+            <td class="result \resultClass{6} phobostest"  title="\get{result_dur_6}">
+                \href{\resultText{6}{\get{result_dur_6}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=6}</td>
+        }{ \if{\eq{\get{projectname}}{D-Programming-GDC}}{
+            <td class="result \resultClass{12} dmdbuild" title="\get{result_dur_12}">
+                \href{\resultText{12}{\get{result_dur_12}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=12}</td>
+            <td class="result \resultClass{13} dmdtest"  title="\get{result_dur_13}">
+                \href{\resultText{13}{\get{result_dur_13}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=13}</td>
+        }}
     </tr>
 }}
 
@@ -189,12 +199,17 @@
 <tr>
     <th>Time (duration)</th>
     <th>Checkout</th>
-    <th>DMD Build</th>
-    <th>DMD Test</th>
-    <th>Runtime Build</th>
-    <th>Runtime Test</th>
-    <th>Phobos Build</th>
-    <th>Phobos Test</th>
+    \if{\eq{\get{projectname}}{D-Programming-Language}}{
+        <th>DMD Build</th>
+        <th>DMD Test</th>
+        <th>Runtime Build</th>
+        <th>Runtime Test</th>
+        <th>Phobos Build</th>
+        <th>Phobos Test</th>
+    }{ \if{\eq{\get{projectname}}{D-Programming-GDC}}{
+        <th>GDC Build</th>
+        <th>GDC Test</th>
+    }}
 </tr>
 \draw{\get{os}}
 </table>

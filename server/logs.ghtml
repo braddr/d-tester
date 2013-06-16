@@ -17,6 +17,9 @@
 \set{file_9}{dmd-merge}
 \set{file_10}{druntime-merge}
 \set{file_11}{phobos-merge}
+\set{file_12}{GDC-build}
+\set{file_13}{GDC-unittest}
+\set{file_14}{GDC-merge}
 
 \set{filename}{/test-results/logs/\get{runid}/\get{file_\get{logid}}.log}
 <pre>

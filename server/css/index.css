@@ -129,6 +129,10 @@ table.summary tr.phobos td {
     padding-bottom: 3px;
 }
 
+table.summary tr.GDC td {
+    padding-bottom: 3px;
+}
+
 table.summary td.historyPassed {
     background: #CAFF70;
 }
@@ -142,7 +146,6 @@ table.summary td.selected {
 }
 
 table.summary td.metadata,td.header {
-    padding-left:
     font-weight: normal;
     text-align: left;
 }

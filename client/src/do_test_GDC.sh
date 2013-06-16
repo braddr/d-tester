@@ -13,7 +13,7 @@ if [ -f configs/`hostname` ]; then
     . configs/`hostname`
 fi
 
-echo -e "\ttesting dmd"
+echo -e "\ttesting GDC"
 
 makecmd=make
 MODEL=32
@@ -54,10 +54,10 @@ fi
 
 cd $1/GDC/output-dir
 
-make check-d
+$makecmd $EXTRA_ARGS check-d >> ../../GDC-unittest.log 2>&1
 
 if [ $? -ne 0 ]; then
-    echo -e "\tdmd tests had failures"
+    echo -e "\tGDC tests had failures"
     exit 1;
 fi
 

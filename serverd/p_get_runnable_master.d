@@ -169,12 +169,29 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
                 foreach (p; proj.branches)
                     formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
 
-                // num steps
-                // checkout(1) dummy
-                // build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
-                // test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
-                formattedWrite(outstr, "14\n");
-                formattedWrite(outstr, "1 0 2 0 3 1 4 2 5 1 6 2 7 0\n");
+                switch (proj.project_name)
+                {
+                    case "D-Programming-Language":
+                        // num steps
+                        // checkout(1) dummy
+                        // build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
+                        // test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
+                        formattedWrite(outstr, "14\n");
+                        formattedWrite(outstr, "1 0 2 0 3 1 4 2 5 1 6 2 7 0\n");
+                        break;
+                    case "D-Programming-GDC":
+                        // num steps
+                        // checkout(1) dummy
+                        // build(12) gdc(0)
+                        // test(13) gdc(0)
+                        formattedWrite(outstr, "6\n");
+                        formattedWrite(outstr, "1 0 12 0 13 0\n");
+                        break;
+                    default:
+                        writelog ("  unknown project: %s", proj.project_name);
+                        outstr.put("skip\n");
+                        break;
+                }
                 break;
             default:
                 writelog("  illegal clientver: %s", clientver);

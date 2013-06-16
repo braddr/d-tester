@@ -91,7 +91,7 @@ function runtests
         extraargs="&force=1"
     fi
 
-    if [ "$2" == "test" ]; then
+    if [ "$2" == "test-DMD" ]; then
         data=("test" "D-Programming-Language" "$OS")
         if [ "$runmode" == "pull" ]; then
             data=(${data[@]} "dmd" "https://github.com/yebblies/dmd.git" "issue4923" "unusedsha")
@@ -103,6 +103,19 @@ function runtests
             data=(${data[@]} 14 1 0)
         fi
         data=(${data[@]} 2 0 3 1 4 2 5 1 6 2 7 0)
+    elif [ "$2" == "test-GDC" ]; then
+        data=("test" "D-Programming-GDC" "$OS")
+        if [ "$runmode" == "pull" ]; then
+            # fix
+            data=(${data[@]} "dmd" "https://github.com/yebblies/dmd.git" "issue4923" "unusedsha")
+        fi
+        data=(${data[@]} "1" "13" "GDC" "master")
+        if [ "$runmode" == "pull" ]; then
+            data=(${data[@]} 8 1 0 14 0)
+        else
+            data=(${data[@]} 6 1 0)
+        fi
+        data=(${data[@]} 12 0 13 0)
     else
         data=($(callcurl get_runnable_$runmode "os=$OS&hostname=`hostname`$extraargs"))
     fi
@@ -156,21 +169,21 @@ function runtests
                     checkoutRepeat "$rundir" "$OS" "$project" "${x[1]}" "${x[2]}"
                     x=(${x[@]:3})
                 done
-                src/do_fixup.sh "$rundir" "$OS"
+                src/do_fixup.sh "$rundir" "$OS" "$project"
                 step_rc=$?
                 logname=checkout.log
                 ;;
-            2|3|4)
+            2|3|4|12)
                 src/do_build_${reponame}.sh "$rundir" "$OS"
                 step_rc=$?
                 logname=${reponame}-build.log
                 ;;
-            5|6|7)
+            5|6|7|13)
                 src/do_test_${reponame}.sh "$rundir" "$OS" "$runmode"
                 step_rc=$?
                 logname=${reponame}-unittest.log
                 ;;
-            9|10|11)
+            9|10|11|14)
                 src/do_pull.sh "$rundir" "$OS" "$repo" "$giturl" "$gitref"
                 step_rc=$?
                 logname=${reponame}-merge.log

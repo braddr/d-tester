@@ -290,23 +290,48 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
                 foreach (p; proj.branches)
                     formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
 
-                // steps to execute
-                //     num steps
-                //     checkout(1) dummy
-                //     merge repo
-                //     build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
-                //     test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
-                formattedWrite(outstr, "16\n");
-                formattedWrite(outstr, "1 0\n");
-                switch (pull[2])
+                switch (proj.project_name)
                 {
-                    case "dmd":      formattedWrite(outstr, "%s %s\n",  9, 0); break;
-                    case "druntime": formattedWrite(outstr, "%s %s\n", 10, 1); break;
-                    case "phobos":   formattedWrite(outstr, "%s %s\n", 11, 2); break;
-                    default: assert(false, "unknown repository");
+                    case "D-Programming-Language":
+                        // steps to execute
+                        //     num steps
+                        //     checkout(1) dummy
+                        //     merge(9|10|11) repo(0|1|2)
+                        //     build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
+                        //     test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
+                        formattedWrite(outstr, "16\n");
+                        formattedWrite(outstr, "1 0\n");
+                        switch (pull[2])
+                        {
+                            case "dmd":      formattedWrite(outstr, "%s %s\n",  9, 0); break;
+                            case "druntime": formattedWrite(outstr, "%s %s\n", 10, 1); break;
+                            case "phobos":   formattedWrite(outstr, "%s %s\n", 11, 2); break;
+                            default: assert(false, "unknown repository");
+                        }
+                        formattedWrite(outstr, "2 0 3 1 4 2\n");
+                        formattedWrite(outstr, "5 1 6 2 7 0\n");
+                        break;
+                    case "D-Programming-GDC":
+                        // steps to execute
+                        //     num steps
+                        //     checkout(1) dummy
+                        //     merge(14) repo(0)
+                        //     build(12) gdc(0)
+                        //     test(13) gdc(0)
+                        formattedWrite(outstr, "8\n");
+                        formattedWrite(outstr, "1 0\n");
+                        switch (pull[2])
+                        {
+                            case "GDC":      formattedWrite(outstr, "%s %s\n", 14, 0); break;
+                            default: assert(false, "unknown repository");
+                        }
+                        formattedWrite(outstr, "12 0 13 0\n");
+                        break;
+                    default:
+                        writelog ("  unknown project: %s", proj.project_name);
+                        outstr.put("skip\n");
+                        break;
                 }
-                formattedWrite(outstr, "2 0 3 1 4 2\n");
-                formattedWrite(outstr, "5 1 6 2 7 0\n");
                 break;
             default:
                 writelog("  illegal clientver: %s", clientver);

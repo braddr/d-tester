@@ -59,9 +59,9 @@ cd $1/dmd/test
 
 $makecmd MODEL=$MODEL test_results/d_do_test >> ../../dmd-unittest.log 2>&1
 if [ ! -z "$ARGS" ]; then
-    $makecmd MODEL=$MODEL $EXTRA_ARGS ARGS="$ARGS" >> ../../dmd-unittest.log 2>&1
+    $makecmd MODEL=$MODEL $EXTRA_ARGS RESULTS_DIR=generated ARGS="$ARGS" >> ../../dmd-unittest.log 2>&1
 else
-    $makecmd MODEL=$MODEL $EXTRA_ARGS >> ../../dmd-unittest.log 2>&1
+    $makecmd MODEL=$MODEL $EXTRA_ARGS RESULTS_DIR=generated >> ../../dmd-unittest.log 2>&1
 fi
 
 if [ $? -ne 0 ]; then

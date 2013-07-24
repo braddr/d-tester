@@ -31,12 +31,19 @@ if [ $? -ne 0 ]; then
 fi
 
 echo >> $top/$1/$3-merge.log
-echo "fetching contents of $4" >> $top/$1/$3-merge.log 2>&1
-git fetch topull         >> $top/$1/$3-merge.log 2>&1
-if [ $? -ne 0 ]; then
+N=3;
+for i in `seq 1 $N`; do
+    echo "fetching contents of $4 (attempt: $i/$N)" >> $top/$1/$3-merge.log 2>&1
+    git fetch topull         >> $top/$1/$3-merge.log 2>&1
+    if [ $? -eq 0 ]; then
+        break
+    fi
     echo -e "\tfailed to fetch from pull repo"
-    exit 1
-fi
+    if [ $i -eq $N ]; then
+        exit 1
+    fi
+    sleep 5
+done
 
 echo >> $top/$1/$3-merge.log
 echo "merging topull/$5" >> $top/$1/$3-merge.log

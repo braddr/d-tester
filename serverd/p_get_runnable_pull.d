@@ -88,6 +88,28 @@ void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls
     }
 }
 
+void filterSuppressedBuilds(string platform, ref sqlrow[string] openPulls)
+{
+    // get all suppressions for the given platform
+    sql_exec(text("select s.id, s.g_p_id "
+                  "from pull_suppressions s "
+                  "where s.platform='", platform, "'"));
+    sqlrow[] rows = sql_rows();
+
+    // remove entries from openPulls
+    foreach (row; rows)
+    {
+        //writelog("g_p_id = %s", row[1]);
+
+        sqlrow* pull = row[1] in openPulls;
+        if (pull == null)
+            continue; // old suppression
+
+        writelog("  suppressed build for pull id: %s/%s (%s)", (*pull)[2], (*pull)[3], row[1]);
+        openPulls.remove(row[1]);
+    }
+}
+
 alias int[2] stat;
 stat[string] loadCurrentRunStatistics()
 {
@@ -250,6 +272,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     loadAllOpenRequests(openPulls, hostid);
 
     filterAlreadyCompleteRequests(platform, openPulls);
+    filterSuppressedBuilds(platform, openPulls);
 
     if (openPulls.length > 0)
     {

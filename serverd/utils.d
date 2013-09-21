@@ -225,7 +225,7 @@ bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responsehe
         curl_easy_setopt(curl, CurlOption.writeheader, &responseheaders);
 
         curl_easy_setopt(curl, CurlOption.stderr, fp.getFP());
-        curl_easy_setopt(curl, CurlOption.verbose, 1);
+        curl_easy_setopt(curl, CurlOption.verbose, 0);
 
         curl_easy_setopt(curl, CurlOption.url, toStringz(url));
         CURLcode res = curl_easy_perform(curl);

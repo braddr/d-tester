@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# set -x
+
 # args:
 #    1) directory for build
 #    2) os
@@ -37,11 +39,22 @@ case "$3" in
                 ;;
             stub)
                 ;;
-            Win_32|Win_64)
+            Win_32)
                 cp src/sc$2.ini $1/dmd/src/sc.ini
 
                 # move minit.obj to be newer than minit.asm
                 touch $1/druntime/src/rt/minit.obj
+                ;;
+            Win_64)
+                cp src/sc$2.ini $1/dmd/src/sc.ini
+
+                # move minit.obj to be newer than minit.asm
+                touch $1/druntime/src/rt/minit.obj
+
+                # fix win64.mak to use right version of VS
+                (cd $1/dmd; patch -p1 < ../../src/diff-dmd-win64.diff)
+                (cd $1/druntime; patch -p1 < ../../src/diff-druntime-win64.diff)
+                (cd $1/phobos; patch -p1 < ../../src/diff-phobos-win64.diff)
                 ;;
         esac
         ;;

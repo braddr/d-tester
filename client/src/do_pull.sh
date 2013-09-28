@@ -23,6 +23,10 @@ echo -e "\tmerging pull: $3 $4 $5"
 
 cd $top/$1/$3
 
+if [ "$2" == "Win_64" ]; then
+    git stash --quiet
+fi
+
 echo "setting up remote topull -> $4" >> $top/$1/$3-merge.log 2>&1
 git remote add topull $4 >> $top/$1/$3-merge.log 2>&1
 if [ $? -ne 0 ]; then
@@ -44,6 +48,10 @@ git merge topull/$5      >> $top/$1/$3-merge.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tfailed to merge pull repo"
     exit 1
+fi
+
+if [ "$2" == "Win_64" ]; then
+    git stash pop --quiet
 fi
 
 cd $top

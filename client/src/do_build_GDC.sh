@@ -51,11 +51,13 @@ case "$2" in
         exit 1;
 esac
 
-tar jxf ../../src/gcc-4.8.1.tar.bz2 >> ../GDC-build.log 2>&1
-./setup-gcc.sh gcc-4.8.1 >> ../GDC-build.log 2>&1
+#GCC_VER=4.8.1
+GCC_VER=4.9-20130929
+tar jxf ../../src/gcc-$GCC_VER.tar.bz2 >> ../GDC-build.log 2>&1
+./setup-gcc.sh gcc-$GCC_VER >> ../GDC-build.log 2>&1
 mkdir output-dir
 cd output-dir
-../gcc-4.8.1/configure --disable-bootstrap --enable-languages=d --prefix=`pwd`/install-dir >> ../../GDC-build.log 2>&1
+../gcc-$GCC_VER/configure --disable-bootstrap --enable-languages=d --prefix=`pwd`/install-dir >> ../../GDC-build.log 2>&1
 $makecmd $EXTRA_ARGS >> ../../GDC-build.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tfailed to build GDC"

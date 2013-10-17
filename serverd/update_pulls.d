@@ -123,6 +123,8 @@ class Pull
     ulong   user_id;
     SysTime updated_at;
     bool    open;
+    bool    base_usable;
+    bool    head_usable;
     string  base_git_url;  // ex: https://github.com/D-Programming-Language/druntime.git
     string  base_ref;      // ex: master
     string  base_sha;      // ex: 98f410bd67e8a79630d05da7a37b0029bc45fa4b
@@ -133,7 +135,7 @@ class Pull
     SysTime create_date;
     SysTime close_date;
 
-    this(ulong _id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, string _base_git_url, string _base_ref, string _base_sha, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date)
+    this(ulong _id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, bool _base_usable, string _base_git_url, string _base_ref, string _base_sha, bool _head_usable, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date)
     {
         id           = _id;
         r_b_id       = _r_b_id;
@@ -141,6 +143,8 @@ class Pull
         user_id      = _user_id;
         updated_at   = _updated_at;
         open         = _open;
+        base_usable  = _base_usable;
+        head_usable  = _head_usable;
         base_git_url = _base_git_url;
         base_ref     = _base_ref;
         base_sha     = _base_sha;
@@ -172,7 +176,7 @@ Pull makePullFromRow(sqlrow row)
     if (row[15] == "") row[15] = "0";
 
     //writelog("row[0] = %s, row[4] = %s, row[11] = %s, row[12] = %s, row[13] = %s, row[14] = %s", row[0], row[4], row[11], row[12], row[13], row[14]);
-    return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), row[5], row[6], row[7], row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]));
+    return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]));
 }
 
 bool[string] loadUsers()
@@ -279,7 +283,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
     bool clearOldResults = false;
 
     bool headDateAccurate = false;
-    if (!k.open || k.head_sha != p.head_sha)
+    if (!k.open || (p.head_usable && k.head_sha != p.head_sha))
     {
         printHeader();
         if (!loadCommitFromGitHub(proj, repo, p))
@@ -307,7 +311,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         sql_exec(text("update github_pulls set updated_at = '", p.updated_at.toISOExtString(), "' where id = ", k.id));
     }
 
-    if (headDateAccurate && k.head_date != p.head_date)
+    if (headDateAccurate && p.head_usable && k.head_date != p.head_date)
     {
         printHeader();
         clearOldResults = true;
@@ -331,7 +335,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         sql_exec(text("update github_pulls set base_sha = '", p.base_sha, "' where id = ", k.id));
     }
 
-    if (k.head_git_url != p.head_git_url)
+    if (p.head_usable && k.head_git_url != p.head_git_url)
     {
         printHeader();
         clearOldResults = true;
@@ -339,7 +343,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         sql_exec(text("update github_pulls set head_git_url = '", p.head_git_url, "' where id = ", k.id));
     }
 
-    if (k.head_sha != p.head_sha)
+    if (p.head_usable && k.head_sha != p.head_sha)
     {
         printHeader();
         clearOldResults = true;
@@ -381,6 +385,11 @@ void processPull(Project proj, Repository repo, Pull* k, Pull p)
         if (rows == [])
         {
             if (!loadCommitFromGitHub(proj, repo, p)) return;
+            if (!p.head_usable)
+            {
+                writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", proj.name, repo.name, p.pull_id);
+                return;
+            }
 
             // new pull request
             writelog("  opening %s/%s/%s", proj.name, repo.name, p.pull_id);
@@ -420,38 +429,51 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
     bool   trusted = checkUser(uid, uname);
 
     const JSONValue base = obj.object["base"];
-    const JSONValue head = obj.object["head"];
 
     if (base.type != JSON_TYPE.OBJECT || base.object.length() == 0)
     {
         writelog("%s/%s/%s: base is null, skipping", proj.name, repo.name, pullid);
         return null;
     }
-    if (head.type != JSON_TYPE.OBJECT || head.object.length() == 0)
-    {
-        writelog("%s/%s/%s: head is null, skipping", proj.name, repo.name, pullid);
-        return null;
-    }
 
     const JSONValue b_repo = base.object["repo"];
-    const JSONValue h_repo = head.object["repo"];
 
     if (b_repo.type != JSON_TYPE.OBJECT || b_repo.object.length() == 0)
     {
         writelog("%s/%s/%s: base.repo is null, skipping", proj.name, repo.name, pullid);
         return null;
     }
-    if (h_repo.type != JSON_TYPE.OBJECT || h_repo.object.length() == 0)
-    {
-        writelog("%s/%s/%s: head.repo is null, skipping", proj.name, repo.name, pullid);
-        return null;
-    }
-
     string base_ref = base.object["ref"].str;
     if (base_ref != repo.branch.name)
     {
         //writelog("%s/%s/%s: pull is for %s, not %s", proj.name, repo.name, pullid, base_ref, repo.branch.name);
         return null;
+    }
+
+    bool   h_isusable = true;
+    string h_url;
+    string h_ref;
+    string h_sha;
+    const JSONValue head = obj.object["head"];
+    if (head.type != JSON_TYPE.OBJECT || head.object.length() == 0)
+    {
+        writelog("WARNING: %s/%s/%s: head is null", proj.name, repo.name, pullid);
+        h_isusable = false;
+    }
+    else
+    {
+        const JSONValue h_repo = head.object["repo"];
+        if (h_repo.type != JSON_TYPE.OBJECT || h_repo.object.length() == 0)
+        {
+            writelog("WARNING: %s/%s/%s: head.repo is null", proj.name, repo.name, pullid);
+            h_isusable = false;
+        }
+        else
+        {
+            h_url = h_repo.object["clone_url"].str;
+            h_ref = head.object["ref"].str;
+            h_sha = head.object["sha"].str;
+        }
     }
 
     const JSONValue jvU = obj.object["updated_at"];
@@ -474,12 +496,14 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
             uid,
             SysTime.fromISOExtString(updated_at),
             obj.object["state"].str == "open",
+            true,
             base.object["repo"].object["clone_url"].str,
             base.object["ref"].str,
             base.object["sha"].str,
-            head.object["repo"].object["clone_url"].str,
-            head.object["ref"].str,
-            head.object["sha"].str,
+            h_isusable,
+            h_url,
+            h_ref,
+            h_sha,
             SysTime.fromISOExtString(updated_at), // wrong time, but need a value. Will be fixed during loadCommitFromGitHub
             SysTime.fromISOExtString(created_at),
             SysTime.fromISOExtString(closed_at));

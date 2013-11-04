@@ -22,6 +22,8 @@ import p_start_pull_test;
 import p_finish_pull_test;
 import p_upload_pull;
 
+import p_toggle_auto_merge;
+
 import std.array;
 import std.datetime;
 import std.file;
@@ -67,6 +69,7 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
 
         // github_post hook
         "/github_hook"         : &p_github_hook.run,
+        "/toggle_auto_merge"   : &p_toggle_auto_merge.run,
 
         // master checkins
         "/get_runnable_master" : &p_get_runnable_master.run, // for a given platform, see if it's time to run

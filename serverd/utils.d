@@ -188,20 +188,30 @@ bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url
     return false;
 }
 
+bool runCurlPUT(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
+{
+    return runCurlMethod(curl, CurlOption.put, responsepayload, responseheaders, url, requestpayload, user, passwd);
+}
+
 bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
+{
+    return runCurlMethod(curl, CurlOption.post, responsepayload, responseheaders, url, requestpayload, user, passwd);
+}
+
+bool runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
 {
     int tries;
     auto fp = File("/tmp/serverd.log", "a");
     while (tries < 3)
     {
-        writelog("  post url: %s, try #%s", url, tries);
+        writelog("  url: %s, try: #%s", url, tries);
 
         responsepayload = "";
         responseheaders = [];
 
         curl_easy_reset(curl);
 
-        curl_easy_setopt(curl, CurlOption.post, 1L);
+        curl_easy_setopt(curl, co, 1L);
         curl_easy_setopt(curl, CurlOption.forbid_reuse, 1L);
 
         curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));

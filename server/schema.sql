@@ -47,6 +47,7 @@ create table if not exists github_pulls
     head_ref          varchar(256) not null,
     head_sha          varchar(256) not null,
     head_date         datetime,
+    auto_pull         bool         not null,
 
     primary key(id),
     key(open, id),
@@ -83,6 +84,7 @@ create table if not exists projects
     test_pulls        bool         not null,
     beta_only         bool         not null,
     enabled           bool         not null,
+    allow_auto_pull   bool         not null,
 
     primary key(id),
     index (name)

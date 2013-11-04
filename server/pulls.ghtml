@@ -209,18 +209,21 @@
   \set{num_\get{r_\get{num_repos}_name}_old}{0}
   \set{num_\get{r_\get{num_repos}_name}_hasfailures}{0}
   \set{num_\get{r_\get{num_repos}_name}_haspasses}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_old}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_hasfailures}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_haspasses}{0}
   \inc{num_repos}
 }
 
 \sqlexec{
-    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date
+    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date, ghp.auto_pull
       from projects p, repositories r, repo_branches rb, github_pulls ghp, github_users u
      where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.trusted and r.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
 }
-\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}}{
+\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}}{
     # get the bucket to place the row in
-    \set{name}{\get{r_name}_\getstate{\get{r_name}}{\get{ghp_pull_id}}}
+    \set{name}{\get{r_name}_\if{\eq{\get{ghp_autopull}}{1}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
 
     # get one row of html and store it in name_num
     \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{project_name}}}
@@ -242,6 +245,9 @@
 \set{total_haspasses}{\sum_repos{haspasses}}
 \set{total_hasfailures}{\sum_repos{hasfailures}}
 \set{total_old}{\sum_repos{old}}
+\set{total_autopull_haspasses}{\sum_repos{autopull_haspasses}}
+\set{total_autopull_hasfailures}{\sum_repos{autopull_hasfailures}}
+\set{total_autopull_old}{\sum_repos{autopull_old}}
 
 <table border=1 class="pulltable">
 <tr class="pullheaders">
@@ -303,6 +309,18 @@
     }
   }
 }}
+
+\if{
+  \op{\get{total_autopull_haspasses}}{>}{0}
+  \op{\get{total_autopull_hasfailures}}{>}{0}
+  \op{\get{total_autopull_old}}{>}{0}
+}{
+  <tr><td colspan="14">Pulls to be auto-merged when successful</td></tr>
+  \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
+  \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
+  \drawOneSection{autopull_old}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}
+  <tr><td colspan="14">Pulls waiting for review and/or manual pull</td></tr>
+}
 
 \drawOneSection{haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
 \drawOneSection{hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}

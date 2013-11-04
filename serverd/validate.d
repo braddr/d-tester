@@ -83,12 +83,12 @@ bool validate_id(ref string id, string idname, Appender!string outstr)
 {
     if (id.empty)
     {
-        formattedWrite(outstr, "bad input: no ", idname, "\n");
+        formattedWrite(outstr, "bad input: no %s\n", idname);
         return false;
     }
     if (!validateNumber(id))
     {
-        formattedWrite(outstr, "bad input: invalid ", idname, "\n");
+        formattedWrite(outstr, "bad input: invalid %s\n", idname);
         return false;
     }
 

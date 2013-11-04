@@ -285,20 +285,22 @@
 # \1 == section (haspasses, hasfailures, old)
 # \2 == label (Has Passes, Has Failures, Old)
 \set{drawOneSection}{\quote{
-  \set{totalrows}{0}
-  \set{firstsecrow}{1}
-  \set{ridx}{0}
-  \while{\op{\get{num_repos}}{>}{\get{ridx}}}{
-    \drawOneSectionRepoBlock{\get{r_\get{ridx}_name}}{\1}{\2}
-    \inc{ridx}
-  }
-  \if{\get{firstsecrow}}{
+  \if{\op{\get{total_\1}}{>}{0}}{
+    \set{totalrows}{0}
+    \set{firstsecrow}{1}
+    \set{ridx}{0}
+    \while{\op{\get{num_repos}}{>}{\get{ridx}}}{
+      \drawOneSectionRepoBlock{\get{r_\get{ridx}_name}}{\1}{\2}
+      \inc{ridx}
+    }
+    \if{\get{firstsecrow}}{
       <tr class="pullrow">
           <td class="sec"><div class="rotate">\2</div></td>
           <td colspan="13"></td>
       </tr>
-  }{
+    }{
       \if{\op{\get{totalrows}}{<}{5}}{<tr><td class="spacer" style="height:3em;" colspan="13">&nbsp;</td></tr>}
+    }
   }
 }}
 

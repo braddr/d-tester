@@ -198,25 +198,32 @@
   {\result}
 }}
 
-\set{num_dmd_old}{0}
-\set{num_dmd_hasfailures}{0}
-\set{num_dmd_haspasses}{0}
-\set{num_druntime_old}{0}
-\set{num_druntime_hasfailures}{0}
-\set{num_druntime_haspasses}{0}
-\set{num_phobos_old}{0}
-\set{num_phobos_hasfailures}{0}
-\set{num_phobos_haspasses}{0}
+\set{num_repos}{0}
+\sqlexec{
+  select r.name
+    from projects p, repositories r
+   where p.id = \get{projectid} and
+         r.project_id = p.id
+}
+\while{\sqlrow{r_\get{num_repos}_name}}{
+  \set{num_\get{r_\get{num_repos}_name}_old}{0}
+  \set{num_\get{r_\get{num_repos}_name}_hasfailures}{0}
+  \set{num_\get{r_\get{num_repos}_name}_haspasses}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_old}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_hasfailures}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_haspasses}{0}
+  \inc{num_repos}
+}
 
 \sqlexec{
-    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date
+    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date, ghp.auto_pull
       from projects p, repositories r, repo_branches rb, github_pulls ghp, github_users u
      where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.trusted and r.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
 }
-\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}}{
+\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}}{
     # get the bucket to place the row in
-    \set{name}{\get{r_name}_\getstate{\get{r_name}}{\get{ghp_pull_id}}}
+    \set{name}{\get{r_name}_\if{\eq{\get{ghp_autopull}}{1}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
 
     # get one row of html and store it in name_num
     \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{project_name}}}
@@ -224,9 +231,23 @@
     \inc{num_\get{name}}
 }
 
-\set{total_haspasses}{\op{\op{\get{num_dmd_haspasses}}{+}{\get{num_druntime_haspasses}}}{+}{\get{num_phobos_haspasses}}}
-\set{total_hasfailures}{\op{\op{\get{num_dmd_hasfailures}}{+}{\get{num_druntime_hasfailures}}}{+}{\get{num_phobos_hasfailures}}}
-\set{total_old}{\op{\op{\get{num_dmd_old}}{+}{\get{num_druntime_old}}}{+}{\get{num_phobos_old}}}
+# \1 == haspasses | hasfailures | old
+\set{sum_repos}{\quote{
+  \set{tot}{0}
+  \set{i}{0}
+  \while{\op{\get{num_repos}}{>}{\get{i}}}{
+    \inc{tot}{\get{num_\get{r_\get{i}_name}_\1}}
+    \inc{i}
+  }
+  \get{tot}
+}}
+
+\set{total_haspasses}{\sum_repos{haspasses}}
+\set{total_hasfailures}{\sum_repos{hasfailures}}
+\set{total_old}{\sum_repos{old}}
+\set{total_autopull_haspasses}{\sum_repos{autopull_haspasses}}
+\set{total_autopull_hasfailures}{\sum_repos{autopull_hasfailures}}
+\set{total_autopull_old}{\sum_repos{autopull_old}}
 
 <table border=1 class="pulltable">
 <tr class="pullheaders">
@@ -234,24 +255,24 @@
 <th>GitHub page</th>
 <th>Test History</th>
 <th>Last Committed</th>
-\buildHeader{F 32}{FreeBSD_32}{FreeBSD with a 32 bit dmd binary and 32 bit output}
-\buildHeader{F 64}{FreeBSD_64}{FreeBSD with a 64 bit dmd binary and 64 bit output}
-\buildHeader{L 32}{Linux_32}{Linux with a 32 bit dmd binary and 32 bit output}
-\buildHeader{L 64}{Linux_64_64}{Linux with a 64 bit dmd binary and 64 bit output}
-\buildHeader{L 32/64}{Linux_32_64}{Linux with a 32 bit dmd binary and 64 bit output}
-\buildHeader{L 64/32}{Linux_64_32}{Linux with a 64 bit dmd binary and 32 bit output}
-\buildHeader{O 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit output}
-\buildHeader{O 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit output}
-#\buildHeader{O 32/64}{Darwin_32_64}{OSX with a 32 bit dmd binary and 64 bit output}
-#\buildHeader{O 64/32}{Darwin_64_32}{OSX with a 64 bit dmd binary and 32 bit output}
-\buildHeader{W 32}{Win_32}{Windows with a 32 bit dmd binary and 32 bit output}
-\buildHeader{W 64}{Win_64}{Windows with a 32 bit dmd binary and 64 bit output}
+\buildHeader{F 32}{FreeBSD_32}{FreeBSD with a 32 bit compiler binary and 32 bit output}
+\buildHeader{F 64}{FreeBSD_64}{FreeBSD with a 64 bit compiler binary and 64 bit output}
+\buildHeader{L 32}{Linux_32}{Linux with a 32 bit compiler binary and 32 bit output}
+\buildHeader{L 64}{Linux_64_64}{Linux with a 64 bit compiler binary and 64 bit output}
+\buildHeader{L 32/64}{Linux_32_64}{Linux with a 32 bit compiler binary and 64 bit output}
+\buildHeader{L 64/32}{Linux_64_32}{Linux with a 64 bit compiler binary and 32 bit output}
+\buildHeader{O 32}{Darwin_32}{OS/X with a 32 bit compiler binary and 32 bit output}
+\buildHeader{O 64}{Darwin_64_64}{OS/X with a 64 bit compiler binary and 64 bit output}
+#\buildHeader{O 32/64}{Darwin_32_64}{OSX with a 32 bit compiler binary and 64 bit output}
+#\buildHeader{O 64/32}{Darwin_64_32}{OSX with a 64 bit compiler binary and 32 bit output}
+\buildHeader{W 32}{Win_32}{Windows with a 32 bit compiler binary and 32 bit output}
+\buildHeader{W 64}{Win_64}{Windows with a 32 bit compiler binary and 64 bit output}
 </tr>
 
 # \1 == repo
 # \2 == state
 # \3 == label
-\set{drawOneSection}{\quote{
+\set{drawOneSectionRepoBlock}{\quote{
     \set{i}{0}
     \while{ \op{\get{num_\1_\2}}{>}{\get{i}} }{
         <tr class="pullrow">
@@ -267,50 +288,43 @@
     \set{totalrows}{\op{\get{totalrows}}{+}{\get{i}}}
 }}
 
-\set{totalrows}{0}
-\set{firstsecrow}{1}
-\set{secheader}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
-\drawOneSection{dmd}{haspasses}{\get{secheader}}
-\drawOneSection{druntime}{haspasses}{\get{secheader}}
-\drawOneSection{phobos}{haspasses}{\get{secheader}}
-\if{\get{firstsecrow}}{
-    <tr class="pullrow">
-        <td class="sec"><div class="rotate">\get{secheader}</div></td>
-        <td colspan="13"></td>
-    </tr>
+# \1 == section (haspasses, hasfailures, old)
+# \2 == label (Has Passes, Has Failures, Old)
+\set{drawOneSection}{\quote{
+  \if{\op{\get{total_\1}}{>}{0}}{
+    \set{totalrows}{0}
+    \set{firstsecrow}{1}
+    \set{ridx}{0}
+    \while{\op{\get{num_repos}}{>}{\get{ridx}}}{
+      \drawOneSectionRepoBlock{\get{r_\get{ridx}_name}}{\1}{\2}
+      \inc{ridx}
+    }
+    \if{\get{firstsecrow}}{
+      <tr class="pullrow">
+          <td class="sec"><div class="rotate">\2</div></td>
+          <td colspan="13"></td>
+      </tr>
+    }{
+      \if{\op{\get{totalrows}}{<}{5}}{<tr><td class="spacer" style="height:3em;" colspan="13">&nbsp;</td></tr>}
+    }
+  }
+}}
+
+\if{
+  \op{\get{total_autopull_haspasses}}{>}{0}
+  \op{\get{total_autopull_hasfailures}}{>}{0}
+  \op{\get{total_autopull_old}}{>}{0}
 }{
-    \if{\op{\get{totalrows}}{<}{5}}{<tr><td class="spacer" style="height:3em;" colspan="13">&nbsp;</td></tr>}
+  <tr><td colspan="14">Pulls to be auto-merged when successful</td></tr>
+  \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
+  \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
+  \drawOneSection{autopull_old}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}
+  <tr><td colspan="14">Pulls waiting for review and/or manual pull</td></tr>
 }
 
-\set{totalrows}{0}
-\set{firstsecrow}{1}
-\set{secheader}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
-\drawOneSection{dmd}{hasfailures}{\get{secheader}}
-\drawOneSection{druntime}{hasfailures}{\get{secheader}}
-\drawOneSection{phobos}{hasfailures}{\get{secheader}}
-\if{\get{firstsecrow}}{
-    <tr class="pullrow">
-        <td class="sec"><div class="rotate">\get{secheader}</div></td>
-        <td colspan="13"></td>
-    </tr>
-}{
-    \if{\op{\get{totalrows}}{<}{5}}{<tr><td class="spacer" style="height:3em;" colspan="13">&nbsp;</td></tr>}
-}
-
-\set{totalrows}{0}
-\set{firstsecrow}{1}
-\set{secheader}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}
-\drawOneSection{dmd}{old}{\get{secheader}}
-\drawOneSection{druntime}{old}{\get{secheader}}
-\drawOneSection{phobos}{old}{\get{secheader}}
-\if{\get{firstsecrow}}{
-    <tr class="pullrow">
-        <td class="sec"><div class="rotate">\get{secheader}</div></td>
-        <td colspan="13"></td>
-    </tr>
-}{
-    \if{\op{\get{totalrows}}{<}{5}}{<tr><td class="spacer" style="height:3em;" colspan="13">&nbsp;</td></tr>}
-}
+\drawOneSection{haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
+\drawOneSection{hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
+\drawOneSection{old}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}
 
 </table>
 

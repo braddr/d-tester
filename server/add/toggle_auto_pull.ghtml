@@ -1,0 +1,31 @@
+\include{/include/test-results}
+
+\set{validate}{\quote{
+    \if{\not{\get{projectid}}}{projectid}
+    \if{\not{\op{\get{projectid}}{V}}}{projectid}
+    \if{\not{\get{repoid}}}{repoid}
+    \if{\not{\op{\get{repoid}}{V}}}{repoid}
+    \if{\not{\get{pullid}}}{pullid}
+    \if{\not{\op{\get{pullid}}{V}}}{pullid}
+    \if{\not{\get{ghp_id}}}{ghp_id}
+    \if{\not{\op{\get{ghp_id}}{V}}}{ghp_id}
+}}#
+#
+\if{\not{\checksecurity}}{
+    Content-type: text/plain
+
+    unauthorized: \get{REMOTE_ADDR}
+    \exit
+}#
+#
+\set{_rc}{\validate}#
+\if{\_rc}{
+    Content-type: text/plain
+
+    bad input: \_rc
+    \exit
+}#
+#
+\sqlexec{update github_pulls set auto_pull = not auto_pull where id=\sqlquote{\get{ghp_id}} }#
+Location: http://\get{SERVERNAME}/test-results/pull-history.ghtml?projectid=\get{projectid}&repoid=\get{repoid}&pullid=\get{pullid}
+

@@ -404,7 +404,7 @@ void processPull(Project proj, Repository repo, Pull* k, Pull p)
             sqlcmd ~= text(", '", p.updated_at.toISOExtString(), "', true, "
                            "'", p.base_git_url, "', '", p.base_ref, "', '", p.base_sha, "', "
                            "'", p.head_git_url, "', '", p.head_ref, "', '", p.head_sha, "', "
-                           "'", p.head_date.toISOExtString(), "')");
+                           "'", p.head_date.toISOExtString(), "', false)");
 
             sql_exec(sqlcmd);
         }

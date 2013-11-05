@@ -142,7 +142,7 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
         `{`
             `"description" : "`, desc, `",`
             `"state" : "`, status, `",`
-            `"target_url" : "http://d.puremagic.com/test-results/pull-history.ghtml?`
+            `"target_url" : "https://d.puremagic.com/test-results/pull-history.ghtml?`
                 `projectid=`, projectid, `&repoid=`, repoid, `&pullid=`, pullid, `"`
         `}`);
 

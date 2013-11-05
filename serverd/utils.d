@@ -17,7 +17,7 @@ import etc.c.curl;
 
 import mysql;
 
-static const char* USERAGENT = "Auto-Tester. http://d.puremagic.com/test-results/  contact: braddr@puremagic.com";
+static const char* USERAGENT = "Auto-Tester. https://d.puremagic.com/test-results/  contact: braddr@puremagic.com";
 
 void writelog(S...)(S s)
 {
@@ -47,6 +47,11 @@ string lookup(const ref string[string] hash, string key)
 {
     const(string*) ptr = key in hash;
     return ptr ? *ptr : "";
+}
+
+string getURLProtocol(const ref string[string] hash)
+{
+    return lookup(hash, "HTTPS") == "on" ? "https" : "http";
 }
 
 bool auth_check(string raddr, Appender!string outstr)

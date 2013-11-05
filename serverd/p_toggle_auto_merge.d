@@ -73,7 +73,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         return;
     }
 
-    outstr.put(text("Location: http://", lookup(hash, "SERVER_NAME"), "/test-results/pull-history.ghtml?",
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/pull-history.ghtml?",
                "projectid=", projectid, "&",
                "repoid=", repoid, "&",
                "pullid=", pullid,

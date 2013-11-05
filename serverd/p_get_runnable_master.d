@@ -198,7 +198,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
                 writelog("  illegal clientver: %s", clientver);
                 outstr.put("skip\n");
         }
-        //p_finish_pull_run.updateGithub(runid[0], outstr);
+        //p_finish_pull_run.updateGithubPullStatus(runid[0], outstr);
     }
     else
         outstr.put("skip\n");

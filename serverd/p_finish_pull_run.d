@@ -52,9 +52,9 @@ bool validateInput(ref string raddr, ref string runid, ref string hostid, ref st
     return true;
 }
 
-bool updateGithub(string runid, Appender!string outstr)
+bool getRelatedData(string runid, ref string reponame, ref string repoid, ref string sha, ref string pullid, ref string ghp_id, ref string projectid, ref string projectname, ref bool automerge, Appender!string outstr)
 {
-    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, r.project_id, p.name from github_pulls ghp, repositories r, repo_branches rb, pull_test_runs ptr, projects p where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.r_b_id = rb.id and rb.repository_id = r.id and p.id = r.project_id")))
+    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, r.project_id, p.name, p.allow_auto_merge, ghp.auto_pull from github_pulls ghp, repositories r, repo_branches rb, pull_test_runs ptr, projects p where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.r_b_id = rb.id and rb.repository_id = r.id and p.id = r.project_id")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -72,21 +72,40 @@ bool updateGithub(string runid, Appender!string outstr)
         return false;
     }
 
-    string reponame = rows[0][0];
-    string sha = rows[0][1];
-    string repoid = rows[0][2];
-    string pullid = rows[0][3];
-    string ghp_id = rows[0][4];
-    string projectid = rows[0][5];
-    string projectname = rows[0][6];
+    reponame = rows[0][0];
+    sha = rows[0][1];
+    repoid = rows[0][2];
+    pullid = rows[0][3];
+    ghp_id = rows[0][4];
+    projectid = rows[0][5];
+    projectname = rows[0][6];
+    automerge = (rows[0][7] == "1") && (rows[0][8] == "1");  // project allows merge and pull is marked for merge
 
+    return true;
+}
+
+// called by p_get_runnable_pull -- can it provide these values itself?
+bool updateGithubPullStatus(string runid, Appender!string outstr)
+{
+    string projectname, projectid;
+    string reponame, repoid;
+    string sha, pullid, ghp_id;
+    bool   automerge;
+    if (!getRelatedData(runid, reponame, repoid, sha, pullid, ghp_id, projectid, projectname, automerge, outstr))
+        return false;
+
+    return updateGithubPullStatus(runid, ghp_id, sha, pullid, projectname, projectid, reponame, repoid, outstr);
+}
+
+bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pullid, string projectname, string projectid, string reponame, string repoid, Appender!string outstr)
+{
     if (!sql_exec(text("select rc from pull_test_runs where g_p_id = ", ghp_id, " and deleted = 0")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    rows = sql_rows();
+    sqlrow[] rows = sql_rows();
 
     int numpass, numfail, numinprogress, numpending;
     foreach(row; rows)
@@ -158,6 +177,34 @@ bool updateStore(string runid, Appender!string outstr)
     return true;
 }
 
+bool mergeGithubPull(string projectname, string reponame, string pullid, string ghp_id, Appender!string outstr)
+{
+    string url = text("https://api.github.com/repos/", projectname, "/", reponame, "/pulls/", pullid, "/merge");
+    string responsepayload;
+    string[] responseheaders;
+
+    sql_exec(text("select count(*) from pull_test_runs where g_p_id = ", ghp_id, " and deleted = false and rc = 0"));
+    sqlrow[] rows = sql_rows();
+    if (rows.length < 1)
+    {
+        outstr.put("mergeGithubPull: should have gotten exactly one row back from count successful tests");
+        return false;
+    }
+
+    // if there aren't 10 completed tests (one for each platform), do nothing
+    // TODO: num platforms really ought to come from the db
+    if (to!int(rows[0][0]) != 10)
+        return true;
+
+    writelog("  todo: call github: %s", url);
+    //if (!runCurlPUT(curl, responsepayload, responseheaders, url, "{}", c.github_user, c.github_passwd))
+    //{
+    //    writelog("  github failed to merge pull request");
+    //    return false;
+    //}
+    return true;
+}
+
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
     outstr.put("Content-type: text/plain\n\n");
@@ -170,8 +217,18 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (!validateInput(raddr, runid, hostid, clientver, outstr))
         return;
 
+    string projectname, projectid;
+    string reponame, repoid;
+    string sha, pullid, ghp_id;
+    bool   automerge;
+    if (!getRelatedData(runid, reponame, repoid, sha, pullid, ghp_id, projectid, projectname, automerge, outstr))
+        return;
+
     updateHostLastCheckin(hostid, clientver);
     updateStore(runid, outstr);
-    updateGithub(runid, outstr);
+    updateGithubPullStatus(runid, ghp_id, sha, pullid, projectname, projectid, reponame, repoid, outstr);
+
+    if (automerge)
+        mergeGithubPull(projectname, reponame, pullid, ghp_id, outstr);
 }
 

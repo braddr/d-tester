@@ -8,11 +8,11 @@
 }
 
 \sqlexec{
-    select id, menu_label, name, project_url, test_pulls, beta_only
+    select id, menu_label, name, project_url, test_pulls, beta_only, allow_auto_merge
       from projects
      where id = \get{projectid}
 }
-\if{\sqlrow{pid}{plabel}{pname}{purl}{ptestpulls}{pbetaonly}}{
+\if{\sqlrow{pid}{plabel}{pname}{purl}{ptestpulls}{pbetaonly}{pallowautomerge}}{
 
     <table class="projectinfo">
         <tr>
@@ -25,6 +25,8 @@
             <th>Project URL</th><td><a href="\get{purl}">\get{purl}</a></td>
         </tr><tr>
             <th>Test Pulls</th><td>\if{\eq{\get{ptestpulls}}{1}}{true}{false}</td>
+        </tr><tr>
+            <th>Automated Merges</th><td>\if{\eq{\get{pallowautomerge}}{1}}{true}{false}</td>
         </tr>
             \if{\eq{\SERVERNAME}{d-beta.puremagic.com}}{
                 <tr>

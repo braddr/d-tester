@@ -27,7 +27,7 @@ After installation, there will be a new block along the right side of the page. 
 
 <p>
 
-2) To integrate the results of a pull requests test build: <a href="http://d.puremagic.com/test-results/github-pull.user.js">install script</a><br>
+2) To integrate the results of a pull requests test build: <a href="github-pull.user.js">install script</a><br>
 
 After installation, there will be a new block along the right side of the page.  It looks like this:<br>
 <img border=0 src="pullresults.png">

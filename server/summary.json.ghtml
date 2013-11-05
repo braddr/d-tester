@@ -41,7 +41,7 @@
         "displayName" : "\2",
         "lastRunDate" : "\get{result_start}",
         "state"       : "\get{state}",
-        "historyURL"  : "http://d.puremagic.com/test-results/platform-history.ghtml?os=\1"
+        "historyURL"  : "https://d.puremagic.com/test-results/platform-history.ghtml?os=\1"
     \}
 }}
 

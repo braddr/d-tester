@@ -22,7 +22,7 @@
     \if{\sqlrow{gp_id}}{
 
         \{
-            "historyURL" : "http://d.puremagic.com/test-results/pull-history.ghtml?repoid=\get{repoid}&pullid=\get{pullid}",
+            "historyURL" : "https://d.puremagic.com/test-results/pull-history.ghtml?repoid=\get{repoid}&pullid=\get{pullid}",
             "results"    : [
 
                 \sqlexec{
@@ -42,7 +42,7 @@
                         "rc"       : "\get{rc}",
                         "deleted"  : "\get{deleted}",
                         "platform" : "\get{platform}",
-                        "url"      : "http://d.puremagic.com/test-results/pull.ghtml?runid=\get{id}"
+                        "url"      : "https://d.puremagic.com/test-results/pull.ghtml?runid=\get{id}"
                     \}
                 }
 

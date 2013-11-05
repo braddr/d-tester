@@ -29,6 +29,10 @@ Content-type: text/plain
         \set{r_b_id}{14, 15, 16}
         \set{project_id}{7}
     }#
+    \if{\strindex{\get{payload}}{refs/heads/2.064}}{
+        \set{r_b_id}{17, 18, 19}
+        \set{project_id}{8}
+    }#
 }{\if{\strindex{\get{payload}}{"organization":"D-Programming-GDC"}}{
     \if{\strindex{\get{payload}}{refs/heads/master}}{
         \set{r_b_id}{13}

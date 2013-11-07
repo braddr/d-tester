@@ -23,5 +23,5 @@
 }#
 #
 \sqlexec{update test_runs set deleted=true where id=\sqlquote{\get{runid}} }#
-Location: http://\get{SERVERNAME}/test-results/test_data.ghtml?projectid=\get{projectid}&runid=\htmlquote{\get{runid}}\if{\get{logid}}{&logid=\get{logid}}
+Location: https://\get{SERVERNAME}/test-results/test_data.ghtml?projectid=\get{projectid}&runid=\htmlquote{\get{runid}}\if{\get{logid}}{&logid=\get{logid}}
 

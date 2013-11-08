@@ -39,13 +39,12 @@
       from build_hosts bh left join
            (
                select ptr.id as run_id,
-                      bh.ipaddr,
-                      bh.name as bh_name,
-                      platform,
+                      ptr.platform,
                       r.name as r_name,
                       ghp.pull_id,
                       p.menu_label as p_name,
-                      p.id as p_id
+                      p.id as p_id,
+                      bh.id as bh_id
                  from pull_test_runs ptr,
                       github_pulls ghp,
                       projects p,
@@ -61,19 +60,18 @@
                       deleted = false
                 union
                select tr.id,
-                      b.ipaddr,
-                      b.name,
                       tr.platform,
                       "branch",
                       -1,
                       p.menu_label,
-                      p.id
-                 from test_runs tr, build_hosts b, projects p
+                      p.id,
+                      bh.id
+                 from test_runs tr, build_hosts bh, projects p
                 where end_time is null and
                       deleted = false and
-                      tr.host_id = b.id and
+                      tr.host_id = bh.id and
                       p.id = tr.project_id
-           ) as ip on (ip.ipaddr = bh.ipaddr and ip.bh_name = bh.name)
+           ) as ip on (ip.bh_id = bh.id)
      where bh.enabled = true
      order by bh.name
 }

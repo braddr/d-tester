@@ -21,14 +21,14 @@ bool validate_testidState(string testid, ref string hostid, ref string testtypei
     sqlrow row = sql_row();
     if (row == [])
     {
-        formattedWrite(outstr, "error: no such testid: ", testid);
+        formattedWrite(outstr, "error: no such testid: %s\n", testid);
         return false;
     }
     else
     {
         if (row[1] != "")
         {
-            formattedWrite(outstr, "error: test already finished, may not upload log any more, testid: ", testid);
+            formattedWrite(outstr, "error: test already finished, may not upload log any more, testid: %s\n", testid);
             return false;
         }
         runid = row[2];
@@ -83,7 +83,7 @@ bool storeResults(string runid, string testtypeid, string contents, Appender!str
     string filename = mapTTIDtoFilename(testtypeid);
     if (filename == "")
     {
-        formattedWrite(outstr, "error: unknown test_type_id: ", testtypeid);
+        formattedWrite(outstr, "error: unknown test_type_id: %s\n", testtypeid);
         return false;
     }
 
@@ -94,7 +94,7 @@ bool storeResults(string runid, string testtypeid, string contents, Appender!str
     }
     catch(Exception e)
     {
-        formattedWrite(outstr, "error: problem writing log to path: ", path, ", error: ", e.toString());
+        formattedWrite(outstr, "error: problem writing log to path: %s, error: %s\n", path, e.toString());
         return false;
     }
 

@@ -10,6 +10,7 @@ import std.algorithm;
 import std.conv;
 import std.range;
 import std.stdio;
+import std.string;
 
 extern(C)
 {
@@ -109,3 +110,22 @@ void parseFormArgs(ref string[string] hash, string str)
     }
 }
 
+void processCookies(ref string[string] hash, string str)
+{
+    str = strip(str);
+    while (!str.empty)
+    {
+        auto r = findSplit(str, ";");
+        if (r[0])
+        {
+            string key, value;
+            if (split_keyvalue(r[0], key, value, false))
+            {
+                key = strip(key);
+                hash[key] = value;
+                //writelog("parseCookies: key = '%s', value = '%s'", key, value);
+            }
+        }
+        str = r[2];
+    }
+}

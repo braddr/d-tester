@@ -203,7 +203,7 @@ bool checkUser(ulong uid, string uname)
     if (!found)
     {
         writelog("  creating user %s(%s)", uname, uidstr);
-        sql_exec(text("insert into github_users values(", uidstr, ", '", sql_quote(uname), "', false)"));
+        sql_exec(text("insert into github_users values(", uidstr, ", '", sql_quote(uname), "', false, null)"));
 
         users[uidstr] = false;
         return false;

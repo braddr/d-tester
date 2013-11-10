@@ -9,6 +9,8 @@ import www;
 import p_finish_run;
 
 import p_github_hook;
+import p_github_process_login;
+import p_logout;
 
 import p_get_runnable_master;
 import p_finish_master_run;
@@ -65,25 +67,27 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
     alias void function(const ref string[string] hash, const ref string[string] userhash, Appender!string outdata) page_func;
     page_func[string] commands =
     [
-        "/dump"                : &p_dump,
+        "/dump"                 : &p_dump,
 
         // github_post hook
-        "/github_hook"         : &p_github_hook.run,
-        "/toggle_auto_merge"   : &p_toggle_auto_merge.run,
+        "/github_hook"          : &p_github_hook.run,
+        "/github_process_login" : &p_github_process_login.run,
+        "/logout"               : &p_logout.run,
+        "/toggle_auto_merge"    : &p_toggle_auto_merge.run,
 
         // master checkins
-        "/get_runnable_master" : &p_get_runnable_master.run, // for a given platform, see if it's time to run
-        "/finish_master_run"   : &p_finish_master_run.run,   // mark a master build as complete
-        "/start_master_test"   : &p_start_master_test.run,   // start a test phase for a master request build
-        "/finish_master_test"  : &p_finish_master_test.run,  // start a test phase for a master request build
-        "/upload_master"       : &p_upload_master.run,       // for a specific test, receive the resulting log
+        "/get_runnable_master"  : &p_get_runnable_master.run, // for a given platform, see if it's time to run
+        "/finish_master_run"    : &p_finish_master_run.run,   // mark a master build as complete
+        "/start_master_test"    : &p_start_master_test.run,   // start a test phase for a master request build
+        "/finish_master_test"   : &p_finish_master_test.run,  // start a test phase for a master request build
+        "/upload_master"        : &p_upload_master.run,       // for a specific test, receive the resulting log
 
         // pull request apis
-        "/get_runnable_pull"   : &p_get_runnable_pull.run, // for a given platform, select a pull to build
-        "/finish_pull_run"     : &p_finish_pull_run.run,   // mark a pull build as complete
-        "/start_pull_test"     : &p_start_pull_test.run,   // start a test phase for a pull request build
-        "/finish_pull_test"    : &p_finish_pull_test.run,  // finish a test phase
-        "/upload_pull"         : &p_upload_pull.run,      // for a specific test, receive the resulting log
+        "/get_runnable_pull"    : &p_get_runnable_pull.run, // for a given platform, select a pull to build
+        "/finish_pull_run"      : &p_finish_pull_run.run,   // mark a pull build as complete
+        "/start_pull_test"      : &p_start_pull_test.run,   // start a test phase for a pull request build
+        "/finish_pull_test"     : &p_finish_pull_test.run,  // finish a test phase
+        "/upload_pull"          : &p_upload_pull.run,      // for a specific test, receive the resulting log
     ];
 
     if (uri.startsWith("/test-results/addv2"))

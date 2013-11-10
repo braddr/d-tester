@@ -119,6 +119,7 @@ void processRequest()
     string[string] userhash;
     processEnv(hash);
     processInput(hash, userhash);
+    processCookies(userhash, lookup(hash, "HTTP_COOKIE"));
 
     string path = lookup(hash, "PATH_INFO");
     if (path.empty)

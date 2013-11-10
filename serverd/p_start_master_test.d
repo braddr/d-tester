@@ -16,13 +16,13 @@ bool validate_testRunable(string runid, string type, ref string hostid, Appender
 
     if (rows.length != 1)
     {
-        formattedWrite(outstr, "bad input: should be exactly one row, runid: ", runid, "\n");
+        formattedWrite(outstr, "bad input: should be exactly one row, runid: %s\n", runid);
         return false;
     }
 
     if (rows[0][1] != "")
     {
-        formattedWrite(outstr, "bad input: run already complete: ", runid, "\n");
+        formattedWrite(outstr, "bad input: run already complete: %s\n", runid);
         return false;
     }
 
@@ -33,7 +33,7 @@ bool validate_testRunable(string runid, string type, ref string hostid, Appender
 
     if (testids.length != 0)
     {
-        formattedWrite(outstr, "bad input: test already exists, type: ", type, "\n");
+        formattedWrite(outstr, "bad input: test already exists, type: %s\n", type);
         return false;
     }
 

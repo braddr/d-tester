@@ -22,13 +22,13 @@ bool validate_runState(string runid, ref string hostid, Appender!string outstr)
 
     if (rows.length != 1)
     {
-        formattedWrite(outstr, "bad input: should be exactly one row, runid: ", runid, "\n");
+        formattedWrite(outstr, "bad input: should be exactly one row, runid: %s\n", runid);
         return false;
     }
 
     if (rows[0][2] != "")
     {
-        formattedWrite(outstr, "bad input: run already complete, runid: ", runid, "\n");
+        formattedWrite(outstr, "bad input: run already complete, runid: %s\n", runid);
         return false;
     }
 
@@ -68,7 +68,7 @@ bool getRelatedData(string runid, ref string reponame, ref string repoid, ref st
     }
     if (rows.length > 1)
     {
-        formattedWrite(outstr, "found more than one associated pull? runid=", runid, "\n");
+        formattedWrite(outstr, "found more than one associated pull? runid=%s\n", runid);
         return false;
     }
 

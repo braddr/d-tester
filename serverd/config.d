@@ -14,6 +14,8 @@ struct Config
 
     string github_user;
     string github_passwd;
+    string github_clientid;
+    string github_clientsecret;
 }
 
 Config c;
@@ -33,5 +35,7 @@ void load_config(string filename)
     JSONValue gh = jv.object["github"];
     c.github_user   = gh.object["user"].str;
     c.github_passwd = gh.object["passwd"].str;
+    c.github_clientid = gh.object["client_id"].str;
+    c.github_clientsecret = gh.object["client_secret"].str;
 }
 

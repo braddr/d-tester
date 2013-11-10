@@ -148,7 +148,7 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
 
     writelog("  request body: %s", requestpayload);
 
-    if (!runCurlPOST(curl, payload, headers, url, requestpayload, c.github_user, c.github_passwd))
+    if (!runCurlPOST(curl, payload, headers, url, requestpayload, null, c.github_user, c.github_passwd))
     {
         writelog("  failed to update github");
         return false;

@@ -141,7 +141,7 @@ extern(C) size_t handleRequestBodyData(void *ptr, size_t size, size_t nmemb, voi
     return 0;
 }
 
-bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url, string userid = null, string passwd = null)
+bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url, string userid, string passwd)
 {
     int tries;
     while (tries < 3)
@@ -193,17 +193,17 @@ bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url
     return false;
 }
 
-bool runCurlPUT(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
+bool runCurlPUT(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
-    return runCurlMethod(curl, CurlOption.put, responsepayload, responseheaders, url, requestpayload, user, passwd);
+    return runCurlMethod(curl, CurlOption.put, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
 }
 
-bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
+bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
-    return runCurlMethod(curl, CurlOption.post, responsepayload, responseheaders, url, requestpayload, user, passwd);
+    return runCurlMethod(curl, CurlOption.post, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
 }
 
-bool runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string user = null, string passwd = null)
+bool runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
     int tries;
     auto fp = File("/tmp/serverd.log", "a");
@@ -228,6 +228,11 @@ bool runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref st
             curl_easy_setopt(curl, CurlOption.password, toStringz(passwd));
         }
 
+        curl_slist* curl_request_headers;
+        foreach (h; requestheaders)
+            curl_request_headers = curl_slist_append(curl_request_headers, cast(char*) toStringz(h));
+        curl_easy_setopt(curl, CurlOption.httpheader, curl_request_headers);
+
         string rpay = requestpayload; // copy original string since rpay is altered during the send
         curl_easy_setopt(curl, CurlOption.infile, cast(void*)&rpay);
         curl_easy_setopt(curl, CurlOption.readfunction, &handleRequestBodyData);
@@ -250,6 +255,10 @@ bool runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref st
         //foreach(h; responseheaders)
         //    writelog("header: '%s'", h);
         //writelog("body: '%s'", responsepayload);
+
+        curl_slist_free_all(curl_request_headers);
+        curl_request_headers = null;
+        curl_easy_setopt(curl, CurlOption.httpheader, curl_request_headers);
 
         long statusCode;
         curl_easy_getinfo(curl, CurlInfo.response_code, &statusCode);

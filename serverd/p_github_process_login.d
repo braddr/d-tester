@@ -1,6 +1,7 @@
 module p_github_process_login;
 
 import config;
+import github_apis;
 import mysql;
 import serverd;
 import utils;
@@ -22,28 +23,8 @@ bool validateInput(ref string raddr, string code, Appender!string outstr)
 
 bool getGithubAccessToken(string code, ref string access_token, Appender!string outstr)
 {
-    string[] headers;
-    headers ~= "Accept: application/json";
-    string url = text("https://github.com/login/oauth/access_token?client_id=", c.github_clientid, "&client_secret=", c.github_clientsecret, "&code=", code);
-    string responsepayload;
-    string responseheaders[];
-    if (!runCurlPOST(curl, responsepayload, responseheaders, url, null, headers, null, null))
-    {
-        writelog("  error retrieving access_token, not logging in");
-        return false;
-    }
-    writelog("  access_token api returned: %s", responsepayload);
-
     JSONValue jv;
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
+    if (!getAccessToken(code, jv)) return false;
 
     JSONValue* jv_ptr;
 
@@ -58,14 +39,16 @@ bool getGithubAccessToken(string code, ref string access_token, Appender!string 
     jv_ptr = "token_type" in jv.object;
     if (!jv_ptr || jv_ptr.type != JSON_TYPE.STRING || jv_ptr.str != "bearer")
     {
-        writelog("  github token_type not 'bearer' as expected: %s", responsepayload);
+        writelog("  github token_type not 'bearer' as expected: %s",
+                (!jv_ptr ? "null" : (jv_ptr.type != JSON_TYPE.STRING ? "non-string" : jv_ptr.str)));
         return false;
     }
 
     jv_ptr = "access_token" in jv.object;
     if (!jv_ptr || jv_ptr.type != JSON_TYPE.STRING)
     {
-        writelog("  github response doesn't include access_token: %s", responsepayload);
+        writelog("  github response doesn't include access_token: %s",
+                (!jv_ptr ? "null" : "non-string"));
         return false;
     }
 
@@ -77,26 +60,8 @@ bool getGithubAccessToken(string code, ref string access_token, Appender!string 
 
 bool getGithubTranslation(string access_token, ref string cookievalue, Appender!string outstr)
 {
-    string url = text("https://api.github.com/applications/", c.github_clientid, "/tokens/", access_token);
-    string responsepayload;
-    string responseheaders[];
-    if (!runCurlGET(curl, responsepayload, responseheaders, url, c.github_clientid, c.github_clientsecret))
-    {
-        writelog("  error retrieving authorization, not logging in");
-        return false;
-    }
-    writelog("  applications api returned: %s", responsepayload);
-
     JSONValue jv;
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
+    if (!getAccessTokenDetails(access_token, jv)) return false;
 
     string id = to!string(jv.object["user"].object["id"].integer);
     string login = jv.object["user"].object["login"].str;

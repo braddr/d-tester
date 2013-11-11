@@ -8,7 +8,7 @@ LIBS=-L-lmysqlclient -L-lcurl
 
 COMMON_SRC=mysql.d config.d utils.d
 
-SERVERD_SRC=serverd.d p_*.d setup.d validate.d www.d
+SERVERD_SRC=serverd.d p_*.d setup.d validate.d www.d github_apis.d
 UPDATE_SRC=update_pulls.d
 
 serverd: $(SERVERD_SRC) $(COMMON_SRC)

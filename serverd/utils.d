@@ -141,124 +141,28 @@ extern(C) size_t handleRequestBodyData(void *ptr, size_t size, size_t nmemb, voi
     return 0;
 }
 
-bool runCurlGET(CURL* curl, ref string payload, ref string[] headers, string url, string userid, string passwd)
+bool runCurlGET(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string user, string passwd)
 {
-    int tries;
-    while (tries < 3)
-    {
-        writelog("  get url: %s, try #%s", url, tries);
-
-        payload = "";
-        headers = [];
-
-        curl_easy_reset(curl);
-
-        curl_easy_setopt(curl, CurlOption.httpget, 1);
-
-        curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
-
-        curl_easy_setopt(curl, CurlOption.writefunction, &handleBodyData);
-        curl_easy_setopt(curl, CurlOption.file, &payload);
-
-        curl_easy_setopt(curl, CurlOption.headerfunction, &handleHeaderData);
-        curl_easy_setopt(curl, CurlOption.writeheader, &headers);
-
-        if (userid && passwd)
-        {
-            curl_easy_setopt(curl, CurlOption.httpauth, CurlAuth.basic);
-            curl_easy_setopt(curl, CurlOption.username, toStringz(userid));
-            curl_easy_setopt(curl, CurlOption.password, toStringz(passwd));
-        }
-
-        curl_easy_setopt(curl, CurlOption.verbose, 0);
-
-        curl_easy_setopt(curl, CurlOption.url, toStringz(url));
-        CURLcode res = curl_easy_perform(curl);
-
-        if (res != 0) writelog("  result: %s", res);
-
-        //foreach(h; headers)
-        //    writelog("header: '%s'", h);
-        //writelog("body: '%s'", payload);
-
-        long statusCode;
-        curl_easy_getinfo(curl, CurlInfo.response_code, &statusCode);
-        if (statusCode >= 200 && statusCode <= 299)
-            return true;
-
-        ++tries;
-        writelog("  http status code %s, retrying in %s seconds", statusCode, tries);
-        Thread.sleep(dur!("seconds")( tries ));
-    }
-    return false;
+    return runCurlMethodRetry(curl, CurlOption.httpget, responsepayload, responseheaders, url, null, null, user, passwd);
 }
 
 bool runCurlPUT(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
-    return runCurlMethod(curl, CurlOption.put, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
+    return runCurlMethodRetry(curl, CurlOption.put, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
 }
 
 bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
-    return runCurlMethod(curl, CurlOption.post, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
+    return runCurlMethodRetry(curl, CurlOption.post, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
 }
 
-bool runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
+bool runCurlMethodRetry(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
     int tries;
-    auto fp = File("/tmp/serverd.log", "a");
     while (tries < 3)
     {
         writelog("  url: %s, try: #%s", url, tries);
-
-        responsepayload = "";
-        responseheaders = [];
-
-        curl_easy_reset(curl);
-
-        curl_easy_setopt(curl, co, 1L);
-        curl_easy_setopt(curl, CurlOption.forbid_reuse, 1L);
-
-        curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
-
-        if (user && passwd)
-        {
-            curl_easy_setopt(curl, CurlOption.httpauth, CurlAuth.basic);
-            curl_easy_setopt(curl, CurlOption.username, toStringz(user));
-            curl_easy_setopt(curl, CurlOption.password, toStringz(passwd));
-        }
-
-        curl_slist* curl_request_headers;
-        foreach (h; requestheaders)
-            curl_request_headers = curl_slist_append(curl_request_headers, cast(char*) toStringz(h));
-        curl_easy_setopt(curl, CurlOption.httpheader, curl_request_headers);
-
-        string rpay = requestpayload; // copy original string since rpay is altered during the send
-        curl_easy_setopt(curl, CurlOption.infile, cast(void*)&rpay);
-        curl_easy_setopt(curl, CurlOption.readfunction, &handleRequestBodyData);
-        curl_easy_setopt(curl, CurlOption.postfieldsize, requestpayload.length);
-
-        curl_easy_setopt(curl, CurlOption.writefunction, &handleBodyData);
-        curl_easy_setopt(curl, CurlOption.file, &responsepayload);
-
-        curl_easy_setopt(curl, CurlOption.headerfunction, &handleHeaderData);
-        curl_easy_setopt(curl, CurlOption.writeheader, &responseheaders);
-
-        curl_easy_setopt(curl, CurlOption.stderr, fp.getFP());
-        curl_easy_setopt(curl, CurlOption.verbose, 0);
-
-        curl_easy_setopt(curl, CurlOption.url, toStringz(url));
-        CURLcode res = curl_easy_perform(curl);
-
-        if (res != 0) writelog("  result: %s", res);
-
-        //foreach(h; responseheaders)
-        //    writelog("header: '%s'", h);
-        //writelog("body: '%s'", responsepayload);
-
-        curl_slist_free_all(curl_request_headers);
-        curl_request_headers = null;
-        curl_easy_setopt(curl, CurlOption.httpheader, curl_request_headers);
+        CURLcode res = runCurlMethod(curl, co, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
 
         long statusCode;
         curl_easy_getinfo(curl, CurlInfo.response_code, &statusCode);
@@ -267,12 +171,69 @@ bool runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref st
 
         ++tries;
         writelog("  http status code %s, retrying in %s seconds", statusCode, tries);
-        //foreach(h; responseheaders)
-        //    writelog("header: '%s'", h);
-        //writelog("body: '%s'", responsepayload);
-
         Thread.sleep(dur!("seconds")( tries ));
     }
-    curl_easy_setopt(curl, CurlOption.stderr, 0);
     return false;
+}
+
+CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
+{
+    auto fp = File("/tmp/serverd.log", "a");
+
+    responsepayload = "";
+    responseheaders = [];
+
+    curl_easy_reset(curl);
+
+    curl_easy_setopt(curl, co, 1L);
+    if (co != CurlOption.httpget)
+        curl_easy_setopt(curl, CurlOption.forbid_reuse, 1L);
+
+    curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
+
+    if (user && passwd)
+    {
+        curl_easy_setopt(curl, CurlOption.httpauth, CurlAuth.basic);
+        curl_easy_setopt(curl, CurlOption.username, toStringz(user));
+        curl_easy_setopt(curl, CurlOption.password, toStringz(passwd));
+    }
+
+    curl_slist* curl_request_headers;
+    foreach (h; requestheaders)
+        curl_request_headers = curl_slist_append(curl_request_headers, cast(char*) toStringz(h));
+    curl_easy_setopt(curl, CurlOption.httpheader, curl_request_headers);
+
+    if (co != CurlOption.httpget)
+    {
+        string rpay = requestpayload; // copy original string since rpay is altered during the send
+        curl_easy_setopt(curl, CurlOption.infile, cast(void*)&rpay);
+        curl_easy_setopt(curl, CurlOption.readfunction, &handleRequestBodyData);
+        curl_easy_setopt(curl, CurlOption.postfieldsize, requestpayload.length);
+    }
+
+    curl_easy_setopt(curl, CurlOption.writefunction, &handleBodyData);
+    curl_easy_setopt(curl, CurlOption.file, &responsepayload);
+
+    curl_easy_setopt(curl, CurlOption.headerfunction, &handleHeaderData);
+    curl_easy_setopt(curl, CurlOption.writeheader, &responseheaders);
+
+    curl_easy_setopt(curl, CurlOption.stderr, fp.getFP());
+    curl_easy_setopt(curl, CurlOption.verbose, 0);
+
+    curl_easy_setopt(curl, CurlOption.url, toStringz(url));
+    CURLcode res = curl_easy_perform(curl);
+
+    if (res != 0) writelog("  result: %s", res);
+
+    //foreach(h; responseheaders)
+    //    writelog("header: '%s'", h);
+    //writelog("body: '%s'", responsepayload);
+
+    curl_slist_free_all(curl_request_headers);
+    curl_request_headers = null;
+    curl_easy_setopt(curl, CurlOption.httpheader, curl_request_headers);
+
+    curl_easy_setopt(curl, CurlOption.stderr, 0);
+
+    return res;
 }

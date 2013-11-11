@@ -1,6 +1,7 @@
 module p_finish_pull_run;
 
 import config;
+import github_apis;
 import mysql;
 import serverd;
 import utils;
@@ -120,10 +121,6 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
     numpending = 10 - numpass - numfail - numinprogress;
     if (numpending < 0) numpending = 0;
 
-    string url = text("https://api.github.com/repos/", projectname, "/", reponame, "/statuses/", sha);
-    string payload;
-    string[] headers;
-
     string desc;
     void appenddesc(string s)
     {
@@ -138,21 +135,11 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
     if (numpending > 0)    { status = "pending"; appenddesc(text("Pending: ",     numpending));    }
     if (numfail > 0)       { status = "failure"; }
 
-    string requestpayload = text(
-        `{`
-            `"description" : "`, desc, `",`
-            `"state" : "`, status, `",`
-            `"target_url" : "https://d.puremagic.com/test-results/pull-history.ghtml?`
-                `projectid=`, projectid, `&repoid=`, repoid, `&pullid=`, pullid, `"`
-        `}`);
+    string targeturl = text(`https://d.puremagic.com/test-results/pull-history.ghtml?`
+                `projectid=`, projectid, `&repoid=`, repoid, `&pullid=`, pullid);
 
-    writelog("  request body: %s", requestpayload);
-
-    if (!runCurlPOST(curl, payload, headers, url, requestpayload, null, c.github_user, c.github_passwd))
-    {
-        writelog("  failed to update github");
+    if (!setSHAStatus(projectname, reponame, sha, desc, status, targeturl))
         return false;
-    }
 
     return true;
 }

@@ -128,7 +128,8 @@
     \if{\get{loggedin}}{
         <span id="loginstate" class="loggedin">\get{github_username}\ - <a href="/test-results/addv2/logout?csrf=\get{csrf}">Logout</a></span>
     }{
-        <span id="loginstate" class="loggedout"><a href="https://github.com/login/oauth/authorize?scope=public_repo&amp;response_type=code&amp;client_id=a45bbbdf40a34981ea34">Login</A></span>
+        \if{\eq{\get{SERVERNAME}}{d-beta.puremagic.com}}{\set{clientid}{a45bbbdf40a34981ea34}}{\set{clientid}{efb9cf46977efe7abd51}}
+        <span id="loginstate" class="loggedout"><a href="https://github.com/login/oauth/authorize?scope=public_repo&amp;response_type=code&amp;client_id=\get{clientid}">Login</A></span>
     }
 }}
 

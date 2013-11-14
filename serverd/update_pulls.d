@@ -348,7 +348,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         printHeader();
         clearOldResults = true;
         writelog("    head_sha: %s -> %s", k.head_sha, p.head_sha);
-        sql_exec(text("update github_pulls set head_sha = '", p.head_sha, "' where id = ", k.id));
+        sql_exec(text("update github_pulls set auto_pull = null, head_sha = '", p.head_sha, "' where id = ", k.id));
     }
 
     if (k.create_date != p.create_date)
@@ -404,7 +404,7 @@ void processPull(Project proj, Repository repo, Pull* k, Pull p)
             sqlcmd ~= text(", '", p.updated_at.toISOExtString(), "', true, "
                            "'", p.base_git_url, "', '", p.base_ref, "', '", p.base_sha, "', "
                            "'", p.head_git_url, "', '", p.head_ref, "', '", p.head_sha, "', "
-                           "'", p.head_date.toISOExtString(), "', false)");
+                           "'", p.head_date.toISOExtString(), "', null)");
 
             sql_exec(sqlcmd);
         }

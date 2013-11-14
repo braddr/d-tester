@@ -232,7 +232,7 @@
 }
 \while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}}{
     # get the bucket to place the row in
-    \set{name}{\get{r_name}_\if{\eq{\get{ghp_autopull}}{1}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
+    \set{name}{\get{r_name}_\if{\get{ghp_autopull}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
 
     # get one row of html and store it in name_num
     \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{project_name}}}

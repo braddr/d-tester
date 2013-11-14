@@ -46,7 +46,7 @@
   </tr><tr>
     <th>Based On</th> <td>\get{ghp_base_ref}</td>
   </tr><tr>
-  <th>Auto Merge</th> <td>\if{\eq{\get{ghp_auto_pull}}{1}}{Yes}{No}\if{\checksecurity}{\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}">Toggle</a>}</td>
+  <th>Auto Merge</th> <td>\if{\get{ghp_auto_pull}}{Yes}{No}\if{\checksecurity}{\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;csrf=\get{csrf}">Toggle</a>}</td>
   </tr>
 </table>
 

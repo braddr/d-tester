@@ -28,8 +28,28 @@ div.page_banner {
     background:      #f0f0f0;
     font-size:       200%;
     text-align:      center;
-    padding-top:     10px;
     padding-bottom:  10px;
+}
+
+div.login_banner {
+    padding-top:     3px;
+    background:      #f0f0f0;
+}
+
+span#loginstate {
+    background:      #C8C8C8;
+    text-align:      left;
+    padding-left:    1em;
+    padding-right:   1em;
+    padding-top:     3px;
+    padding-bottom:  3px;
+    border-bottom-right-radius:   8px;
+}
+
+#loginstate span.loggedin {
+}
+
+#loginstate span.logedout {
 }
 
 td.page_menupushtop

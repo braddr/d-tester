@@ -53,7 +53,7 @@ bool validateInput(ref string raddr, ref string runid, ref string hostid, ref st
     return true;
 }
 
-bool getRelatedData(string runid, ref string reponame, ref string repoid, ref string sha, ref string pullid, ref string ghp_id, ref string projectid, ref string projectname, ref bool automerge, Appender!string outstr)
+bool getRelatedData(string runid, ref string reponame, ref string repoid, ref string sha, ref string pullid, ref string ghp_id, ref string projectid, ref string projectname, ref string merge_authorizing_id, Appender!string outstr)
 {
     if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, r.project_id, p.name, p.allow_auto_merge, ghp.auto_pull from github_pulls ghp, repositories r, repo_branches rb, pull_test_runs ptr, projects p where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.r_b_id = rb.id and rb.repository_id = r.id and p.id = r.project_id")))
     {
@@ -80,7 +80,9 @@ bool getRelatedData(string runid, ref string reponame, ref string repoid, ref st
     ghp_id = rows[0][4];
     projectid = rows[0][5];
     projectname = rows[0][6];
-    automerge = (rows[0][7] == "1") && (rows[0][8] == "1");  // project allows merge and pull is marked for merge
+
+    // if project allows merging, return the pull merge state, otherwise null
+    merge_authorizing_id = (rows[0][7] == "1") ? rows[0][8] : "";
 
     return true;
 }
@@ -91,8 +93,8 @@ bool updateGithubPullStatus(string runid, Appender!string outstr)
     string projectname, projectid;
     string reponame, repoid;
     string sha, pullid, ghp_id;
-    bool   automerge;
-    if (!getRelatedData(runid, reponame, repoid, sha, pullid, ghp_id, projectid, projectname, automerge, outstr))
+    string merge_authorizing_id;
+    if (!getRelatedData(runid, reponame, repoid, sha, pullid, ghp_id, projectid, projectname, merge_authorizing_id, outstr))
         return false;
 
     return updateGithubPullStatus(runid, ghp_id, sha, pullid, projectname, projectid, reponame, repoid, outstr);
@@ -164,31 +166,29 @@ bool updateStore(string runid, Appender!string outstr)
     return true;
 }
 
-bool mergeGithubPull(string projectname, string reponame, string pullid, string ghp_id, Appender!string outstr)
+bool mergeGithubPull(string projectname, string reponame, string pullid, string ghp_id, string merge_authorizing_id, Appender!string outstr)
 {
-    string url = text("https://api.github.com/repos/", projectname, "/", reponame, "/pulls/", pullid, "/merge");
-    string responsepayload;
-    string[] responseheaders;
-
     sql_exec(text("select count(*) from pull_test_runs where g_p_id = ", ghp_id, " and deleted = false and rc = 0"));
     sqlrow[] rows = sql_rows();
-    if (rows.length < 1)
-    {
-        outstr.put("mergeGithubPull: should have gotten exactly one row back from count successful tests");
-        return false;
-    }
 
     // if there aren't 10 completed tests (one for each platform), do nothing
     // TODO: num platforms really ought to come from the db
     if (to!int(rows[0][0]) != 10)
         return true;
 
-    writelog("  todo: call github: %s", url);
-    //if (!runCurlPUT(curl, responsepayload, responseheaders, url, "{}", c.github_user, c.github_passwd))
-    //{
-    //    writelog("  github failed to merge pull request");
-    //    return false;
-    //}
+    sql_exec(text("select access_token, username from github_users where id = ", merge_authorizing_id));
+    rows = sql_rows();
+
+    if (!userIsCollaborator(rows[0][1], projectname, reponame, rows[0][0]))
+    {
+        writelog("  WARNING: user no longer is authorized to merge pull, skipping");
+        formattedWrite(outstr, "%s is not authorized to perform merges", rows[0][1]);
+        sql_exec(text("update github_pulls set auto_pull = null where id = ", ghp_id));
+        return false;
+    }
+
+    string commit_message; // = text("auto-merge authorized by ", rows[0][1]);
+    performPullMerge(projectname, reponame, pullid, rows[0][0], commit_message);
     return true;
 }
 
@@ -207,15 +207,15 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string projectname, projectid;
     string reponame, repoid;
     string sha, pullid, ghp_id;
-    bool   automerge;
-    if (!getRelatedData(runid, reponame, repoid, sha, pullid, ghp_id, projectid, projectname, automerge, outstr))
+    string merge_authorizing_id;
+    if (!getRelatedData(runid, reponame, repoid, sha, pullid, ghp_id, projectid, projectname, merge_authorizing_id, outstr))
         return;
 
     updateHostLastCheckin(hostid, clientver);
     updateStore(runid, outstr);
     updateGithubPullStatus(runid, ghp_id, sha, pullid, projectname, projectid, reponame, repoid, outstr);
 
-    if (automerge)
-        mergeGithubPull(projectname, reponame, pullid, ghp_id, outstr);
+    if (merge_authorizing_id != "")
+        mergeGithubPull(projectname, reponame, pullid, ghp_id, merge_authorizing_id, outstr);
 }
 

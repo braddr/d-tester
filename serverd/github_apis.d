@@ -98,3 +98,19 @@ bool setSHAStatus(string owner, string repo, string sha, string desc, string sta
     return true;
 }
 
+bool performPullMerge(string owner, string repo, string pullid, string access_token, string commit_message)
+{
+    string url = text("https://api.github.com/repos/", owner, "/", repo, "/pulls/", pullid, "/merge?access_token=", access_token);
+    string responsepayload;
+    string[] responseheaders;
+
+    string requestbody = commit_message != "" ? text("{ \"commit_message\" : \"", commit_message, "\"}") : "{}";
+    writelog("  calling github to merge %s/%s/%s", owner, repo, pullid);
+    if (!runCurlPUT(curl, responsepayload, responseheaders, url, requestbody, null, null, null))
+    {
+        writelog("  github failed to merge pull request");
+        return false;
+    }
+
+    return true;
+}

@@ -37,6 +37,8 @@ import std.string;
 
 import etc.c.curl;
 
+import core.sys.posix.signal;
+
 extern(C)
 {
     struct FCGX_Stream;
@@ -144,9 +146,17 @@ void processRequest()
     sql_cleanup_after_request();
 }
 
+extern(C) void handle_sigterm(int sig) @system nothrow
+{
+    //writelog("caught sigterm");
+    shutdown = true;
+}
+
 int main(string[] args)
 {
     writelog("start app");
+
+    signal(SIGTERM, &handle_sigterm);
 
     string filename = std.process.getenv("SERVERD_CONFIG");
     if (filename == "")

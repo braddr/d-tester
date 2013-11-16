@@ -10,6 +10,8 @@ import serverd;
 import utils;
 import validate;
 
+import std.json;
+
 bool validateInput(ref string projectid, ref string repoid, ref string pullid, ref string ghp_id, ref string cookie, ref string csrf, Appender!string outstr)
 {
     if (!validate_id(projectid, "projectid", outstr))
@@ -32,15 +34,21 @@ bool validateInput(ref string projectid, ref string repoid, ref string pullid, r
     return true;
 }
 
-bool updateStore(string ghp_id, string loginid)
+bool updateStore(string ghp_id, string loginid, ref bool newstate)
 {
     sql_exec(text("select auto_pull from github_pulls where id = ", ghp_id));
     sqlrow[] rows = sql_rows();
 
     if (rows[0][0] == "")
+    {
+        newstate = true;
         sql_exec(text("update github_pulls set auto_pull = \"", loginid, "\" where id=", ghp_id));
+    }
     else
+    {
+        newstate = false;
         sql_exec(text("update github_pulls set auto_pull = null where id=", ghp_id));
+    }
 
     return true;
 }
@@ -96,7 +104,14 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         extra_param = "&notcollab=1";
     else
     {
-        if (!updateStore(ghp_id, userid)) goto Lerror;
+        bool newstate;
+        if (!updateStore(ghp_id, userid, newstate)) goto Lerror;
+
+        string commenttext = text("Auto-merge toggled ", newstate ? "on" : "off");
+
+        JSONValue jv;
+        if (!github.addPullComment(access_token, rows[0][0], rows[0][1], pullid, commenttext, jv))
+            writelog("  failed to submit a comment to github, continuing anwyay");
 
         // TODO: change so that a github related error in merging is presented as normal in the ui, not an internal error
         if (!checkMergeNow(projectid, repoid, pullid, ghp_id, valout)) goto Lerror;

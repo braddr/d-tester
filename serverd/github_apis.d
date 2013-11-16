@@ -238,5 +238,56 @@ bool getPulls(string owner, string repo, ref JSONValue jv, ref string nextlink)
     return true;
 }
 
+bool getPullComments(string owner, string repo, string issuenum, ref JSONValue jv)
+{
+    string url = text("https://api.github.com/repos/", owner, "/", repo, "/issues/", issuenum, "/comments");
+    string responsepayload;
+    string[] responseheaders;
+
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    {
+        writelog("  failed to load comments from github");
+        return false;
+    }
+
+    try
+    {
+        jv = parseJSON(responsepayload);
+    }
+    catch (JSONException e)
+    {
+        writelog("  error parsing github json response: %s\n", e.toString);
+        return false;
+    }
+
+    return true;
+}
+
+bool addPullComment(string access_token, string owner, string repo, string issuenum, string comment, ref JSONValue jv)
+{
+    string url = text("https://api.github.com/repos/", owner, "/", repo, "/issues/", issuenum, "/comments?access_token=", access_token);
+    string responsepayload;
+    string[] responseheaders;
+
+    string payload = text(`{ "body" : "`, comment, `" }`);
+    if (!runCurlPOST(curl, responsepayload, responseheaders, url, payload, null, null, null))
+    {
+        writelog("  failed to load comments from github");
+        return false;
+    }
+
+    try
+    {
+        jv = parseJSON(responsepayload);
+    }
+    catch (JSONException e)
+    {
+        writelog("  error parsing github json response: %s\n", e.toString);
+        return false;
+    }
+
+    return true;
+}
+
 }
 

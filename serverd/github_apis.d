@@ -16,6 +16,23 @@ private:
     string clientsecret;
     CURL*  curl;
 
+private:
+
+bool parseAndReturn(string responsepayload, ref JSONValue jv)
+{
+    try
+    {
+        jv = parseJSON(responsepayload);
+    }
+    catch (JSONException e)
+    {
+        writelog("  error parsing github json response: %s\n", e.toString);
+        return false;
+    }
+
+    return true;
+}
+
 public:
 
 this(string userid_, string passwd_, string clientid_, string clientsecret_, CURL* curl_)
@@ -55,17 +72,7 @@ bool getAccessToken(string code, ref JSONValue jv)
     }
     writelog("  access_token api returned: %s", responsepayload);
 
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
-
-    return true;
+    return parseAndReturn(responsepayload, jv);
 }
 
 bool getAccessTokenDetails(string access_token, ref JSONValue jv)
@@ -80,17 +87,7 @@ bool getAccessTokenDetails(string access_token, ref JSONValue jv)
     }
     writelog("  applications api returned: %s", responsepayload);
 
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
-
-    return true;
+    return parseAndReturn(responsepayload, jv);
 }
 
 bool setSHAStatus(string owner, string repo, string sha, string desc, string status, string targeturl)
@@ -146,17 +143,7 @@ bool getPull(string owner, string repo, string pullid, ref JSONValue jv)
         return false;
     }
 
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
-
-    return true;
+    return parseAndReturn(responsepayload, jv);
 }
 
 bool getCommit(string owner, string repo, string sha, ref JSONValue jv)
@@ -171,17 +158,7 @@ bool getCommit(string owner, string repo, string sha, ref JSONValue jv)
         return false;
     }
 
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
-
-    return true;
+    return parseAndReturn(responsepayload, jv);
 }
 
 string findNextLink(string[] headers)
@@ -225,17 +202,7 @@ bool getPulls(string owner, string repo, ref JSONValue jv, ref string nextlink)
 
     nextlink = findNextLink(responseheaders);
 
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
-
-    return true;
+    return parseAndReturn(responsepayload, jv);
 }
 
 bool getPullComments(string owner, string repo, string issuenum, ref JSONValue jv)
@@ -250,17 +217,7 @@ bool getPullComments(string owner, string repo, string issuenum, ref JSONValue j
         return false;
     }
 
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
-
-    return true;
+    return parseAndReturn(responsepayload, jv);
 }
 
 bool addPullComment(string access_token, string owner, string repo, string issuenum, string comment, ref JSONValue jv)
@@ -276,17 +233,7 @@ bool addPullComment(string access_token, string owner, string repo, string issue
         return false;
     }
 
-    try
-    {
-        jv = parseJSON(responsepayload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
-        return false;
-    }
-
-    return true;
+    return parseAndReturn(responsepayload, jv);
 }
 
 }

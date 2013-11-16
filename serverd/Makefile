@@ -4,7 +4,7 @@ DMD=../../source/trunk3/dmd/src/dmd
 
 DFLAGS=-m64 -gc
 
-LIBS=-L-lmysqlclient -L-lcurl
+LIBS=-L-lmysqlclient -L-lcurl -L-lcrypto
 
 COMMON_SRC=mysql.d config.d utils.d
 

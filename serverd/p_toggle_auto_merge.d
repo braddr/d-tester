@@ -9,10 +9,8 @@ import mysql;
 import utils;
 import validate;
 
-bool validateInput(ref string raddr, ref string projectid, ref string repoid, ref string pullid, ref string ghp_id, ref string testerlogin, Appender!string outstr)
+bool validateInput(ref string projectid, ref string repoid, ref string pullid, ref string ghp_id, ref string cookie, ref string csrf, Appender!string outstr)
 {
-    if (!validate_raddr(raddr, outstr))
-        return false;
     if (!validate_id(projectid, "projectid", outstr))
         return false;
     if (!validate_id(repoid, "repoid", outstr))
@@ -22,25 +20,13 @@ bool validateInput(ref string raddr, ref string projectid, ref string repoid, re
     if (!validate_id(ghp_id, "ghp_id", outstr))
         return false;
 
-    if (!validate_id(testerlogin, "testerlogin", outstr))
+    if (!validateNonEmpty(cookie, "testerlogin", outstr))
+        return false;
+    if (!validateNonEmpty(csrf, "csrf", outstr))
         return false;
 
-    return true;
-}
-
-bool getAccessTokenFromCookie(string testerlogin, ref string access_token, ref string userid, ref string username)
-{
-    sql_exec(text("select username, access_token from github_users where id = ", testerlogin));
-    sqlrow[] rows = sql_rows();
-    if (rows.length != 1)
-    {
-        writelog("  found %s rows, expected 1, for id %s", rows.length, testerlogin);
-        return false;
-    }
-
-    userid = testerlogin;
-    username = rows[0][0];
-    access_token = rows[0][1];
+    cookie = sql_quote(cookie);
+    csrf = sql_quote(csrf);
 
     return true;
 }
@@ -80,26 +66,29 @@ bool checkMergeNow(string projectid, string repoid, string pullid, string ghp_id
 
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
-    string raddr = lookup(hash, "REMOTE_ADDR");
     string projectid = lookup(userhash, "projectid");
     string repoid = lookup(userhash, "repoid");
     string pullid = lookup(userhash, "pullid");
     string ghp_id = lookup(userhash, "ghp_id");
-    string testerlogin = lookup(userhash, "testerlogin");
+    string cookie = lookup(userhash, "testerlogin");
+    string csrf = lookup(userhash, "csrf");
 
     auto valout = appender!string;
-    if (!validateInput(raddr, projectid, repoid, pullid, ghp_id, testerlogin, valout)) goto Lerror;
+    if (!validateInput(projectid, repoid, pullid, ghp_id, cookie, csrf, valout))
+        goto Lerror;
 
     string access_token;
     string userid;
     string username;
-    if (!getAccessTokenFromCookie(testerlogin, access_token, userid, username))
+    if (!getAccessTokenFromCookie(cookie, csrf, access_token, userid, username))
     {
         valout.put("error toggling auto-merge state\n");
         goto Lerror;
     }
 
     if (!updateStore(ghp_id, userid)) goto Lerror;
+
+    // TODO: change so that a github related error in merging is presented as normal in the ui, not an internal error
     if (!checkMergeNow(projectid, repoid, pullid, ghp_id, valout)) goto Lerror;
 
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/pull-history.ghtml?",

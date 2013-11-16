@@ -15,9 +15,9 @@ import std.range;
 void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
 {
     // get set of pull requests that need to have runs
-    //                 0      1     2       3           4            5                6            7              8             9        10
+    //                 0      1     2       3           4            5                6            7              8             9        10    11                  12
     string q = text(
-               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name, p.id "
+               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name, p.id, p.allow_auto_merge, gp.auto_pull "
                "from github_pulls gp, projects p, repositories r, repo_branches rb, github_users u, build_host_projects bhp "
                "where gp.open = true and "
                "  gp.r_b_id = rb.id and "
@@ -160,13 +160,16 @@ sqlrow selectOnePull(ref sqlrow[string] openPulls)
     //writelog("stats end:");
 
     // filter past runs into buckets
+    sqlrow[string] automerge;
     sqlrow[string] noRuns;
     sqlrow[string] allPass;
     sqlrow[string] somePass;
     sqlrow[string] allFail;
     foreach(key, row; openPulls)
     {
-        if (auto s = key in stats)
+        if (row[11] == "1" && row[12] != "")
+            automerge[key] = row;
+        else if (auto s = key in stats)
         {
             if ((*s)[1] == 0) // no failures
                 allPass[key] = row;
@@ -192,7 +195,9 @@ sqlrow selectOnePull(ref sqlrow[string] openPulls)
     }
     else
     {
-        if (allPass.length > 0)
+        if (automerge.length > 0)
+            return selectOnePull_byNewest(automerge);
+        else if (allPass.length > 0)
             return selectOnePull_byNewest(allPass);
         else if (noRuns.length > 0)
             return selectOnePull_byNewest(noRuns);
@@ -362,7 +367,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
                 outstr.put("skip\n");
         }
 
-        p_finish_pull_run.updateGithub(runid[0], outstr);
+        p_finish_pull_run.updateGithubPullStatus(runid[0], outstr);
     }
     else
         outstr.put("skip\n");

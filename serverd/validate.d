@@ -7,6 +7,17 @@ import std.range;
 import mysql;
 import utils;
 
+bool validateNonEmpty(string str, string label, Appender!string outstr)
+{
+    if (str.empty)
+    {
+        formattedWrite(outstr, "bad input: missing %s\n", label);
+        return false;
+    }
+
+    return true;
+}
+
 bool validateNumber(string strid)
 {
     try
@@ -36,11 +47,7 @@ bool validate_raddr(ref string raddr, Appender!string outstr)
 
 bool validate_knownhost(string raddr, ref string rname, ref string hostid, Appender!string outstr)
 {
-    if (rname.empty)
-    {
-        outstr.put("bad input: missing hostname\n");
-        return false;
-    }
+    if (!validateNonEmpty(raddr, "hostname", outstr)) return false;
 
     rname = sql_quote(rname);
 
@@ -65,11 +72,7 @@ bool validate_knownhost(string raddr, ref string rname, ref string hostid, Appen
 
 bool validate_platform(ref string platform, Appender!string outstr)
 {
-    if (platform.empty)
-    {
-        outstr.put("bad input: missing os\n");
-        return false;
-    }
+    if (!validateNonEmpty(platform, "os", outstr)) return false;
 
     platform = sql_quote(platform);
 
@@ -81,14 +84,10 @@ bool validate_platform(ref string platform, Appender!string outstr)
 
 bool validate_id(ref string id, string idname, Appender!string outstr)
 {
-    if (id.empty)
-    {
-        formattedWrite(outstr, "bad input: no ", idname, "\n");
-        return false;
-    }
+    if (!validateNonEmpty(id, idname, outstr)) return false;
     if (!validateNumber(id))
     {
-        formattedWrite(outstr, "bad input: invalid ", idname, "\n");
+        formattedWrite(outstr, "bad input: invalid %s\n", idname);
         return false;
     }
 
@@ -99,11 +98,7 @@ bool validate_id(ref string id, string idname, Appender!string outstr)
 
 bool validate_testtype(ref string type, Appender!string outstr)
 {
-    if (type.empty)
-    {
-        outstr.put("bad input: no type\n");
-        return false;
-    }
+    if (!validateNonEmpty(type, "type", outstr)) return false;
     if (!validateNumber(type))
     {
         outstr.put("bad input: invalid type\n");

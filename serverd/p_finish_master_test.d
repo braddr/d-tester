@@ -21,13 +21,13 @@ bool validate_testState(string testid, ref string hostid, Appender!string outstr
 
     if (rows.length != 1)
     {
-        formattedWrite(outstr, "bad input: should be exactly one row, testid: ", testid, "\n");
+        formattedWrite(outstr, "bad input: should be exactly one row, testid: %s\n", testid);
         return false;
     }
 
     if (rows[0][2] != "" || rows[0][3] != "")
     {
-        formattedWrite(outstr, "bad input: test or run already complete, testid: ", testid, "\n");
+        formattedWrite(outstr, "bad input: test or run already complete, testid: %s\n", testid);
         return false;
     }
 

@@ -47,7 +47,7 @@ create table if not exists github_pulls
     head_ref          varchar(256) not null,
     head_sha          varchar(256) not null,
     head_date         datetime,
-    auto_pull         bool         not null,
+    auto_pull         int,
 
     primary key(id),
     key(open, id),
@@ -61,8 +61,12 @@ create table if not exists github_users
     id                int          not null,
     username          varchar(32)  not null,
     trusted           bool,
+    access_token      varchar(1024),
+    cookie            char(24),
+    csrf              char(12),
 
-    primary key(id)
+    primary key(id),
+    unique key(cookie)
 );
 
 create table if not exists github_posts

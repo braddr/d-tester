@@ -1,12 +1,31 @@
 module github_apis;
 
-import config;
-import serverd;
 import utils;
 
 import etc.c.curl;
 import std.conv;
 import std.json;
+import std.string;
+
+class Github
+{
+private:
+    string userid;
+    string passwd;
+    string clientid;
+    string clientsecret;
+    CURL*  curl;
+
+public:
+
+this(string userid_, string passwd_, string clientid_, string clientsecret_, CURL* curl_)
+{
+    userid = userid_;
+    passwd = passwd_;
+    clientid = clientid_;
+    clientsecret = clientsecret_;
+    curl = curl_;
+}
 
 bool userIsCollaborator(string login, string owner, string repo, string access_token)
 {
@@ -26,7 +45,7 @@ bool getAccessToken(string code, ref JSONValue jv)
 {
     string[] headers;
     headers ~= "Accept: application/json";
-    string url = text("https://github.com/login/oauth/access_token?client_id=", c.github_clientid, "&client_secret=", c.github_clientsecret, "&code=", code);
+    string url = text("https://github.com/login/oauth/access_token?client_id=", clientid, "&client_secret=", clientsecret, "&code=", code);
     string responsepayload;
     string responseheaders[];
     if (!runCurlPOST(curl, responsepayload, responseheaders, url, null, headers, null, null))
@@ -51,10 +70,10 @@ bool getAccessToken(string code, ref JSONValue jv)
 
 bool getAccessTokenDetails(string access_token, ref JSONValue jv)
 {
-    string url = text("https://api.github.com/applications/", c.github_clientid, "/tokens/", access_token);
+    string url = text("https://api.github.com/applications/", clientid, "/tokens/", access_token);
     string responsepayload;
     string responseheaders[];
-    if (!runCurlGET(curl, responsepayload, responseheaders, url, c.github_clientid, c.github_clientsecret))
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, clientid, clientsecret))
     {
         writelog("  error retrieving authorization, not logging in");
         return false;
@@ -77,8 +96,8 @@ bool getAccessTokenDetails(string access_token, ref JSONValue jv)
 bool setSHAStatus(string owner, string repo, string sha, string desc, string status, string targeturl)
 {
     string url = text("https://api.github.com/repos/", owner, "/", repo, "/statuses/", sha);
-    string payload;
-    string[] headers;
+    string responsepayload;
+    string[] responseheaders;
 
     string requestpayload = text(
         `{`
@@ -89,7 +108,7 @@ bool setSHAStatus(string owner, string repo, string sha, string desc, string sta
 
     writelog("  request body: %s", requestpayload);
 
-    if (!runCurlPOST(curl, payload, headers, url, requestpayload, null, c.github_user, c.github_passwd))
+    if (!runCurlPOST(curl, responsepayload, responseheaders, url, requestpayload, null, userid, passwd))
     {
         writelog("  failed to update github");
         return false;
@@ -114,3 +133,110 @@ bool performPullMerge(string owner, string repo, string pullid, string access_to
 
     return true;
 }
+
+bool getPull(string owner, string repo, string pullid, ref JSONValue jv)
+{
+    string url = text("https://api.github.com/repos/", owner, "/", repo, "/pulls/", pullid);
+    string responsepayload;
+    string[] responseheaders;
+
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    {
+        writelog("  failed to load pull from github");
+        return false;
+    }
+
+    try
+    {
+        jv = parseJSON(responsepayload);
+    }
+    catch (JSONException e)
+    {
+        writelog("  error parsing github json response: %s\n", e.toString);
+        return false;
+    }
+
+    return true;
+}
+
+bool getCommit(string owner, string repo, string sha, ref JSONValue jv)
+{
+    string url = text("https://api.github.com/repos/", owner, "/", repo, "/commits/", sha);
+    string responsepayload;
+    string[] responseheaders;
+
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    {
+        writelog("  failed to load commit from github");
+        return false;
+    }
+
+    try
+    {
+        jv = parseJSON(responsepayload);
+    }
+    catch (JSONException e)
+    {
+        writelog("  error parsing github json response: %s\n", e.toString);
+        return false;
+    }
+
+    return true;
+}
+
+string findNextLink(string[] headers)
+{
+    // Link: <https://api.github.com/repos/D-Programming-Language/dmd/pulls?page=2&per_page=100&state=open>; rel="next",
+    //       <https://api.github.com/repos/D-Programming-Language/dmd/pulls?page=2&per_page=100&state=open>; rel="last"
+    foreach (h; headers)
+    {
+        if (h.length >= 5 && toLower(h[0 .. 5]) == "link:")
+        {
+            string rest = h[5 .. $];
+            strip(rest);
+
+            string[] links = std.string.split(rest, ",");
+            foreach (l; links)
+            {
+                string[] parts = std.string.split(l, ";");
+                if (toLower(strip(parts[1])) == `rel="next"`)
+                {
+                    string toReturn = strip(parts[0])[1 .. $-1].idup;
+                    //writelog("continuation link: %s", toReturn);
+                    return toReturn;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+bool getPulls(string owner, string repo, ref JSONValue jv, ref string nextlink)
+{
+    string url = nextlink != "" ? nextlink : text("https://api.github.com/repos/", owner, "/", repo, "/pulls?state=open&per_page=100");
+    string responsepayload;
+    string[] responseheaders;
+
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    {
+        writelog("  failed to load pulls from github");
+        return false;
+    }
+
+    nextlink = findNextLink(responseheaders);
+
+    try
+    {
+        jv = parseJSON(responsepayload);
+    }
+    catch (JSONException e)
+    {
+        writelog("  error parsing github json response: %s\n", e.toString);
+        return false;
+    }
+
+    return true;
+}
+
+}
+

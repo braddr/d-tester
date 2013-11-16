@@ -140,7 +140,7 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
     string targeturl = text(`https://d.puremagic.com/test-results/pull-history.ghtml?`
                 `projectid=`, projectid, `&repoid=`, repoid, `&pullid=`, pullid);
 
-    if (!setSHAStatus(projectname, reponame, sha, desc, status, targeturl))
+    if (!github.setSHAStatus(projectname, reponame, sha, desc, status, targeturl))
         return false;
 
     return true;
@@ -179,7 +179,7 @@ bool mergeGithubPull(string projectname, string reponame, string pullid, string 
     sql_exec(text("select access_token, username from github_users where id = ", merge_authorizing_id));
     rows = sql_rows();
 
-    if (!userIsCollaborator(rows[0][1], projectname, reponame, rows[0][0]))
+    if (!github.userIsCollaborator(rows[0][1], projectname, reponame, rows[0][0]))
     {
         writelog("  WARNING: user no longer is authorized to merge pull, skipping");
         formattedWrite(outstr, "%s is not authorized to perform merges", rows[0][1]);
@@ -188,7 +188,7 @@ bool mergeGithubPull(string projectname, string reponame, string pullid, string 
     }
 
     string commit_message; // = text("auto-merge authorized by ", rows[0][1]);
-    performPullMerge(projectname, reponame, pullid, rows[0][0], commit_message);
+    github.performPullMerge(projectname, reponame, pullid, rows[0][0], commit_message);
     return true;
 }
 

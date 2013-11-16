@@ -1,6 +1,7 @@
 module serverd;
 
 import config;
+import github_apis;
 import mysql;
 import utils;
 import setup;
@@ -51,6 +52,7 @@ extern(C)
     extern char *FCGX_GetParam(const char *name, FCGX_ParamArray envp);
 }
 
+Github github;
 CURL* curl;
 FCGX_Stream* fcgi_in, fcgi_out, fcgi_err;
 FCGX_ParamArray fcgi_envp;
@@ -179,6 +181,8 @@ int main(string[] args)
         writelog("failed to initialize curl library, exiting");
         return 1;
     }
+
+    github = new Github(c.github_user, c.github_passwd, c.github_clientid, c.github_clientsecret, curl);
 
     version (FASTCGI)
     {

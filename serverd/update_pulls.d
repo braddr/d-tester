@@ -1,6 +1,7 @@
 module p_update_pulls;
 
 import config;
+import github_apis;
 import mysql;
 import utils;
 
@@ -15,6 +16,7 @@ import std.string;
 import std.stdio;
 
 CURL* curl;
+Github github;
 alias string[] sqlrow;
 
 class RepoBranch
@@ -214,52 +216,18 @@ bool checkUser(ulong uid, string uname)
 
 Pull loadPullFromGitHub(Project proj, Repository repo, ulong pullid)
 {
-    string url = text("https://api.github.com/repos/", proj.name, "/", repo.name, "/pulls/", pullid);
-    string payload;
-    string[] headers;
-
-    if (!runCurlGET(curl, payload, headers, url, c.github_user, c.github_passwd) || payload.length == 0)
-    {
-        writelog("  failed to load pull from github");
-        return null;
-    }
-
     JSONValue jv;
-    try
-    {
-        jv = parseJSON(payload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
+    if (!github.getPull(proj.name, repo.name, to!string(pullid), jv))
         return null;
-    }
 
     return makePullFromJson(jv, proj, repo);
 }
 
 bool loadCommitFromGitHub(Project proj, Repository repo, Pull p)
 {
-    string url = text("https://api.github.com/repos/", proj.name, "/", repo.name, "/commits/", p.head_sha);
-    string payload;
-    string[] headers;
-
-    if (!runCurlGET(curl, payload, headers, url, c.github_user, c.github_passwd) || payload.length == 0)
-    {
-        writelog("  failed to load commit from github");
-        return false;
-    }
-
     JSONValue jv;
-    try
-    {
-        jv = parseJSON(payload);
-    }
-    catch (JSONException e)
-    {
-        writelog("  error parsing github json response: %s\n", e.toString);
+    if (!github.getCommit(proj.name, repo.name, p.head_sha, jv))
         return false;
-    }
 
     string s = jv.object["commit"].object["committer"].object["date"].str;
     p.head_date = SysTime.fromISOExtString(s, UTC());
@@ -527,32 +495,6 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
     return true;
 }
 
-string findNextLink(string[] headers)
-{
-    // Link: <https://api.github.com/repos/D-Programming-Language/dmd/pulls?page=2&per_page=100&state=open>; rel="next", <https://api.github.com/repos/D-Programming-Language/dmd/pulls?page=2&per_page=100&state=open>; rel="last"
-    foreach (h; headers)
-    {
-        if (h.length >= 5 && toLower(h[0 .. 5]) == "link:")
-        {
-            string rest = h[5 .. $];
-            strip(rest);
-
-            string[] links = std.string.split(rest, ",");
-            foreach (l; links)
-            {
-                string[] parts = std.string.split(l, ";");
-                if (toLower(strip(parts[1])) == `rel="next"`)
-                {
-                    string toReturn = strip(parts[0])[1 .. $-1].idup;
-                    //writelog("continuation link: %s", toReturn);
-                    return toReturn;
-                }
-            }
-        }
-    }
-    return null;
-}
-
 void update_pulls(Project[ulong] projects)
 {
 projloop:
@@ -571,32 +513,16 @@ projloop:
                 knownpulls[to!ulong(row[2])] = p;
             }
 
-            string url = text("https://api.github.com/repos/", pv.name, "/", rv.name, "/pulls?state=open&per_page=100");
-            while (url)
+            string nextlink;
+            do
             {
-                string payload;
-                string[] headers;
-
-                if (!runCurlGET(curl, payload, headers, url, c.github_user, c.github_passwd) || payload.length == 0)
-                {
-                    writelog("  failed to load pulls, skipping repo");
-                    continue projloop;
-                }
-
                 JSONValue jv;
-                try
-                {
-                    jv = parseJSON(payload);
-                }
-                catch (JSONException e)
-                {
-                    writelog("  error parsing github json response: %s\n", e.toString);
-                    break;
-                }
+                if (!github.getPulls(pv.name, rv.name, jv, nextlink))
+                    continue projloop;
 
                 if (jv.type != JSON_TYPE.ARRAY)
                 {
-                    writelog("  github pulls data malformed: %s\n", payload);
+                    writelog("  github pulls data malformed, expected an array");
                     break;
                 }
 
@@ -605,9 +531,8 @@ projloop:
                     writelog("  failed to process project, skipping repo");
                     continue projloop;
                 }
-
-                url = findNextLink(headers);
             }
+            while (nextlink != "");
 
             //writelog("closing pulls");
             // any elements left in knownpulls means they're no longer open, so mark closed
@@ -668,6 +593,8 @@ int main(string[] args)
         writelog("failed to initialize curl library, exiting");
         return 1;
     }
+
+    github = new Github(c.github_user, c.github_passwd, c.github_clientid, c.github_clientsecret, curl);
 
     // loads the tree of Project -> Repository -> RepoBranch
     Project[ulong] projects = loadProjects();

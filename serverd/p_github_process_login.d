@@ -23,7 +23,7 @@ bool validateInput(string code, Appender!string outstr)
 bool getGithubAccessToken(string code, ref string access_token, Appender!string outstr)
 {
     JSONValue jv;
-    if (!getAccessToken(code, jv)) return false;
+    if (!github.getAccessToken(code, jv)) return false;
 
     JSONValue* jv_ptr;
 
@@ -60,7 +60,7 @@ bool getGithubAccessToken(string code, ref string access_token, Appender!string 
 bool getGithubTranslation(string access_token, ref string username, ref long userid, Appender!string outstr)
 {
     JSONValue jv;
-    if (!getAccessTokenDetails(access_token, jv)) return false;
+    if (!github.getAccessTokenDetails(access_token, jv)) return false;
 
     userid = jv.object["user"].object["id"].integer;
     username = jv.object["user"].object["login"].str;

@@ -6,6 +6,7 @@ import std.range;
 
 import github_apis;
 import mysql;
+import serverd;
 import utils;
 import validate;
 
@@ -86,15 +87,26 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         goto Lerror;
     }
 
-    if (!updateStore(ghp_id, userid)) goto Lerror;
+    sql_exec(text("select p.name, r.name from projects p, repositories r where p.id = ", projectid, " and r.id = ", repoid));
+    sqlrow[] rows = sql_rows();
 
-    // TODO: change so that a github related error in merging is presented as normal in the ui, not an internal error
-    if (!checkMergeNow(projectid, repoid, pullid, ghp_id, valout)) goto Lerror;
+    string extra_param;
+    // TODO: this should be cached data to avoid github load
+    if (!github.userIsCollaborator(username, rows[0][0], rows[0][1], access_token))
+        extra_param = "&notcollab=1";
+    else
+    {
+        if (!updateStore(ghp_id, userid)) goto Lerror;
+
+        // TODO: change so that a github related error in merging is presented as normal in the ui, not an internal error
+        if (!checkMergeNow(projectid, repoid, pullid, ghp_id, valout)) goto Lerror;
+    }
 
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/pull-history.ghtml?",
                "projectid=", projectid, "&",
                "repoid=", repoid, "&",
                "pullid=", pullid,
+               extra_param,
                "\n\n"));
 
     return;

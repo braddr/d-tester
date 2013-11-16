@@ -7,14 +7,13 @@ import serverd;
 import utils;
 import validate;
 
+import std.base64;
 import std.conv;
 import std.json;
 import std.range;
 
-bool validateInput(ref string raddr, string code, Appender!string outstr)
+bool validateInput(string code, Appender!string outstr)
 {
-    if (!validate_raddr(raddr, outstr))
-        return false;
     if (!validateNonEmpty(code, "code", outstr))
         return false;
 
@@ -58,32 +57,48 @@ bool getGithubAccessToken(string code, ref string access_token, Appender!string 
     return true;
 }
 
-bool getGithubTranslation(string access_token, ref string cookievalue, Appender!string outstr)
+bool getGithubTranslation(string access_token, ref string username, ref long userid, Appender!string outstr)
 {
     JSONValue jv;
     if (!getAccessTokenDetails(access_token, jv)) return false;
 
-    string id = to!string(jv.object["user"].object["id"].integer);
-    string login = jv.object["user"].object["login"].str;
-
-    access_token = sql_quote(access_token);
-    sql_exec(text("insert into github_users values (", id, ", \"", login, "\", false, \"", access_token, "\") on duplicate key update access_token = \"", access_token, "\""));
-
-    cookievalue = id;
+    userid = jv.object["user"].object["id"].integer;
+    username = jv.object["user"].object["login"].str;
 
     return true;
 }
 
+extern(C) { int RAND_bytes(ubyte* buf, int num); }
+
+bool createSession(string access_token, string username, long userid, ref string cookie)
+{
+    access_token = sql_quote(access_token);
+    username = sql_quote(username);
+
+    ubyte[(128 + 64) / 8] rawdata;
+    if (RAND_bytes(rawdata.ptr, rawdata.length) != 1)
+        return false;
+
+    cookie = cast(string)Base64.encode(rawdata[0 .. (128/8)]);
+    string csrf = cast(string)Base64.encode(rawdata[(128/8) .. $]);
+
+    sql_exec(text("insert into github_users values (", userid, ", \"", username, "\", false, \"", access_token, "\", \"", cookie, "\", \"", csrf, "\") on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\""));
+
+    return true;
+}
+
+// NOTE: expected to only be called by github's login processor
 // TODO: replace ip address validation with something else
-// cookie contents needs to be much safer than just github uid
+// TODO: use state to pass a unique string to prevent spoofing.  not terrible as is
+//       since we turn around and ask github to expand the token right away and fail
+//       if that doesn't work.
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
-    string raddr = lookup(hash, "REMOTE_ADDR");
     string sn = lookup(hash, "SERVER_NAME");
     string code = lookup(userhash, "code");
 
     auto tmpstr = appender!string();
-    if (!validateInput(raddr, code, tmpstr))
+    if (!validateInput(code, tmpstr))
     {
         outstr.put("Content-type: text/plain\n\n");
         outstr.put(tmpstr.data);
@@ -92,16 +107,17 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     string ret;
 
-    // TODO: use state to pass a unique string to prevent spoofing.  not terrible as is
-    // since we turn around and ask github to expand the token right away and fail if
-    // that doesn't work.
-
     string access_token;
     if (!getGithubAccessToken(code, access_token, tmpstr))
         goto Lsend;
 
+    string username;
+    long userid;
+    if (!getGithubTranslation(access_token, username, userid, tmpstr))
+        goto Lsend;
+
     string cookievalue;
-    if (!getGithubTranslation(access_token, cookievalue, tmpstr))
+    if (!createSession(access_token, username, userid, cookievalue))
         goto Lsend;
 
     ret = text("Set-Cookie: testerlogin=", cookievalue, "; domain=", sn, "; path=/test-results; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");

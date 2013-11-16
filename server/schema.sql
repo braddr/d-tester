@@ -61,9 +61,12 @@ create table if not exists github_users
     id                int          not null,
     username          varchar(32)  not null,
     trusted           bool,
-    accss_token       varchar(1024),
+    access_token      varchar(1024),
+    cookie            char(24),
+    csrf              char(12),
 
-    primary key(id)
+    primary key(id),
+    unique key(cookie)
 );
 
 create table if not exists github_posts

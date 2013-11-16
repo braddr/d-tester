@@ -101,6 +101,23 @@ bool check_addr(string addr)
     return false;
 }
 
+bool getAccessTokenFromCookie(string cookie, string csrf, ref string access_token, ref string userid, ref string username)
+{
+    sql_exec(text("select id, username, access_token, csrf from github_users where cookie=\"", cookie, "\" and csrf=\"", csrf, "\""));
+    sqlrow[] rows = sql_rows();
+    if (rows.length != 1)
+    {
+        writelog("  found %s rows, expected 1, for cookie '%s'", rows.length, cookie);
+        return false;
+    }
+
+    userid = rows[0][0];
+    username = rows[0][1];
+    access_token = rows[0][2];
+
+    return true;
+}
+
 void updateHostLastCheckin(string hostid, string clientver)
 {
     sql_exec(text("update build_hosts set last_heard_from = now(), clientver = ", clientver, " where id = ", hostid));

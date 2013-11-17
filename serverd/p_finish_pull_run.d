@@ -8,6 +8,7 @@ import utils;
 import validate;
 
 import std.conv;
+import std.json;
 import std.format;
 import std.range;
 
@@ -178,17 +179,30 @@ bool mergeGithubPull(string projectname, string reponame, string pullid, string 
 
     sql_exec(text("select access_token, username from github_users where id = ", merge_authorizing_id));
     rows = sql_rows();
+    string access_token = rows[0][0];
+    string username = rows[0][1];
 
-    if (!github.userIsCollaborator(rows[0][1], projectname, reponame, rows[0][0]))
+    if (!github.userIsCollaborator(username, projectname, reponame, access_token))
     {
         writelog("  WARNING: user no longer is authorized to merge pull, skipping");
-        formattedWrite(outstr, "%s is not authorized to perform merges", rows[0][1]);
+        formattedWrite(outstr, "%s is not authorized to perform merges", username);
         sql_exec(text("update github_pulls set auto_pull = null where id = ", ghp_id));
         return false;
     }
 
+    JSONValue jv;
+    if (!github.getPull(projectname, reponame, pullid, jv)) return true;
+
+    sql_exec(text("select head_sha from github_pulls where id = ", ghp_id));
+    rows = sql_rows();
+    if (rows[0][0] != jv.object["head"].object["sha"].str)
+    {
+        writelog("  github has a newer sha than we do, skipping merge");
+        return true;
+    }
+
     string commit_message; // = text("auto-merge authorized by ", rows[0][1]);
-    github.performPullMerge(projectname, reponame, pullid, rows[0][0], commit_message);
+    github.performPullMerge(projectname, reponame, pullid, access_token, commit_message);
     return true;
 }
 

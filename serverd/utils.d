@@ -107,7 +107,7 @@ bool getAccessTokenFromCookie(string cookie, string csrf, ref string access_toke
     sqlrow[] rows = sql_rows();
     if (rows.length != 1)
     {
-        writelog("  found %s rows, expected 1, for cookie '%s'", rows.length, cookie);
+        writelog("  found %s rows, expected 1, for cookie '%s', csrf '%s'", rows.length, cookie, csrf);
         return false;
     }
 

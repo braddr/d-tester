@@ -79,8 +79,8 @@ bool createSession(string access_token, string username, long userid, ref string
     if (RAND_bytes(rawdata.ptr, rawdata.length) != 1)
         return false;
 
-    cookie = cast(string)Base64.encode(rawdata[0 .. (128/8)]);
-    string csrf = cast(string)Base64.encode(rawdata[(128/8) .. $]);
+    cookie = cast(string)Base64URL.encode(rawdata[0 .. (128/8)]);
+    string csrf = cast(string)Base64URL.encode(rawdata[(128/8) .. $]);
 
     sql_exec(text("insert into github_users values (", userid, ", \"", username, "\", false, \"", access_token, "\", \"", cookie, "\", \"", csrf, "\") on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\""));
 

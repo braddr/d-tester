@@ -37,6 +37,10 @@
     \ignore{\sqlrow{pull_authorizer}}
 }
 
+\if{\get{notcollab}}{
+    <div class="notcollab">Sorry, it looks like you don't have permission to this project at github.</div>
+}
+
 <table class="pulldata" border=1>
   <tr>
     <th>ID</th>       <td>\get{ghp_id} - (\if{\eq{\get{ghp_open}}{1}}{open}{closed})</td>
@@ -51,7 +55,7 @@
   </tr><tr>
     <th>Based On</th> <td>\get{ghp_base_ref}</td>
   </tr><tr>
-  <th>Auto Merge</th> <td>\if{\get{ghp_auto_pull}}{Yes - (by \get{pull_authorizer})}{No}\if{\get{loggedin}}{\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;csrf=\get{csrf}">Toggle</a>}</td>
+  <th>Auto Merge</th> <td>\if{\get{ghp_auto_pull}}{Yes - (by \get{pull_authorizer})}{No}\if{\get{loggedin}}{\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;from=pull-history&amp;csrf=\get{csrf}">Toggle</a>}</td>
   </tr>
 </table>
 

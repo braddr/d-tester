@@ -131,10 +131,12 @@
 # \6 == updated_at
 # \7 == head_date
 # \8 == project name (D-Programming-Language)
+# \9 == auto-merge
+# /10 == github_pull.id
 \set{drawrow}{\quote{
     <td class="pullcell header"><a href="https://github.com/\8/\1/pull/\3">\1/\3</a></td>
     <td class="pullcell header"><a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3" title="\4/\5">\4/\shorten{\5}</a></td>
-    #<td class="pullcell header">\6</td>
+    <td>\if{\get{loggedin}}{<a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3&amp;ghp_id=\10&amp;from=pulls&amp;csrf=\get{csrf}">\if{\9}{Yes}{No}</a>}{\if{\9}{Yes}{No}}</td>
     <td class="pullcell header">\7</td>
     \drawcol{\1}{\3}{FreeBSD_32}
     \drawcol{\1}{\3}{FreeBSD_64}
@@ -225,17 +227,17 @@
 }
 
 \sqlexec{
-    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date, ghp.auto_pull
+    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date, ghp.auto_pull, ghp.id
       from projects p, repositories r, repo_branches rb, github_pulls ghp, github_users u
      where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.trusted and r.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
 }
-\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}}{
+\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}{ghp_id}}{
     # get the bucket to place the row in
     \set{name}{\get{r_name}_\if{\get{ghp_autopull}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
 
     # get one row of html and store it in name_num
-    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{project_name}}}
+    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{project_name}}{\get{ghp_auto_pull}}{\get{ghp_id}}}
 
     \inc{num_\get{name}}
 }
@@ -263,6 +265,7 @@
 <td class=""></td>
 <th>GitHub page</th>
 <th>Test History</th>
+<th>Auto-Merge</th>
 <th>Last Committed</th>
 \buildHeader{F 32}{FreeBSD_32}{FreeBSD with a 32 bit compiler binary and 32 bit output}
 \buildHeader{F 64}{FreeBSD_64}{FreeBSD with a 64 bit compiler binary and 64 bit output}

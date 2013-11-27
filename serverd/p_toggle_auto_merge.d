@@ -81,6 +81,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string ghp_id = lookup(userhash, "ghp_id");
     string cookie = lookup(userhash, "testerlogin");
     string csrf = lookup(userhash, "csrf");
+    string from = lookup(userhash, "from");
 
     auto valout = appender!string;
     if (!validateInput(projectid, repoid, pullid, ghp_id, cookie, csrf, valout))
@@ -117,7 +118,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         if (!checkMergeNow(projectid, repoid, pullid, ghp_id, valout)) goto Lerror;
     }
 
-    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/pull-history.ghtml?",
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/", from, ".ghtml?",
                "projectid=", projectid, "&",
                "repoid=", repoid, "&",
                "pullid=", pullid,

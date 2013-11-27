@@ -82,9 +82,18 @@ bool createSession(string access_token, string username, long userid, ref string
     cookie = cast(string)Base64URL.encode(rawdata[0 .. (128/8)]);
     string csrf = cast(string)Base64URL.encode(rawdata[(128/8) .. $]);
 
-    sql_exec(text("insert into github_users values (", userid, ", \"", username, "\", false, \"", access_token, "\", \"", cookie, "\", \"", csrf, "\") on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\""));
+    string redirect = "";
+
+    sql_exec(text("insert into github_users values (", userid, ", \"", username, "\", false, \"", access_token, "\", \"", cookie, "\", \"", csrf, "\", null) on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\", redirect = null"));
 
     return true;
+}
+
+string parsestate(string state)
+{
+    string parts[] = split(state, "|");
+
+    return parts[0] ~ "?" ~ join(parts[1 .. $], "&");
 }
 
 // NOTE: expected to only be called by github's login processor
@@ -96,6 +105,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 {
     string sn = lookup(hash, "SERVER_NAME");
     string code = lookup(userhash, "code");
+    string state = lookup(userhash, "state");
 
     auto tmpstr = appender!string();
     if (!validateInput(code, tmpstr))
@@ -106,6 +116,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
 
     string ret;
+    string urldata;
 
     string access_token;
     if (!getGithubAccessToken(code, access_token, tmpstr))
@@ -123,8 +134,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     ret = text("Set-Cookie: testerlogin=", cookievalue, "; domain=", sn, "; path=/test-results; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");
     writelog("  login returning: %s", ret);
 
+    urldata = parsestate(state);
+
 Lsend:
-    outstr.put(text("Location: ", getURLProtocol(hash) , "://", sn, "/test-results/\n"));
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", sn, "/test-results/", urldata, "\n"));
     if (ret != "") outstr.put(ret);
     outstr.put("\n");
 }

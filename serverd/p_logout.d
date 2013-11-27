@@ -16,10 +16,20 @@ bool validateInput(ref string cookie, ref string csrf, Appender!string outstr)
     return true;
 }
 
+string parsestate(string state)
+{
+    string parts[] = split(state, "|");
+
+    return parts[0] ~ "?" ~ join(parts[1 .. $], "&");
+}
+
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
     string cookie = lookup(userhash, "testerlogin");
     string csrf = lookup(userhash, "csrf");
+    string state = lookup(userhash, "state");
+
+    string urldata = parsestate(state);
 
     auto tmpstr = appender!string();
     if (!validateInput(cookie, csrf, tmpstr))
@@ -46,7 +56,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     ret = text("Set-Cookie: testerlogin=; domain=", sn, "; path=/test-results; Expires=Sat, 01 Jan 2000 00:00:00 GMT; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");
 
 Lsend:
-    outstr.put(text("Location: ", getURLProtocol(hash) , "://", sn, "/test-results/\n"));
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", sn, "/test-results/", urldata, "\n"));
     if (ret != "") outstr.put(ret);
     outstr.put("\n");
 }

@@ -12,17 +12,18 @@
         \set{tok}{\strtok{}{/}}
     }
     \sqlexec{
-        select ghp.id
+        select ghp.id, ghp.auto_pull
           from github_pulls ghp, repositories r, repo_branches rb
          where ghp.pull_id = \get{pullid} and
                r.id = \get{repoid} and
                rb.id = ghp.r_b_id and
                rb.repository_id = r.id
     }
-    \if{\sqlrow{gp_id}}{
+    \if{\sqlrow{gp_id}{gp_automerge}}{
 
         \{
-            "historyURL" : "https://d.puremagic.com/test-results/pull-history.ghtml?repoid=\get{repoid}&pullid=\get{pullid}",
+            "historyURL" : "https://d.puremagic.com/test-results/pull-history.ghtml?projectid=1&repoid=\get{repoid}&pullid=\get{pullid}",
+            "auto-merge" : \if{\get{gp_automerge}}{\get{gp_automerge}}{null},
             "results"    : [
 
                 \sqlexec{
@@ -42,7 +43,7 @@
                         "rc"       : "\get{rc}",
                         "deleted"  : "\get{deleted}",
                         "platform" : "\get{platform}",
-                        "url"      : "https://d.puremagic.com/test-results/pull.ghtml?runid=\get{id}"
+                        "url"      : "https://d.puremagic.com/test-results/pull.ghtml?projectid=1&runid=\get{id}"
                     \}
                 }
 

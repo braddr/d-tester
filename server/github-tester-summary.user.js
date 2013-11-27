@@ -4,7 +4,7 @@
 // @description         add auto tester results to github
 // @include             https://github.com/
 // @include             https://github.com/organizations/D-Programming-Language
-// @version             1.2
+// @version             1.3
 // ==/UserScript==
 
 function showResults(results)
@@ -38,7 +38,7 @@ function doLoad()
     GM_xmlhttpRequest({
         method:"GET",
         url:"http://d.puremagic.com/test-results/summary.json.ghtml",
-        onload:function(details) { var results = eval(details.responseText); showResults(results); }
+        onload:function(details) { var results = JSON.parse(details.responseText); showResults(results); }
     });
 }
 

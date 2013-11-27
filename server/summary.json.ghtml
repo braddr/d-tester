@@ -6,7 +6,7 @@
     \sqlexec{
         select tr.id, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.platform
           from test_runs tr
-         where tr.platform = "\sqlquote{\1}"
+         where tr.platform = "\sqlquote{\1}" and tr.project_id = 1
          order by tr.start_time desc, tr.id desc
          limit 1
     }
@@ -41,7 +41,7 @@
         "displayName" : "\2",
         "lastRunDate" : "\get{result_start}",
         "state"       : "\get{state}",
-        "historyURL"  : "https://d.puremagic.com/test-results/platform-history.ghtml?os=\1"
+        "historyURL"  : "https://d.puremagic.com/test-results/platform-history.ghtml?projectid=1&os=\1"
     \}
 }}
 
@@ -58,6 +58,6 @@ Content-type: application/json
     \draw{Darwin_64_64}{OSX 64},
     \draw{Darwin_32_64}{OSX 32/64},
     \draw{Darwin_64_32}{OSX 64/32},
-    \draw{Win_32}{Windows 32}
+    \draw{Win_32}{Windows 32},
     \draw{Win_64}{Windows 64}
 ]

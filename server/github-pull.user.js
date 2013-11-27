@@ -8,7 +8,7 @@
 // @include             https://github.com/organizations/D-Programming-Language/dmd/pull/*
 // @include             https://github.com/organizations/D-Programming-Language/druntime/pull/*
 // @include             https://github.com/organizations/D-Programming-Language/phobos/pull/*
-// @version             1.1
+// @version             1.3
 // ==/UserScript==
 
 function doLoad()
@@ -23,6 +23,8 @@ function doLoad()
             var results = JSON.parse(details.responseText);
 
             var newhtml = "";
+            if (results["auto-merge"])
+                newhtml += "<span style=\"color:red\">Auto-merge on</span><br>";
             var platforms = results.results;
             for (i = 0; i < platforms.length; i++)
             {
@@ -31,7 +33,7 @@ function doLoad()
                 var t;
                 if (r.rc == "0" || r.rc == "") { s += "color:green;"; t="success"; } else { s = "color:red;"; t="failed"; }
                 if (r.deleted == "1") { s += "opacity:0.4;"; }
-                newhtml += "<a href=\"" + r.url + "\"><span style=\"" + s + "\">" + r.platform + "</span></a>\n";
+                newhtml += "<a href=\"" + r.url + "\"><span style=\"" + s + "\">" + r.platform + "</span></a><br>\n";
             }
 
             var toreplace = document.getElementById("apt_listing");

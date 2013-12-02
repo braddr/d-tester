@@ -229,7 +229,23 @@ bool addPullComment(string access_token, string owner, string repo, string issue
     string payload = text(`{ "body" : "`, comment, `" }`);
     if (!runCurlPOST(curl, responsepayload, responseheaders, url, payload, null, null, null))
     {
-        writelog("  failed to load comments from github");
+        writelog("  failed to add a comment to github(access_token)");
+        return false;
+    }
+
+    return parseAndReturn(responsepayload, jv);
+}
+
+bool addPullComment(string owner, string repo, string issuenum, string comment, ref JSONValue jv)
+{
+    string url = text("https://api.github.com/repos/", owner, "/", repo, "/issues/", issuenum, "/comments");
+    string responsepayload;
+    string[] responseheaders;
+
+    string payload = text(`{ "body" : "`, comment, `" }`);
+    if (!runCurlPOST(curl, responsepayload, responseheaders, url, payload, null, userid, passwd))
+    {
+        writelog("  failed to add a comment to github(userid, passwd)");
         return false;
     }
 

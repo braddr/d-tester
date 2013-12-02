@@ -136,8 +136,9 @@ class Pull
     SysTime head_date;
     SysTime create_date;
     SysTime close_date;
+    ulong   auto_pull;
 
-    this(ulong _id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, bool _base_usable, string _base_git_url, string _base_ref, string _base_sha, bool _head_usable, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date)
+    this(ulong _id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, bool _base_usable, string _base_git_url, string _base_ref, string _base_sha, bool _head_usable, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date, ulong _auto_pull)
     {
         id           = _id;
         r_b_id       = _r_b_id;
@@ -156,14 +157,15 @@ class Pull
         head_date    = _head_date;
         create_date  = _create_date;
         close_date   = _close_date;
+        auto_pull    = _auto_pull;
     }
 }
 
 string getPullColumns()
 {
     // field 1 is unused now (was repo_id)
-    //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15
-    return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, r_b_id";
+    //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15      16
+    return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, r_b_id, auto_pull";
 }
 
 Pull makePullFromRow(sqlrow row)
@@ -176,9 +178,11 @@ Pull makePullFromRow(sqlrow row)
 
     // TODO: remove once r_b_id data is backfilled
     if (row[15] == "") row[15] = "0";
+    // null -> 0 for auto_pull userid
+    if (row[16] == "") row[16] = "0";
 
     //writelog("row[0] = %s, row[4] = %s, row[11] = %s, row[12] = %s, row[13] = %s, row[14] = %s", row[0], row[4], row[11], row[12], row[13], row[14]);
-    return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]));
+    return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]), to!ulong(row[16]));
 }
 
 bool[string] loadUsers()
@@ -316,7 +320,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         printHeader();
         clearOldResults = true;
         writelog("    head_sha: %s -> %s", k.head_sha, p.head_sha);
-        sql_exec(text("update github_pulls set auto_pull = null, head_sha = '", p.head_sha, "' where id = ", k.id));
+        sql_exec(text("update github_pulls set head_sha = '", p.head_sha, "' where id = ", k.id));
     }
 
     if (k.create_date != p.create_date)
@@ -338,6 +342,13 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         writelog("    deprecating old test results");
         sql_exec(text("update pull_test_runs set deleted=1 where deleted=0 and g_p_id = ", k.id));
         sql_exec(text("delete from pull_suppressions where g_p_id = ", k.id));
+
+        if (k.auto_pull != 0)
+        {
+            JSONValue jv;
+            github.addPullComment(proj.name, repo.name, to!string(k.pull_id), "Pull updated, auto_merge toggled off", jv);
+            sql_exec(text("update github_pulls set auto_pull = null where g_p_id = ", k.id));
+        }
     }
 }
 
@@ -474,7 +485,8 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
             h_sha,
             SysTime.fromISOExtString(updated_at), // wrong time, but need a value. Will be fixed during loadCommitFromGitHub
             SysTime.fromISOExtString(created_at),
-            SysTime.fromISOExtString(closed_at));
+            SysTime.fromISOExtString(closed_at),
+            0);
 
     return p;
 }

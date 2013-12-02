@@ -31,6 +31,25 @@ bool validateNumber(string strid)
     }
 }
 
+bool validateAuthenticated(const ref string[string] userhash, ref string access_token, ref string userid, ref string username, Appender!string outstr)
+{
+    string cookie = lookup(userhash, "testerlogin");
+    string csrf = lookup(userhash, "csrf");
+
+    if (!validateNonEmpty(cookie, "testerlogin", outstr))
+        return false;
+    if (!validateNonEmpty(csrf, "csrf", outstr))
+        return false;
+
+    cookie = sql_quote(cookie);
+    csrf = sql_quote(csrf);
+
+    if (!getAccessTokenFromCookie(cookie, csrf, access_token, userid, username))
+        return false;
+
+    return true;
+}
+
 bool validate_raddr(ref string raddr, Appender!string outstr)
 {
     auto tmpout = appender!string();

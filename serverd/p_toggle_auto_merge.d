@@ -2,6 +2,7 @@ module p_toggle_auto_merge;
 
 static import p_finish_pull_run;
 import std.conv;
+import std.json;
 import std.range;
 
 import github_apis;
@@ -10,9 +11,7 @@ import serverd;
 import utils;
 import validate;
 
-import std.json;
-
-bool validateInput(ref string projectid, ref string repoid, ref string pullid, ref string ghp_id, ref string cookie, ref string csrf, Appender!string outstr)
+bool validateInput(ref string projectid, ref string repoid, ref string pullid, ref string ghp_id, Appender!string outstr)
 {
     if (!validate_id(projectid, "projectid", outstr))
         return false;
@@ -22,14 +21,6 @@ bool validateInput(ref string projectid, ref string repoid, ref string pullid, r
         return false;
     if (!validate_id(ghp_id, "ghp_id", outstr))
         return false;
-
-    if (!validateNonEmpty(cookie, "testerlogin", outstr))
-        return false;
-    if (!validateNonEmpty(csrf, "csrf", outstr))
-        return false;
-
-    cookie = sql_quote(cookie);
-    csrf = sql_quote(csrf);
 
     return true;
 }
@@ -75,26 +66,25 @@ bool checkMergeNow(string projectid, string repoid, string pullid, string ghp_id
 
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
-    string projectid = lookup(userhash, "projectid");
-    string repoid = lookup(userhash, "repoid");
-    string pullid = lookup(userhash, "pullid");
-    string ghp_id = lookup(userhash, "ghp_id");
-    string cookie = lookup(userhash, "testerlogin");
-    string csrf = lookup(userhash, "csrf");
-    string from = lookup(userhash, "from");
-
     auto valout = appender!string;
-    if (!validateInput(projectid, repoid, pullid, ghp_id, cookie, csrf, valout))
-        goto Lerror;
 
     string access_token;
     string userid;
     string username;
-    if (!getAccessTokenFromCookie(cookie, csrf, access_token, userid, username))
+    if (!validateAuthenticated(userhash, access_token, userid, username, valout))
     {
         valout.put("error toggling auto-merge state\n");
         goto Lerror;
     }
+
+    string projectid = lookup(userhash, "projectid");
+    string repoid = lookup(userhash, "repoid");
+    string pullid = lookup(userhash, "pullid");
+    string ghp_id = lookup(userhash, "ghp_id");
+    string from = lookup(userhash, "from");
+
+    if (!validateInput(projectid, repoid, pullid, ghp_id, valout))
+        goto Lerror;
 
     sql_exec(text("select p.name, r.name from projects p, repositories r where p.id = ", projectid, " and r.id = ", repoid));
     sqlrow[] rows = sql_rows();

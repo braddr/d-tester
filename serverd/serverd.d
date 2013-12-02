@@ -25,6 +25,7 @@ import p_start_pull_test;
 import p_finish_pull_test;
 import p_upload_pull;
 
+import p_deprecate_run;
 import p_toggle_auto_merge;
 
 import std.array;
@@ -78,6 +79,7 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
         "/github_process_login" : &p_github_process_login.run,
         "/logout"               : &p_logout.run,
         "/toggle_auto_merge"    : &p_toggle_auto_merge.run,
+        "/deprecate_run"        : &p_deprecate_run.run,
 
         // master checkins
         "/get_runnable_master"  : &p_get_runnable_master.run, // for a given platform, see if it's time to run

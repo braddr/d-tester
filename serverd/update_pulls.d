@@ -253,6 +253,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
     }
 
     bool clearOldResults = false;
+    bool clearAutoPull = false;
 
     bool headDateAccurate = false;
     if (!k.open || (p.head_usable && k.head_sha != p.head_sha))
@@ -295,6 +296,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
     {
         printHeader();
         clearOldResults = true;
+        clearAutoPull = true;
         writelog("    base_git_url: %s -> %s", k.base_git_url, p.base_git_url);
         sql_exec(text("update github_pulls set base_git_url = '", p.base_git_url, "' where id = ", k.id));
     }
@@ -303,6 +305,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
     {
         printHeader();
         clearOldResults = true;
+        clearAutoPull = true;
         writelog("    base_sha: %s -> %s", k.base_sha, p.base_sha);
         sql_exec(text("update github_pulls set base_sha = '", p.base_sha, "' where id = ", k.id));
     }
@@ -311,6 +314,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
     {
         printHeader();
         clearOldResults = true;
+        clearAutoPull = true;
         writelog("    head_git_url: %s -> %s", k.head_git_url, p.head_git_url);
         sql_exec(text("update github_pulls set head_git_url = '", p.head_git_url, "' where id = ", k.id));
     }
@@ -319,6 +323,7 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
     {
         printHeader();
         clearOldResults = true;
+        clearAutoPull = true;
         writelog("    head_sha: %s -> %s", k.head_sha, p.head_sha);
         sql_exec(text("update github_pulls set head_sha = '", p.head_sha, "' where id = ", k.id));
     }
@@ -342,13 +347,14 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         writelog("    deprecating old test results");
         sql_exec(text("update pull_test_runs set deleted=1 where deleted=0 and g_p_id = ", k.id));
         sql_exec(text("delete from pull_suppressions where g_p_id = ", k.id));
+    }
 
-        if (k.auto_pull != 0)
-        {
-            JSONValue jv;
-            github.addPullComment(proj.name, repo.name, to!string(k.pull_id), "Pull updated, auto_merge toggled off", jv);
-            sql_exec(text("update github_pulls set auto_pull = null where g_p_id = ", k.id));
-        }
+    if (clearAutoPull && k.auto_pull != 0)
+    {
+        writelog("    clearing auto-pull state");
+        JSONValue jv;
+        github.addPullComment(proj.name, repo.name, to!string(k.pull_id), "Pull updated, auto_merge toggled off", jv);
+        sql_exec(text("update github_pulls set auto_pull = null where id = ", k.id));
     }
 }
 

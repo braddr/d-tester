@@ -50,7 +50,7 @@
   </tr><tr>
     <th>Result Code</th><td>\get{rc}</td>
   </tr><tr>
-    <th>Deleted</th><td>\get{deleted}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_pull_run.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}">deprecate</a>}</td>
+    <th>Deleted</th><td>\get{deleted}\if{\and{\get{loggedin}}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="addv2/deprecate_run?projectid=\get{projectid}&amp;runid=\get{runid}&amp;runtype=pull&amp;csrf=\get{csrf}">deprecate</a>}</td>
   </tr>
 </table>
 

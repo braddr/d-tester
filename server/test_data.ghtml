@@ -107,7 +107,7 @@
         </tr>
         <tr class="data phobos">
             <td class="metadata header bottomleft">Obsolete</td>
-            <td class="metadata data">\if{\eq{\get{deleted}}{0}}{No}{Yes}\if{\and{\checksecurity}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="add/deprecate_run.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}\if{\get{logid}}{&amp;logid=\get{logid}}">deprecate</a>}</td>
+            <td class="metadata data">\if{\eq{\get{deleted}}{0}}{No}{Yes}\if{\and{\get{loggedin}}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="addv2/deprecate_run?projectid=\get{projectid}&amp;runid=\get{runid}\if{\get{logid}}{&amp;logid=\get{logid}}&amp;runtype=master&amp;csrf=\get{csrf}">deprecate</a>}</td>
             \if{\eq{\get{projectname}}{D-Programming-Language}}{
                 <td>phobos</td>
                 \drawOneTest{4}{build}

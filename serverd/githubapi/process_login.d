@@ -1,4 +1,4 @@
-module p_github_process_login;
+module githubapi.process_login;
 
 import config;
 import github_apis;

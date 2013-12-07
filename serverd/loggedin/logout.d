@@ -1,4 +1,4 @@
-module p_logout;
+module loggedin.logout;
 
 import mysql;
 import utils;

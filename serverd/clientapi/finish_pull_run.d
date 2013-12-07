@@ -1,4 +1,4 @@
-module p_finish_pull_run;
+module clientapi.finish_pull_run;
 
 import config;
 import github_apis;

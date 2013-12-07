@@ -1,8 +1,8 @@
-module p_get_runnable_pull;
+module clientapi.get_runnable_pull;
 
 import mysql;
-import master = p_get_runnable_master;
-static import p_finish_pull_run;
+import master = clientapi.get_runnable_master;
+static import clientapi.finish_pull_run;
 import serverd;
 import utils;
 import validate;
@@ -367,7 +367,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
                 outstr.put("skip\n");
         }
 
-        p_finish_pull_run.updateGithubPullStatus(runid[0], outstr);
+        clientapi.finish_pull_run.updateGithubPullStatus(runid[0], outstr);
     }
     else
         outstr.put("skip\n");

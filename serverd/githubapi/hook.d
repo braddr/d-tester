@@ -1,4 +1,4 @@
-module p_github_hook;
+module githubapi.hook;
 
 import mysql;
 import utils;

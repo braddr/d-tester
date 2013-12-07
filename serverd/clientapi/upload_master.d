@@ -1,4 +1,4 @@
-module p_upload_master;
+module clientapi.upload_master;
 
 import mysql;
 import serverd;

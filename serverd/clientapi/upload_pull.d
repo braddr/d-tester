@@ -1,4 +1,4 @@
-module p_upload_pull;
+module clientapi.upload_pull;
 
 import mysql;
 import serverd;

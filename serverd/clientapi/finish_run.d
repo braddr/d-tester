@@ -1,6 +1,5 @@
-module p_finish_master_run;
+module clientapi.finish_run;
 
-import config;
 import mysql;
 import serverd;
 import utils;
@@ -12,7 +11,7 @@ import std.range;
 
 bool validate_runState(string runid, ref string hostid, Appender!string outstr)
 {
-    if (!sql_exec(text("select id, host_id, end_time from test_runs where id = ", runid)))
+    if (!sql_exec(text("select id, hostid, end_time from test_runs where id=", runid)))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -37,7 +36,7 @@ bool validate_runState(string runid, ref string hostid, Appender!string outstr)
     return true;
 }
 
-bool validateInput(ref string raddr, ref string runid, ref string hostid, ref string clientver, Appender!string outstr)
+bool validateInput(ref string raddr, ref string hostid, ref string runid, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
         return false;
@@ -52,39 +51,30 @@ bool validateInput(ref string raddr, ref string runid, ref string hostid, ref st
     return true;
 }
 
-bool updateStore(string runid, Appender!string outstr)
+bool storeResults(string runid, Appender!string outstr)
 {
-    sql_exec(text("select rc from test_data where test_run_id=", runid));
-    sqlrow[] rows = sql_rows();
-
-    int rc = 0;
-    foreach(row; rows)
+    if (!sql_exec(text("update test_runs set end_time=now() where id=", runid)))
     {
-        if (row[0] == "1")
-        {
-            rc = 1;
-            break;
-        }
+        formattedWrite(outstr, "error executing sql, check error log\n");
+        return false;
     }
-
-    sql_exec(text("update test_runs set end_time=now(), rc=", rc, " where id=", runid));
 
     return true;
 }
 
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
-    outstr.put("Content-type: text/plain\n\n");
+    formattedWrite(outstr, "Content-type: text/plain\n\n");
 
     string raddr = lookup(hash, "REMOTE_ADDR");
-    string hostid;
     string runid = lookup(userhash, "runid");
     string clientver = lookup(userhash, "clientver");
+    string hostid;
 
-    if (!validateInput(raddr, runid, hostid, clientver, outstr))
+    if (!validateInput(raddr, hostid, runid, clientver, outstr))
         return;
 
     updateHostLastCheckin(hostid, clientver);
-    updateStore(runid, outstr);
+    if (!storeResults(runid, outstr))
+        return;
 }
-

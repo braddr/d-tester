@@ -1,6 +1,6 @@
-module p_toggle_auto_merge;
+module loggedin.toggle_auto_merge;
 
-static import p_finish_pull_run;
+static import clientapi.finish_pull_run;
 import std.conv;
 import std.json;
 import std.range;
@@ -58,7 +58,7 @@ bool checkMergeNow(string projectid, string repoid, string pullid, string ghp_id
     if (rows[0][2] != "1" || rows[0][3] == "")
         return true;
 
-    if (!p_finish_pull_run.mergeGithubPull(rows[0][0], rows[0][1], pullid, ghp_id, rows[0][3], outstr))
+    if (!clientapi.finish_pull_run.mergeGithubPull(rows[0][0], rows[0][1], pullid, ghp_id, rows[0][3], outstr))
         return false;
 
     return true;

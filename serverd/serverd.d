@@ -7,26 +7,24 @@ import utils;
 import setup;
 import www;
 
-import p_finish_run;
+import githubapi.hook;
+import githubapi.process_login;
 
-import p_github_hook;
-import p_github_process_login;
-import p_logout;
+import clientapi.get_runnable_master;
+import clientapi.finish_master_run;
+import clientapi.start_master_test;
+import clientapi.finish_master_test;
+import clientapi.upload_master;
 
-import p_get_runnable_master;
-import p_finish_master_run;
-import p_start_master_test;
-import p_finish_master_test;
-import p_upload_master;
+import clientapi.get_runnable_pull;
+import clientapi.finish_pull_run;
+import clientapi.start_pull_test;
+import clientapi.finish_pull_test;
+import clientapi.upload_pull;
 
-import p_get_runnable_pull;
-import p_finish_pull_run;
-import p_start_pull_test;
-import p_finish_pull_test;
-import p_upload_pull;
-
-import p_deprecate_run;
-import p_toggle_auto_merge;
+import loggedin.deprecate_run;
+import loggedin.logout;
+import loggedin.toggle_auto_merge;
 
 import std.array;
 import std.datetime;
@@ -75,25 +73,26 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
         "/dump"                 : &p_dump,
 
         // github_post hook
-        "/github_hook"          : &p_github_hook.run,
-        "/github_process_login" : &p_github_process_login.run,
-        "/logout"               : &p_logout.run,
-        "/toggle_auto_merge"    : &p_toggle_auto_merge.run,
-        "/deprecate_run"        : &p_deprecate_run.run,
+        "/github_hook"          : &githubapi.hook.run,
+        "/github_process_login" : &githubapi.process_login.run,
+
+        "/logout"               : &loggedin.logout.run,
+        "/toggle_auto_merge"    : &loggedin.toggle_auto_merge.run,
+        "/deprecate_run"        : &loggedin.deprecate_run.run,
 
         // master checkins
-        "/get_runnable_master"  : &p_get_runnable_master.run, // for a given platform, see if it's time to run
-        "/finish_master_run"    : &p_finish_master_run.run,   // mark a master build as complete
-        "/start_master_test"    : &p_start_master_test.run,   // start a test phase for a master request build
-        "/finish_master_test"   : &p_finish_master_test.run,  // start a test phase for a master request build
-        "/upload_master"        : &p_upload_master.run,       // for a specific test, receive the resulting log
+        "/get_runnable_master"  : &clientapi.get_runnable_master.run, // for a given platform, see if it's time to run
+        "/finish_master_run"    : &clientapi.finish_master_run.run,   // mark a master build as complete
+        "/start_master_test"    : &clientapi.start_master_test.run,   // start a test phase for a master request build
+        "/finish_master_test"   : &clientapi.finish_master_test.run,  // start a test phase for a master request build
+        "/upload_master"        : &clientapi.upload_master.run,       // for a specific test, receive the resulting log
 
         // pull request apis
-        "/get_runnable_pull"    : &p_get_runnable_pull.run, // for a given platform, select a pull to build
-        "/finish_pull_run"      : &p_finish_pull_run.run,   // mark a pull build as complete
-        "/start_pull_test"      : &p_start_pull_test.run,   // start a test phase for a pull request build
-        "/finish_pull_test"     : &p_finish_pull_test.run,  // finish a test phase
-        "/upload_pull"          : &p_upload_pull.run,      // for a specific test, receive the resulting log
+        "/get_runnable_pull"    : &clientapi.get_runnable_pull.run, // for a given platform, select a pull to build
+        "/finish_pull_run"      : &clientapi.finish_pull_run.run,   // mark a pull build as complete
+        "/start_pull_test"      : &clientapi.start_pull_test.run,   // start a test phase for a pull request build
+        "/finish_pull_test"     : &clientapi.finish_pull_test.run,  // finish a test phase
+        "/upload_pull"          : &clientapi.upload_pull.run,       // for a specific test, receive the resulting log
     ];
 
     if (uri.startsWith("/test-results/addv2"))

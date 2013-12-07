@@ -1,4 +1,4 @@
-module p_deprecate_run;
+module loggedin.deprecate_run;
 
 import std.array;
 import std.conv;

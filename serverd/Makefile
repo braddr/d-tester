@@ -1,6 +1,7 @@
 all: serverd-fastcgi serverd update-pulls
 
 DMD=../../source/trunk3/dmd/src/dmd
+OUTPUT_DIR=obj
 
 DFLAGS=-m64 -gc
 
@@ -12,16 +13,16 @@ SERVERD_SRC=serverd.d clientapi/*.d githubapi/*.d loggedin/*.d setup.d validate.
 UPDATE_SRC=update_pulls.d github_apis.d
 
 serverd: $(SERVERD_SRC) $(COMMON_SRC)
-	$(DMD) $(DFLAGS) -of$@ $^ $(LIBS)
+	$(DMD) $(DFLAGS) -of$(OUTPUT_DIR)/$@ $^ $(LIBS)
 
 serverd-fastcgi: $(SERVERD_SRC) $(COMMON_SRC)
-	$(DMD) -version=FASTCGI $(DFLAGS) -of$@ $^ $(LIBS) -L-lfcgi
+	$(DMD) -version=FASTCGI $(DFLAGS) -of$(OUTPUT_DIR)/$@ $^ $(LIBS) -L-lfcgi
 
 update-pulls: $(UPDATE_SRC) $(COMMON_SRC)
-	$(DMD) $(DFLAGS) -of$@ $^ $(LIBS)
+	$(DMD) $(DFLAGS) -of$(OUTPUT_DIR)/$@ $^ $(LIBS)
 
 clean:
-	rm -f *.o serverd serverd-fastcgi update-pulls
+	rm -f $(OUTPUT_DIR)/*.o $(OUTPUT_DIR)/serverd $(OUTPUT_DIR)/serverd-fastcgi $(OUTPUT_DIR)/update-pulls
 
 upload:
-	scp serverd-fastcgi root@slice-1:/tmp
+	scp $(OUTPUT_DIR)/serverd-fastcgi root@slice-1:/tmp

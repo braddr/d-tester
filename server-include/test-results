@@ -122,9 +122,10 @@
 \set{session_status}{\quote{
     \set{loggedin}{}
     \set{csrf}{}
+    \set{pulls_are_tested}{}
     \if{\get{testerlogin}}{
-        \sqlexec{ select username, csrf from github_users where cookie = "\sqlquote{\get{testerlogin}}" }
-        \set{loggedin}{\sqlrow{github_username}{csrf}}
+        \sqlexec{ select username, csrf, pull_approver from github_users where cookie = "\sqlquote{\get{testerlogin}}" }
+        \set{loggedin}{\sqlrow{github_username}{csrf}{pulls_are_tested}}
     }
     \set{session_status_page}{\htmlquote{\replace{\get{FILENAME}}{/test-results/}{}|\replace{\get{QUERY_STRING}}{&}{|}}}
     \if{\get{loggedin}}{

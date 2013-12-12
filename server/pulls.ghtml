@@ -35,7 +35,7 @@
   select gu.username, gu.id, gp.id, p.name, r.name, gp.pull_id
     from github_pulls gp, github_users gu, repositories r, repo_branches rb, projects p
    where gp.user_id = gu.id and
-         gu.trusted = 0 and
+         gu.pull_approver is null and
          gp.open = 1 and
          gp.r_b_id = rb.id and
          rb.repository_id = r.id and
@@ -49,16 +49,23 @@
 
     <tr class="authheaders">
     <th>Username</th>
-    <th>Userid</th>
+    #<th>Userid</th>
     <th>GitHub page</th>
-    <tr><td colspan=3>Not yet authorized users</td></tr>
+    \if{\eq{\get{pulls_are_tested}}{1}}{
+      <th>Approve testing for this user</th>
+    }
+    </tr>
+    <tr><td colspan=4>Not yet authorized users</td></tr>
     \set{firstrow}{}
   }
  
   <tr>
     <td>\get{gu_username}</td>
-    <td>\get{gu_id}</td>
+    #<td>\get{gu_id}</td>
     <td><a href="https://github.com/\get{project_name}/\get{r_name}/pull/\get{gp_pullid}">\get{r_name}/\get{gp_pullid}</a></td>
+    \if{\eq{\get{pulls_are_tested}}{1}}{
+        <td><a href="addv2/approve_pull_requester?projectid=\get{projectid}&amp;userid=\get{gu_id}&amp;csrf=\get{csrf}">Approve</a></td>
+    }
   </tr> 
 }
 \if{\not{\firstrow}}{
@@ -87,7 +94,7 @@
          rb.repository_id = r.id and
          ghp.user_id = u.id and
          ghp.open = 1 and
-         u.trusted and
+         u.pull_approver is not null and
          r.project_id = \get{projectid} and
          ptr.start_time > date_sub(now(), interval 2 week)
    order by r.name, ghp.pull_id, ptr.platform
@@ -229,7 +236,7 @@
 \sqlexec{
     select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date, ghp.auto_pull, ghp.id
       from projects p, repositories r, repo_branches rb, github_pulls ghp, github_users u
-     where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.trusted and r.project_id = p.id and p.id = \get{projectid}
+     where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.pull_approver is not null and r.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
 }
 \while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}{ghp_id}}{

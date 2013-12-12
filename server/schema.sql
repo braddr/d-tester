@@ -64,6 +64,7 @@ create table if not exists github_users
     access_token      varchar(1024),
     cookie            char(24),
     csrf              char(12),
+    pull_approver     int,
 
     primary key(id),
     unique key(cookie)

@@ -25,6 +25,7 @@ import clientapi.upload_pull;
 import loggedin.deprecate_run;
 import loggedin.logout;
 import loggedin.toggle_auto_merge;
+import loggedin.approve_pull_requester;
 
 import std.array;
 import std.datetime;
@@ -70,29 +71,30 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
     alias void function(const ref string[string] hash, const ref string[string] userhash, Appender!string outdata) page_func;
     page_func[string] commands =
     [
-        "/dump"                 : &p_dump,
+        "/dump"                   : &p_dump,
 
         // github_post hook
-        "/github_hook"          : &githubapi.hook.run,
-        "/github_process_login" : &githubapi.process_login.run,
+        "/github_hook"            : &githubapi.hook.run,
+        "/github_process_login"   : &githubapi.process_login.run,
 
-        "/logout"               : &loggedin.logout.run,
-        "/toggle_auto_merge"    : &loggedin.toggle_auto_merge.run,
-        "/deprecate_run"        : &loggedin.deprecate_run.run,
+        "/logout"                 : &loggedin.logout.run,
+        "/toggle_auto_merge"      : &loggedin.toggle_auto_merge.run,
+        "/deprecate_run"          : &loggedin.deprecate_run.run,
+        "/approve_pull_requester" : &loggedin.approve_pull_requester.run,
 
         // master checkins
-        "/get_runnable_master"  : &clientapi.get_runnable_master.run, // for a given platform, see if it's time to run
-        "/finish_master_run"    : &clientapi.finish_master_run.run,   // mark a master build as complete
-        "/start_master_test"    : &clientapi.start_master_test.run,   // start a test phase for a master request build
-        "/finish_master_test"   : &clientapi.finish_master_test.run,  // start a test phase for a master request build
-        "/upload_master"        : &clientapi.upload_master.run,       // for a specific test, receive the resulting log
+        "/get_runnable_master"    : &clientapi.get_runnable_master.run, // for a given platform, see if it's time to run
+        "/finish_master_run"      : &clientapi.finish_master_run.run,   // mark a master build as complete
+        "/start_master_test"      : &clientapi.start_master_test.run,   // start a test phase for a master request build
+        "/finish_master_test"     : &clientapi.finish_master_test.run,  // start a test phase for a master request build
+        "/upload_master"          : &clientapi.upload_master.run,       // for a specific test, receive the resulting log
 
         // pull request apis
-        "/get_runnable_pull"    : &clientapi.get_runnable_pull.run, // for a given platform, select a pull to build
-        "/finish_pull_run"      : &clientapi.finish_pull_run.run,   // mark a pull build as complete
-        "/start_pull_test"      : &clientapi.start_pull_test.run,   // start a test phase for a pull request build
-        "/finish_pull_test"     : &clientapi.finish_pull_test.run,  // finish a test phase
-        "/upload_pull"          : &clientapi.upload_pull.run,       // for a specific test, receive the resulting log
+        "/get_runnable_pull"      : &clientapi.get_runnable_pull.run, // for a given platform, select a pull to build
+        "/finish_pull_run"        : &clientapi.finish_pull_run.run,   // mark a pull build as complete
+        "/start_pull_test"        : &clientapi.start_pull_test.run,   // start a test phase for a pull request build
+        "/finish_pull_test"       : &clientapi.finish_pull_test.run,  // finish a test phase
+        "/upload_pull"            : &clientapi.upload_pull.run,       // for a specific test, receive the resulting log
     ];
 
     if (uri.startsWith("/test-results/addv2"))

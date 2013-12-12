@@ -84,7 +84,7 @@ bool createSession(string access_token, string username, long userid, ref string
 
     string redirect = "";
 
-    sql_exec(text("insert into github_users values (", userid, ", \"", username, "\", false, \"", access_token, "\", \"", cookie, "\", \"", csrf, "\", null) on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\", redirect = null"));
+    sql_exec(text("insert into github_users (id, username, access_token, cookie, csrf) values (", userid, ", \"", username, "\", \"", access_token, "\", \"", cookie, "\", \"", csrf, "\") on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\", redirect = null"));
 
     return true;
 }

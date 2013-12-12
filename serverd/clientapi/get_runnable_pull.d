@@ -24,7 +24,7 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
                "  rb.repository_id = r.id and "
                "  p.id = r.project_id and "
                "  gp.user_id = u.id and "
-               "  u.trusted = true and "
+               "  u.pull_approver is not null and "
                "  p.enabled = true and "
                "  p.test_pulls = true and "
                "  bhp.project_id = r.project_id and "

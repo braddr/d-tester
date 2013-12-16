@@ -7,10 +7,23 @@ import serverd;
 import utils;
 import validate;
 
+import std.algorithm;
 import std.conv;
 import std.file;
 import std.format;
+import std.random;
 import std.range;
+
+struct Pull
+{
+    string g_p_id;
+    string project_id;
+    string repo;
+    string giturl;
+    string gitref;
+    string sha;
+    bool merge;
+}
 
 void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
 {
@@ -208,14 +221,14 @@ sqlrow selectOnePull(ref sqlrow[string] openPulls)
     }
 }
 
-sqlrow recordRunStart(string hostid, string platform, sqlrow pull)
+string recordRunStart(string hostid, string platform, const ref Pull pull)
 {
     sql_exec(text("insert into pull_test_runs (id, g_p_id, host_id, platform, sha, start_time, deleted) values (null, ",
-                  pull[0], ", ", hostid, ", \"", platform, "\", \"", pull[4], "\", now(), false)"));
+                  pull.g_p_id, ", ", hostid, ", \"", platform, "\", \"", pull.sha, "\", now(), false)"));
     sql_exec("select last_insert_id()");
     sqlrow lastidrow = sql_row();
 
-    return lastidrow;
+    return lastidrow[0];
 }
 
 void tryToCleanup(string hostid)
@@ -231,7 +244,7 @@ void tryToCleanup(string hostid)
     sqlrow[] rows = sql_rows();
     foreach (row; rows)
     {
-        writelog("  cleaning up in progress run: %s/%s", row[1], row[2]);
+        writelog("  cleaning up in progress run: %s, %s/%s", row[0], row[1], row[2]);
         sql_exec(text("update pull_test_runs set deleted = 1 where id = ", row[0]));
     }
 }
@@ -250,6 +263,157 @@ bool validateInput(ref string raddr, ref string rname, ref string hostid, ref st
     return true;
 }
 
+void output(string clientver, string runid, string platform, master.project proj, Pull[] pulls, Appender!string outstr)
+{
+    switch (clientver)
+    {
+        case "3":
+            formattedWrite(outstr, "%s\n", runid);
+            formattedWrite(outstr, "%s\n", proj.project_name);
+            formattedWrite(outstr, "%s\n", platform);
+
+            // repo, url, ref, sha
+            formattedWrite(outstr, "%s\n%s\n%s\n%s\n", pulls[0].repo, pulls[0].giturl, pulls[0].gitref, "dummy");
+
+            // list of repositories
+            formattedWrite(outstr, "%s\n", proj.branches.length);
+            foreach (p; proj.branches)
+                formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
+
+            switch (proj.project_name)
+            {
+                case "D-Programming-Language":
+                    // steps to execute
+                    //     num steps
+                    //     checkout(1) dummy
+                    //     merge(9|10|11) repo(0|1|2)
+                    //     build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
+                    //     test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
+                    formattedWrite(outstr, "16\n");
+                    formattedWrite(outstr, "1 0\n");
+                    switch (pulls[0].repo)
+                    {
+                        case "dmd":      formattedWrite(outstr, "%s %s\n",  9, 0); break;
+                        case "druntime": formattedWrite(outstr, "%s %s\n", 10, 1); break;
+                        case "phobos":   formattedWrite(outstr, "%s %s\n", 11, 2); break;
+                        default: assert(false, "unknown repository");
+                    }
+                    formattedWrite(outstr, "2 0 3 1 4 2\n");
+                    formattedWrite(outstr, "5 1 6 2 7 0\n");
+                    break;
+                case "D-Programming-GDC":
+                    // steps to execute
+                    //     num steps
+                    //     checkout(1) dummy
+                    //     merge(14) repo(0)
+                    //     build(12) gdc(0)
+                    //     test(13) gdc(0)
+                    formattedWrite(outstr, "8\n");
+                    formattedWrite(outstr, "1 0\n");
+                    switch (pulls[0].repo)
+                    {
+                        case "GDC":      formattedWrite(outstr, "%s %s\n", 14, 0); break;
+                        default: assert(false, "unknown repository");
+                    }
+                    formattedWrite(outstr, "12 0 13 0\n");
+                    break;
+                default:
+                    writelog ("  unknown project: %s", proj.project_name);
+                    outstr.put("skip\n");
+                    break;
+            }
+            break;
+
+        case "4":
+            formattedWrite(outstr, "%s\n", runid);
+            formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");
+            formattedWrite(outstr, "%s\n", proj.project_name);
+            formattedWrite(outstr, "%s\n", platform);
+
+            // list of repositories
+            formattedWrite(outstr, "%s\n", proj.branches.length);
+            foreach (p; proj.branches)
+                formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
+
+            switch (proj.project_name)
+            {
+                case "D-Programming-Language":
+                    formattedWrite(outstr, "1 0\n"); // checkout dummy
+
+                    //  merge(9|10|11) repoindex(0|1|2) url ref
+                    foreach (p; pulls)
+                    {
+                        int step, repoindex;
+                        switch (p.repo)
+                        {
+                            case "dmd":      step =  9; repoindex = 0; break;
+                            case "druntime": step = 10; repoindex = 1; break;
+                            case "phobos":   step = 11; repoindex = 2; break;
+                            default: assert(false, "unknown repository");
+                        }
+                        formattedWrite(outstr, "%s %s %s %s\n", step, repoindex, p.giturl, p.gitref);
+                    }
+
+                    formattedWrite(outstr, "2 0\n"); // build dmd
+                    formattedWrite(outstr, "3 1\n"); // build druntime
+                    formattedWrite(outstr, "4 2\n"); // build phobos
+                    formattedWrite(outstr, "5 1\n"); // test druntime
+                    formattedWrite(outstr, "6 2\n"); // test phobos
+                    formattedWrite(outstr, "7 0\n"); // test dmd
+                    break;
+                case "D-Programming-GDC":
+                    formattedWrite(outstr, "1 0\n"); // checkout dummy
+
+                    // merge(14) repoindex(0) url ref
+                    foreach (p; pulls)
+                    {
+                        int step, repoindex;
+                        switch (p.repo)
+                        {
+                            case "GDC": step = 14; repoindex = 0; break;
+                            default: assert(false, "unknown repository");
+                        }
+                        formattedWrite(outstr, "%s %s %s %s\n", step, repoindex, p.giturl, p.gitref);
+                    }
+                    formattedWrite(outstr, "12 0\n"); // build gdc
+                    formattedWrite(outstr, "13 0\n"); // test gdc
+                    break;
+                default:
+                    writelog ("  unknown project: %s", proj.project_name);
+                    outstr.put("skip\n");
+                    break;
+            }
+            break;
+        default:
+            writelog("  illegal clientver: %s", clientver);
+            outstr.put("skip\n");
+    }
+}
+
+Pull[] selectPullsToBuild(string hostid, string platform)
+{
+    sqlrow[string] openPulls;
+    loadAllOpenRequests(openPulls, hostid);
+
+    filterAlreadyCompleteRequests(platform, openPulls);
+    filterSuppressedBuilds(platform, openPulls);
+
+    if (openPulls.length == 0)
+        return null;
+
+    sqlrow pull = selectOnePull(openPulls);
+    Pull[] pulls = [Pull(pull[0], pull[10], pull[2], pull[5], pull[6], pull[4], (pull[11] == "1" && pull[12] != ""))];
+    return pulls;
+}
+
+master.project[] selectMasterToBuild(bool force, string hostid, string platform)
+{
+    master.project[] projects = master.loadProjects(hostid);
+
+    projects = projects.filter!(a => master.shouldDoBuild(force, platform, a.project_id)).array;
+    return projects;
+}
+
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
     outstr.put("Content-type: text/plain\n\n");
@@ -258,6 +422,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string rname = lookup(userhash, "hostname");
     string hostid;
     string platform = lookup(userhash, "os");
+    string force = lookup(userhash, "force");
     string clientver = lookup(userhash, "clientver");
 
     if (!validateInput(raddr, rname, hostid, platform, clientver, outstr))
@@ -272,104 +437,52 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
 
     tryToCleanup(hostid);
+    master.tryToCleanup(hostid);
 
-    sqlrow[string] openPulls;
-    loadAllOpenRequests(openPulls, hostid);
+    Pull[] pulls = selectPullsToBuild(hostid, platform);
+    master.project[] projects = selectMasterToBuild(force.length != 0, hostid, platform);
 
-    filterAlreadyCompleteRequests(platform, openPulls);
-    filterSuppressedBuilds(platform, openPulls);
+    bool doPull = false;
+    bool doMaster = false;
+    if (pulls.length > 0 && pulls[0].merge)
+        doPull = true;
+    else if (projects.length > 0 && clientver == "4")
+        doMaster = true;
+    else if (pulls.length > 0)
+        doPull = true;
 
-    if (openPulls.length > 0)
+    if (!doPull && !doMaster)
     {
-        sqlrow pull = selectOnePull(openPulls);
+        outstr.put("skip\n");
+        return;
+    }
 
-        sqlrow runid = recordRunStart(hostid, platform, pull);
+    string runid;
+    master.project proj;
 
-        master.project proj = loadProjectById(pull[10]);
-
-        try
-        {
-            string path = "/home/dwebsite/pull-results/pull-" ~ runid[0];
-            mkdir(path);
-        }
-        catch(Exception e) { writelog("  caught exception: %s", e); }
-
-        writelog("  building: %s", pull);
-        // runid
-        formattedWrite(outstr, "%s\n", runid[0]);
-        switch (clientver)
-        {
-            case "1":
-                // repo, url, ref, sha, branch
-                formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", pull[2], pull[5], pull[6], pull[4], pull[9]);
-                break;
-            case "2":
-                // branch, repo, url, ref, sha
-                formattedWrite(outstr, "%s\n%s\n%s\n%s\n%s\n", pull[9], pull[2], pull[5], pull[6], pull[4]);
-                break;
-            case "3":
-                formattedWrite(outstr, "%s\n", proj.project_name);
-                formattedWrite(outstr, "%s\n", platform);
-
-                // repo, url, ref, sha
-                formattedWrite(outstr, "%s\n%s\n%s\n%s\n", pull[2], pull[5], pull[6], pull[4]);
-
-                // list of repositories
-                formattedWrite(outstr, "%s\n", proj.branches.length);
-                foreach (p; proj.branches)
-                    formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
-
-                switch (proj.project_name)
-                {
-                    case "D-Programming-Language":
-                        // steps to execute
-                        //     num steps
-                        //     checkout(1) dummy
-                        //     merge(9|10|11) repo(0|1|2)
-                        //     build(2) dmd(0), build(3) druntime(1), build(4) phobos(2)
-                        //     test(5) druntime(1), test(6) phobos(2), test(7) dmd(0)
-                        formattedWrite(outstr, "16\n");
-                        formattedWrite(outstr, "1 0\n");
-                        switch (pull[2])
-                        {
-                            case "dmd":      formattedWrite(outstr, "%s %s\n",  9, 0); break;
-                            case "druntime": formattedWrite(outstr, "%s %s\n", 10, 1); break;
-                            case "phobos":   formattedWrite(outstr, "%s %s\n", 11, 2); break;
-                            default: assert(false, "unknown repository");
-                        }
-                        formattedWrite(outstr, "2 0 3 1 4 2\n");
-                        formattedWrite(outstr, "5 1 6 2 7 0\n");
-                        break;
-                    case "D-Programming-GDC":
-                        // steps to execute
-                        //     num steps
-                        //     checkout(1) dummy
-                        //     merge(14) repo(0)
-                        //     build(12) gdc(0)
-                        //     test(13) gdc(0)
-                        formattedWrite(outstr, "8\n");
-                        formattedWrite(outstr, "1 0\n");
-                        switch (pull[2])
-                        {
-                            case "GDC":      formattedWrite(outstr, "%s %s\n", 14, 0); break;
-                            default: assert(false, "unknown repository");
-                        }
-                        formattedWrite(outstr, "12 0 13 0\n");
-                        break;
-                    default:
-                        writelog ("  unknown project: %s", proj.project_name);
-                        outstr.put("skip\n");
-                        break;
-                }
-                break;
-            default:
-                writelog("  illegal clientver: %s", clientver);
-                outstr.put("skip\n");
-        }
-
-        clientapi.finish_pull_run.updateGithubPullStatus(runid[0], outstr);
+    if (doPull)
+    {
+        proj = loadProjectById(pulls[0].project_id);
+        runid = recordRunStart(hostid, platform, pulls[0]);
     }
     else
-        outstr.put("skip\n");
+    {
+        pulls = null;
+        proj = projects[uniform(0, projects.length)];
+        runid = master.getNewID(platform, hostid, proj.project_id);
+    }
+
+    try
+    {
+        string path = "/home/dwebsite/" ~ (doMaster ? "test-results/" : "pull-results/pull-") ~ runid;
+        mkdir(path);
+    }
+    catch(Exception e) { writelog("  caught exception: %s", e); }
+
+    writelog("  building: %s", pulls);
+
+    output(clientver, runid, platform, proj, pulls, outstr);
+
+    clientapi.finish_pull_run.updateGithubPullStatus(runid, outstr);
 }
 

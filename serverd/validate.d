@@ -138,9 +138,8 @@ bool validate_clientver(ref string clientver, Appender!string outstr)
 
     switch (clientver)
     {
-        case "1":
-        case "2":
         case "3":
+        case "4":
             return true;
         default:
             formattedWrite(outstr, "bad input: unknown clientver: %s\n", clientver);

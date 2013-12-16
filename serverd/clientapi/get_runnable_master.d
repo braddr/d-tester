@@ -55,7 +55,7 @@ void tryToCleanup(string hostid)
     sqlrow[] rows = sql_rows();
     foreach (row; rows)
     {
-        writelog("  cleaning up in progress master run");
+        writelog("  cleaning up in progress master run: %s", row[0]);
         sql_exec(text("update test_runs set deleted = 1 where id = ", row[0]));
     }
 }
@@ -158,10 +158,6 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         formattedWrite(outstr, "%s\n", runid);
         switch (clientver)
         {
-            case "1":
-            case "2":
-                formattedWrite(outstr, "%s\n", proj.branches[0].branch_name);
-                break;
             case "3":
                 formattedWrite(outstr, "%s\n", proj.project_name);
                 formattedWrite(outstr, "%s\n", platform);

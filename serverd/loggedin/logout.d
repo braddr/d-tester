@@ -46,10 +46,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (!cookie || !csrf)
         goto Lsend;
 
-    // get the related data only if cookie and csrf exist and match
-    string access_token, userid, username;
-    if (!getAccessTokenFromCookie(cookie, csrf, access_token, userid, username))
-        goto Lsend;
+    {
+        // get the related data only if cookie and csrf exist and match
+        string access_token, userid, username;
+        if (!getAccessTokenFromCookie(cookie, csrf, access_token, userid, username))
+            goto Lsend;
+    }
 
     sql_exec(text("update github_users set access_token = null, cookie = null, csrf = null where cookie = \"", cookie, "\" and csrf = \"", csrf, "\""));
 

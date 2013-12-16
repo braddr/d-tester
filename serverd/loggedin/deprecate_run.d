@@ -31,7 +31,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string userid;
     string username;
     if (!validateAuthenticated(userhash, access_token, userid, username, valout))
-        goto Lerror;
+    {
+Lerror:
+        outstr.put("Content-type: text/plain\n\n");
+        outstr.put(valout.data);
+        return;
+    }
 
     string projectid = lookup(userhash, "projectid");
     string runid = lookup(userhash, "runid");
@@ -51,11 +56,5 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (logid != "")
         outstr.put(text("&logid=", logid));
     outstr.put("\n\n");
-
-    return;
-
-Lerror:
-    outstr.put("Content-type: text/plain\n\n");
-    outstr.put(valout.data);
 }
 

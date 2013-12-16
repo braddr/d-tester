@@ -74,7 +74,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (!validateAuthenticated(userhash, access_token, userid, username, valout))
     {
         valout.put("error toggling auto-merge state\n");
-        goto Lerror;
+Lerror:
+        outstr.put("Content-type: text/plain\n\n");
+        outstr.put(valout.data);
+        return;
     }
 
     string projectid = lookup(userhash, "projectid");
@@ -114,10 +117,4 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
                "pullid=", pullid,
                extra_param,
                "\n\n"));
-
-    return;
-
-Lerror:
-    outstr.put("Content-type: text/plain\n\n");
-    outstr.put(valout.data);
 }

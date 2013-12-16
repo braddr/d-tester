@@ -115,19 +115,21 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     string ret;
     string urldata;
-
-    string access_token;
-    if (!getGithubAccessToken(code, access_token, tmpstr))
-        goto Lsend;
-
-    string username;
-    long userid;
-    if (!getGithubTranslation(access_token, username, userid, tmpstr))
-        goto Lsend;
-
     string cookievalue;
-    if (!createSession(access_token, username, userid, cookievalue))
-        goto Lsend;
+
+    {
+        string access_token;
+        if (!getGithubAccessToken(code, access_token, tmpstr))
+            goto Lsend;
+
+        string username;
+        long userid;
+        if (!getGithubTranslation(access_token, username, userid, tmpstr))
+            goto Lsend;
+
+        if (!createSession(access_token, username, userid, cookievalue))
+            goto Lsend;
+    }
 
     ret = text("Set-Cookie: testerlogin=", cookievalue, "; domain=", sn, "; path=/test-results; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");
     writelog("  login returning: %s", ret);

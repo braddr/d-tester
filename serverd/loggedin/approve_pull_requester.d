@@ -39,7 +39,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string userid;
     string username;
     if (!validateAuthenticated(userhash, access_token, userid, username, valout))
-        goto Lerror;
+    {
+Lerror:
+        outstr.put("Content-type: text/plain\n\n");
+        outstr.put(valout.data);
+        return;
+    }
 
     string projectid = lookup(userhash, "projectid");
     string pull_userid = lookup(userhash, "userid");
@@ -54,11 +59,5 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/pulls.ghtml?projectid=", projectid));
     outstr.put("\n\n");
-
-    return;
-
-Lerror:
-    outstr.put("Content-type: text/plain\n\n");
-    outstr.put(valout.data);
 }
 

@@ -18,6 +18,19 @@ bool validateInput(ref string projectid, ref string pull_userid, Appender!string
     return true;
 }
 
+bool validateCanApprove(string userid, Appender!string outstr)
+{
+    sql_exec(text("select pull_approver from github_users where id = ", userid));
+    sqlrow[] rows = sql_rows();
+    if (rows.length != 1 || rows[0][0] == "")
+    {
+        formattedWrite(outstr, "error, user not approved to approve new pullers");
+        return false;
+    }
+
+    return true;
+}
+
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
     auto valout = appender!string;
@@ -34,13 +47,8 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (!validateInput(projectid, pull_userid, valout))
         goto Lerror;
 
-    sql_exec(text("select pull_approver from github_users where id = ", userid));
-    sqlrow[] rows = sql_rows();
-    if (rows.length != 1 || rows[0][0] == "")
-    {
-        formattedWrite(valout, "error, user not approved to approve new pullers");
+    if (!validateCanApprove(userid, valout))
         goto Lerror;
-    }
 
     sql_exec(text("update github_users set pull_approver = ", userid, " where id = ", pull_userid));
 

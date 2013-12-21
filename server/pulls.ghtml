@@ -51,7 +51,7 @@
     <th>Username</th>
     #<th>Userid</th>
     <th>GitHub page</th>
-    \if{\not{\eq{\get{pulls_are_tested}}{}}}{
+    \if{\and{\not{\eq{\get{pulls_are_tested}}{}}}{\get{loggedin}}}{
       <th>Approve testing for this user</th>
     }
     </tr>
@@ -63,7 +63,7 @@
     <td>\get{gu_username}</td>
     #<td>\get{gu_id}</td>
     <td><a href="https://github.com/\get{project_name}/\get{r_name}/pull/\get{gp_pullid}">\get{r_name}/\get{gp_pullid}</a></td>
-    \if{\not{\eq{\get{pulls_are_tested}}{1}}}{
+    \if{\and{\not{\eq{\get{pulls_are_tested}}{1}}}{\get{loggedin}}}{
         <td><a href="addv2/approve_pull_requester?projectid=\get{projectid}&amp;userid=\get{gu_id}&amp;csrf=\get{csrf}">Approve</a></td>
     }
   </tr> 

@@ -113,6 +113,10 @@ div.page_menu_selected {
     -moz-border-radius: 12px;
 }
 
+div.failed_master_build {
+    border: 1px solid red;
+}
+
 div.page_submenu {
     margin-left:     20px;
 }

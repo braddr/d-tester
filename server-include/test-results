@@ -62,8 +62,10 @@
 # \1 == url suffix
 # \2 == href text
 # \3 == css class suffix
+# \4 == additional css classes
+# \5 == title text
 \set{drawOneMenu}{\quote{
-    <div class="page_menu_\3" onClick="parent.location='/test-results/\1'">
+    <div class="page_menu_\3\if{\4}{\ \4}" onClick="parent.location='/test-results/\1'"\if{\5}{\ title="\5"}>
         <a href="/test-results/\1">\2</a>
     </div>
 }}
@@ -86,14 +88,30 @@
 
     <tr><td>
     \sqlexec{
-        select id, menu_label, name, test_pulls, beta_only from projects where enabled=true order by menu_label
+        #select id, menu_label, name, test_pulls, beta_only from projects where enabled=true order by menu_label
+
+        select p.id, p.menu_label, p.name, p.test_pulls, p.beta_only, ifnull(counts.pull_count, 0) as 'pull_count', ifnull(results.max_rc, 0)
+          from projects p left join (
+              select p.id as p_id, count(*) as pull_count
+                from projects p, github_pulls ghp, repo_branches rb, repositories r
+               where ghp.r_b_id = r.id and rb.repository_id = r.id and r.project_id = p.id and
+                     p.enabled = true and
+                     ghp.open = true
+               group by p.id
+          ) counts on p.id = counts.p_id left join (
+              select project_id as p_id, max(rc) as max_rc
+                from test_runs tr, projects p
+               where tr.project_id = p.id and p.enabled = true and tr.deleted = false
+               group by project_id) results on p.id = results.p_id
+          where p.enabled = true
+          order by p.menu_label
     }
-    \while{\sqlrow{pid}{label}{name}{test_pulls}{beta_only}}{
+    \while{\sqlrow{pid}{label}{name}{test_pulls}{beta_only}{pull_counts}{max_rc}}{
         \if{
             \not{\eq{\get{beta_only}}{1}}
             \eq{\get{SERVERNAME}}{d-beta.puremagic.com}
         }{
-            \drawOneMenu{?projectid=\get{pid}}{\get{label}}{\isMenuSelected{\1}{\get{pid}}}
+            \drawOneMenu{?projectid=\get{pid}}{\get{label}\if{\not{\eq{\get{pull_counts}}{0}}}{\ &diams;}}{\isMenuSelected{\1}{\get{pid}}}{\if{\eq{\get{max_rc}}{0}}{}{failed_master_build}}{\get{pull_counts}\ open pulls}
 
             \if{
                 \eq{\get{projectid}}{\get{pid}}

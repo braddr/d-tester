@@ -52,7 +52,9 @@ case "$2" in
 esac
 
 #GCC_VER=4.8.1
-GCC_VER=4.9-20130929
+#GCC_VER=4.9-20130929
+#GCC_VER=4.9-20131117
+GCC_VER=4.9-20131201
 tar jxf ../../src/gcc-$GCC_VER.tar.bz2 >> ../GDC-build.log 2>&1
 ./setup-gcc.sh gcc-$GCC_VER >> ../GDC-build.log 2>&1
 mkdir output-dir

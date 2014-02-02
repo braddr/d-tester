@@ -29,7 +29,7 @@ fi
 
 echo >> $top/$1/$3-merge.log
 N=3
-for i in `seq 1 $N`; do
+for i in 1 2 3; do
     echo "fetching $4 $5 (attempt: $i/$N)" >> $top/$1/$3-merge.log 2>&1
     git fetch $4 $5 >> $top/$1/$3-merge.log 2>&1
     if [ $? -eq 0 ]; then

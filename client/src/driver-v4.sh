@@ -114,7 +114,7 @@ function runtests
     fi
     runid=${data[0]}
 
-    if [ "x$runid" == "x" -o "x$runid" == "xskip" -o "x$runid" == "xbad" -o "x$runid" == "xunauthorized" -o "x${runid:0:9}" == "x<!DOCTYPE" -o "x${runid:0:17}" == "Unable to dispatch" ]; then
+    if [ "x$runid" == "x" -o "x$runid" == "xskip" -o "x$runid" == "xbad" -o "x$runid" == "xunauthorized:" -o "x${runid:0:9}" == "x<!DOCTYPE" -o "x${runid:0:17}" == "Unable to dispatch" ]; then
         echo -e -n "Skipping run ($OS)...\r"
         run_rc=2
         return

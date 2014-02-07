@@ -5,6 +5,8 @@ import serverd;
 import utils;
 import validate;
 
+import clientapi.sql;
+
 import std.conv;
 import std.format;
 import std.range;
@@ -71,9 +73,17 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         return;
 
     updateHostLastCheckin(hostid, clientver);
-    sql_exec(text("insert into pull_test_data (test_run_id, test_type_id, start_time) values (", runid, ", ", type, ", now())"));
-    sql_exec("select last_insert_id()");
-    sqlrow liid = sql_row();
-    formattedWrite(outstr, "%s\n", liid[0]);
+
+    if (isPullRunAborted(runid))
+    {
+        outstr.put("abort");
+    }
+    else
+    {
+        sql_exec(text("insert into pull_test_data (test_run_id, test_type_id, start_time) values (", runid, ", ", type, ", now())"));
+        sql_exec("select last_insert_id()");
+        sqlrow liid = sql_row();
+        formattedWrite(outstr, "%s\n", liid[0]);
+    }
 }
 

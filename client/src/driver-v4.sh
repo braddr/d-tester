@@ -143,6 +143,10 @@ function runtests
     run_rc=0
     while [ $run_rc -eq 0 -a ${#steps[@]} -gt 0 ]; do
         testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}")
+        if [ "x$testid" == "xabort" ]; then
+            run_rc=3
+            break
+        fi
         reponame=${repobranches[${steps[1]}*3 + 1]}
         case ${steps[0]} in
             1) # checkout
@@ -174,9 +178,11 @@ function runtests
         esac
         steps=(${steps[@]:2})
         uploadlog $testid $rundir $logname $runmode
-        callcurl finish_${runmode}_test "testid=$testid&rc=$step_rc"
+        curlrc=$(callcurl finish_${runmode}_test "testid=$testid&rc=$step_rc")
         if [ "$runmode" == "pull" -a $step_rc -ne 0 ]; then
             run_rc=1
+        elif [ "x$curlrc" == "xabort" ]; then
+            run_rc=3
         fi
     done
 

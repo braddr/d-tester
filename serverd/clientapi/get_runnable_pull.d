@@ -483,6 +483,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     output(clientver, runid, platform, proj, pulls, outstr);
 
-    clientapi.finish_pull_run.updateGithubPullStatus(runid, outstr);
+    if (doPull) // TODO: this an be made to work with master runs as well
+        clientapi.finish_pull_run.updateGithubPullStatus(runid, outstr);
 }
 

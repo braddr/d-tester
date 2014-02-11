@@ -18,6 +18,7 @@ import etc.c.curl;
 import mysql;
 
 static const char* USERAGENT = "Auto-Tester. https://d.puremagic.com/test-results/  contact: braddr@puremagic.com";
+static string LOGNAME = "/tmp/serverd.log";
 
 void writelog(S...)(S s)
 {
@@ -28,7 +29,7 @@ void writelog(S...)(S s)
 
     try
     { 
-        auto fp = File("/tmp/serverd.log", "a");
+        auto fp = File(LOGNAME, "a");
 
         auto t = Clock.currTime();
         t.fracSec = FracSec.from!"hnsecs"(0);
@@ -187,7 +188,7 @@ bool runCurlMethodRetry(CURL* curl, CurlOption co, ref string responsepayload, r
             return true;
 
         ++tries;
-        writelog("  http status code %s, retrying in %s seconds", statusCode, tries);
+        writelog("  http status code %s, retrying in %s seconds, body: %s", statusCode, tries, responsepayload);
         Thread.sleep(dur!("seconds")( tries ));
     }
     return false;
@@ -195,7 +196,7 @@ bool runCurlMethodRetry(CURL* curl, CurlOption co, ref string responsepayload, r
 
 CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
-    auto fp = File("/tmp/serverd.log", "a");
+    auto fp = File(LOGNAME, "a");
 
     responsepayload = "";
     responseheaders = [];

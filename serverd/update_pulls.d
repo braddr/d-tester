@@ -595,6 +595,8 @@ void backfill_pulls()
 
 int main(string[] args)
 {
+    LOGNAME = "/tmp/update-pulls.log";
+
     writelog("start app");
 
     load_config(getenv("SERVERD_CONFIG"));

@@ -79,7 +79,7 @@
 
 \while{\sqlrow{h_id}{h_name}{h_ipaddr}{h_email}{h_date}{h_diff}{h_late}{ip_runid}{ip_platform}{ip_repo_name}{ip_pull_id}{p_name}{p_id}{h_clientver}}{
     <tr class="\if{\eq{\get{h_enabled}}{1}}{enabled}{disabled}">
-        <td>\get{h_name}</td>
+        <td><a href="details.ghtml?hostid=\get{h_id}">\get{h_name}</a></td>
         <td>\get{h_ipaddr}</td>
         <td \if{\eq{\get{h_late}}{1}}{class="late"}>\if{\get{h_date}}{\get{h_date}\ - \get{h_diff}}</td>
         <td>\get{ip_platform}</td>

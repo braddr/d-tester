@@ -1,0 +1,134 @@
+\include{/include/test-results}
+
+\validateURLParameter{hostid}
+
+\pageHeader{60}{hosts}{
+    <link rel="stylesheet" href="/test-results/css/hosts.css" type="text/css">
+}
+
+<table class="hosts">
+
+<tr>
+    <th>Host</th>
+    <th>IP Address</th>
+    <th>Last Heard From</th>
+    <th>CVer</th>
+</tr>
+
+\sqlexec{
+    select bh.id,
+           bh.name,
+           bh.ipaddr,
+           bh.owner_email,
+           bh.last_heard_from,
+           timediff(now(), last_heard_from) time_since,
+           (timediff(now(), last_heard_from) > "00:20:00") as over_due,
+           bh.clientver
+      from build_hosts bh
+     where bh.id = \get{hostid}
+     order by bh.name
+}
+\while{\sqlrow{h_id}{h_name}{h_ipaddr}{h_email}{h_date}{h_diff}{h_late}{h_clientver}}{
+    <tr class="\if{\eq{\get{h_enabled}}{1}}{enabled}{disabled}">
+        <td>\get{h_name}</td>
+        <td>\get{h_ipaddr}</td>
+        <td \if{\eq{\get{h_late}}{1}}{class="late"}>\if{\get{h_date}}{\get{h_date}\ - \get{h_diff}}</td>
+        <td>\get{h_clientver}</td>
+    </tr>
+}
+</table>
+
+# \1 == rc
+\set{processRC}{\quote{
+    \if{\eq{\1}{0}}{
+        \set{class}{pass}
+        \set{text}{P}
+    }{
+        \if{\eq{\1}{}}{
+            \set{class}{running}
+            \set{text}{R}
+        }{
+            \set{class}{fail}
+            \set{text}{F}
+        }
+    }
+}}
+
+<table class="hosts" id="branchruns">
+  <tr>
+    <th>Run ID</th>
+    <th>Project</th>
+    <th>Platform</th>
+    <th>Start Time</th>
+    <th>Duration</th>
+    <th>Result Code</th>
+    <th>Deleted</th>
+  </tr>
+
+\sqlexec{
+    select tr.id, p.name, tr.project_id, tr.platform, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.rc, tr.deleted
+      from test_runs tr,
+           projects p
+     where tr.host_id = \get{hostid} and
+           tr.project_id = p.id
+     order by tr.start_time desc
+     limit 10
+}
+\while{\sqlrow{run_id}{project_name}{project_id}{platform}{start_time}{end_time}{duration}{rc}{deleted}}{
+  \processRC{\get{rc}}
+  <tr class="pulltestrun \get{class}">
+    <td class="id"><a href="../test_data.ghtml?projectid=\get{project_id}&runid=\get{run_id}&logid=1">\get{run_id}</a></td>
+    <td class="project"><a href="../?projectid=\get{project_id}">\get{project_name}</a></td>
+    <td class="platform">\get{platform}</td>
+    <td class="starttime">\get{start_time}</td>
+    <td class="duration">\get{duration}</td>
+    <td class="result">\get{text}</td>
+    <td class="deleted">\get{deleted}</td>
+  </tr>
+}
+
+</table>
+
+<table class="hosts" id="pullruns">
+  <tr>
+    <th>Run ID</th>
+    <th>Project</th>
+    <th>Git Pull</th>
+    <th>Platform</th>
+    <th>Start Time</th>
+    <th>Duration</th>
+    <th>Result Code</th>
+    <th>Deleted</th>
+  </tr>
+
+\sqlexec{
+    select ptr.id, r.project_id, p.name, r.name, ghp.pull_id, ptr.platform, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
+      from pull_test_runs ptr,
+           github_pulls ghp,
+           repo_branches rb,
+           repositories r,
+           projects p
+     where ptr.host_id = \get{hostid} and
+           ptr.g_p_id = ghp.id and
+           ghp.r_b_id = rb.id and
+           rb.repository_id = r.id and
+           r.project_id = p.id
+     order by ptr.start_time desc
+     limit 50
+}
+\while{\sqlrow{run_id}{project_id}{project_name}{r_name}{pull_id}{platform}{start_time}{end_time}{duration}{rc}{deleted}}{
+  \processRC{\get{rc}}
+  <tr class="pulltestrun \get{class}">
+    <td class="id"><a href="../pull.ghtml?projectid=\get{project_id}&amp;runid=\get{run_id}">\get{run_id}</a></td>
+    <td class="project"><a href="../?projectid=\get{project_id}">\get{project_name}</a></td>
+    <td class="pullid"><a href="https://github.com/\get{project_name}/\get{r_name}/pull/\get{pull_id}">\get{r_name}/\get{pull_id}</a></td>
+    <td class="platform">\get{platform}</td>
+    <td class="starttime">\get{start_time}</td>
+    <td class="duration">\get{duration}</td>
+    <td class="result">\get{text}</td>
+    <td class="deleted">\get{deleted}</td>
+  </tr>
+}
+
+</table>
+\pageFooter

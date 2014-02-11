@@ -58,3 +58,11 @@ table.github_state td {
     padding-bottom: 2px;
 }
 
+table#branchruns {
+    margin-top: 30px;
+}
+
+table#pullruns {
+    margin-top: 30px;
+}
+

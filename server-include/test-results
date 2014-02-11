@@ -128,7 +128,7 @@
         }
     }
     <div class="page_menu_spacer"></div>
-    <div class="page_menu_\isMenuSelected{\1}{hosts}" onClick="parent.location='/test-results/hosts/'"><a href="/test-results/hosts/">Build Host Status</a></div>
+    <div class="page_menu_\isMenuSelected{\1}{hosts}" onClick="parent.location='/test-results/hosts/'"><a href="/test-results/hosts/">Build Hosts</a></div>
     #<div class="page_menu_\isMenuSelected{\1}{docs}" onClick="parent.location='/test-results/docs/'"><a href="/test-results/docs/">Documentation</a></div>
     #<div class="page_menu_\isMenuSelected{\1}{admin}" onClick="parent.location='/test-results/create-project.ghtml'"><a href="/test-results/create-project.ghtml">Create New Project</a></div>
     </td></tr>

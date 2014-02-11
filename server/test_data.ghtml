@@ -6,11 +6,11 @@
 \validateURLParameter{logid}
 
 \sqlexec{
-    select tr.id, b.ipaddr, b.name, tr.platform, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.rc, tr.deleted, p.name
+    select tr.id, b.id, b.ipaddr, b.name, tr.platform, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.rc, tr.deleted, p.name
       from test_runs tr, build_hosts b, projects p
       where tr.id = \get{runid} and tr.host_id = b.id and tr.project_id = p.id
 }
-\set{runid_found}{\sqlrow{id}{b_ipaddr}{b_name}{os}{start_time}{end_time}{duration}{rc}{deleted}{projectname}}
+\set{runid_found}{\sqlrow{id}{b_id}{b_ipaddr}{b_name}{os}{start_time}{end_time}{duration}{rc}{deleted}{projectname}}
 
 \pageHeader{\if{\not{\get{end_time}}}{60}}{\get{projectid}}{
     <link rel="stylesheet" href="/test-results/css/index.css" type="text/css">
@@ -85,7 +85,7 @@
         </tr>
         <tr class="data dmd">
             <td class="metadata header">Reporter</td>
-            <td class="metadata data">\get{b_name}&nbsp;(\get{b_ipaddr})</td>
+            <td class="metadata data"><a href="hosts/details.ghtml?hostid=\get{b_id}">\get{b_name}&nbsp;(\get{b_ipaddr})</a></td>
             \if{\eq{\get{projectname}}{D-Programming-Language}}{
                 <td>dmd</td>
                 \drawOneTest{2}{build}

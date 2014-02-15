@@ -16,12 +16,6 @@ bool isPullRunAborted(string runid)
         return true;
     }
 
-    writelog("  isPullRunAborted: rows[0][0] = %s", rows[0][0]);
-    if (rows[0][0] == "1")
-    {
-        return true;
-    }
-
-    return false;
+    return rows[0][0] == "1";
 }
 

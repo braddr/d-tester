@@ -345,7 +345,8 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
     if (clearOldResults)
     {
         writelog("    deprecating old test results");
-        sql_exec(text("update pull_test_runs set deleted=1 where deleted=0 and g_p_id = ", k.id));
+        sql_exec(text("update pull_test_runs set rc = 2 where rc is null and deleted = 0 and g_p_id = ", k.id));
+        sql_exec(text("update pull_test_runs set deleted = 1 where deleted = 0 and g_p_id = ", k.id));
         sql_exec(text("delete from pull_suppressions where g_p_id = ", k.id));
     }
 

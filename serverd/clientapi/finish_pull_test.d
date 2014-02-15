@@ -72,7 +72,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     updateHostLastCheckin(hostid, clientver);
     if (isPullRunAborted(runid))
+    {
+        writelog("  aboring in progress pull test, runid: %s", runid);
         outstr.put("abort");
+    }
     else
         sql_exec(text("update pull_test_data set end_time=now(), rc=", rc, " where id=", testid));
 }

@@ -152,17 +152,17 @@ bool updateStore(string runid, Appender!string outstr)
     sql_exec(text("select rc from pull_test_data where test_run_id=", runid));
     sqlrow[] rows = sql_rows();
 
-    int rc = 0;
+    int maxrc = 0;
     foreach(row; rows)
     {
-        if (row[0] == "1")
+        int rc = to!int(row[0]);
+        if (rc > maxrc)
         {
-            rc = 1;
-            break;
+            maxrc = rc;
         }
     }
 
-    sql_exec(text("update pull_test_runs set end_time=now(), rc=", rc, " where id=", runid));
+    sql_exec(text("update pull_test_runs set end_time=now(), rc=", maxrc, " where id=", runid));
 
     return true;
 }

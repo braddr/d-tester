@@ -245,6 +245,7 @@ void tryToCleanup(string hostid)
     foreach (row; rows)
     {
         writelog("  cleaning up in progress run: %s, %s/%s", row[0], row[1], row[2]);
+        sql_exec(text("update pull_test_runs set rc = 2 where rc is null and id = ", row[0]));
         sql_exec(text("update pull_test_runs set deleted = 1 where id = ", row[0]));
     }
 }

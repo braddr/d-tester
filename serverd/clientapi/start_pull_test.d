@@ -76,7 +76,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     if (isPullRunAborted(runid))
     {
-        writelog("  aboring in progress pull test, runid: %s", runid);
+        writelog("  aborting in progress pull test, runid: %s", runid);
         outstr.put("abort");
     }
     else

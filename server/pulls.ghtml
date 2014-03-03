@@ -218,7 +218,7 @@
 }
 
 \sqlexec{
-    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, ghp.head_date, ghp.auto_pull, ghp.id
+    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, date(ghp.head_date), ghp.auto_pull, ghp.id
       from projects p, repositories r, repo_branches rb, github_pulls ghp, github_users u
      where ghp.r_b_id = rb.id and rb.repository_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.pull_approver is not null and r.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
@@ -258,18 +258,18 @@
 <th></th>
 <th>GitHub page</th>
 <th>Test History</th>
-<th>Auto-Merge</th>
+<th>Merge</th>
 <th>Last Committed</th>
 \buildHeader{F 32}{FreeBSD_32}{FreeBSD with a 32 bit compiler binary and 32 bit output}
 \buildHeader{F 64}{FreeBSD_64}{FreeBSD with a 64 bit compiler binary and 64 bit output}
 \buildHeader{L 32}{Linux_32}{Linux with a 32 bit compiler binary and 32 bit output}
 \buildHeader{L 64}{Linux_64_64}{Linux with a 64 bit compiler binary and 64 bit output}
-\buildHeader{L 32/64}{Linux_32_64}{Linux with a 32 bit compiler binary and 64 bit output}
-\buildHeader{L 64/32}{Linux_64_32}{Linux with a 64 bit compiler binary and 32 bit output}
+\buildHeader{L 3/6}{Linux_32_64}{Linux with a 32 bit compiler binary and 64 bit output}
+\buildHeader{L 6/3}{Linux_64_32}{Linux with a 64 bit compiler binary and 32 bit output}
 \buildHeader{O 32}{Darwin_32}{OS/X with a 32 bit compiler binary and 32 bit output}
 \buildHeader{O 64}{Darwin_64_64}{OS/X with a 64 bit compiler binary and 64 bit output}
-#\buildHeader{O 32/64}{Darwin_32_64}{OSX with a 32 bit compiler binary and 64 bit output}
-#\buildHeader{O 64/32}{Darwin_64_32}{OSX with a 64 bit compiler binary and 32 bit output}
+#\buildHeader{O 3/6}{Darwin_32_64}{OSX with a 32 bit compiler binary and 64 bit output}
+#\buildHeader{O 6/3}{Darwin_64_32}{OSX with a 64 bit compiler binary and 32 bit output}
 \buildHeader{W 32}{Win_32}{Windows with a 32 bit compiler binary and 32 bit output}
 \buildHeader{W 64}{Win_64}{Windows with a 32 bit compiler binary and 64 bit output}
 </tr>

@@ -220,7 +220,7 @@
 }
     </div>
 }{
-    <div class="chart_empty" id="\1_empty">Sorry, only \get{i}\ data point, need at least 2</div>
+    <div class="chart_empty" id="\1_empty">Sorry, only \get{i}\ data point\if{\eq{\get{i}}{1}}{}{s}, need at least 2</div>
 }
 </div>
 

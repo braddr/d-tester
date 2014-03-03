@@ -69,6 +69,22 @@
     }
     </table>
 
+    <table class="whiterounded" id="buildhosts">
+        <tr><th>Build Host</th></tr>
+
+        \sqlexec{
+            select bh.id, bh.name
+              from build_host_projects bhp,
+                   build_hosts bh
+             where bhp.project_id = \get{projectid} and
+                   bhp.host_id = bh.id and
+                   bh.enabled = true
+        }
+        \while{\sqlrow{bh_id}{bh_name}}{
+            <tr><td><a href="hosts/details.ghtml?hostid=\get{bh_id}">\get{bh_name}</a></td></tr>
+        }
+    </table>
+
 }{
     Hrm.. unknown project id: \get{projectid}
 }

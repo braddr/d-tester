@@ -38,6 +38,27 @@
 }
 </table>
 
+\sqlexec{
+    select bhp.id, p.id, p.menu_label
+      from build_host_projects bhp,
+           projects p
+     where bhp.project_id = p.id and
+           bhp.host_id = \get{hostid} and
+           p.enabled = true
+  order by p.menu_label
+}
+
+<table class="whiterounded" id="hostprojects">
+
+<tr>
+    <th>Project</th>
+</tr>
+\while{\sqlrow{bhp_id}{p_id}{p_name}}{
+    <tr><td><a href="../project-info.ghtml?projectid=\get{p_id}">\get{p_name}</a></td></tr>
+}
+
+</table>
+
 # \1 == rc
 \set{processRC}{\quote{
     \if{\eq{\1}{0}}{

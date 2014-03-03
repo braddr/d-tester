@@ -182,7 +182,7 @@
     # close tag for body
     </td></tr>
 
-    <tr colspan="2"><td class="page_menufoot"><div class="copy">&copy; 2013 PureMagic Software</div></td></tr>
+    <tr><td class="page_menufoot" colspan="2"><div class="copy">&copy; 2013 PureMagic Software</div></td></tr>
 
     #<div>
     #<a href="http://d.puremagic.com/test-results/greasemonkey.ghtml">GreaseMonkey scripts</a><br>

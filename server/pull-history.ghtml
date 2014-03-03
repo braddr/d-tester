@@ -68,21 +68,20 @@
     <th>Result Code</th>
     <th>Deleted</th>
     <th>Tested sha</th>
-    <th>Reporter IP</th>
-    <th>Reporter Name</th>
+    <th>Build Host</th>
   </tr>
 
 \set{prevsha}{}
 
 \sqlexec{
-    select ptr.id, bh.ipaddr, bh.name, ptr.platform, ptr.sha, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
+    select ptr.id, bh.id, bh.ipaddr, bh.name, ptr.platform, ptr.sha, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
       from pull_test_runs ptr, build_hosts bh
      where ptr.g_p_id = \get{ghp_id} and
            ptr.host_id = bh.id
      order by start_time desc
      limit 100
 }
-\while{\sqlrow{run_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}{
+\while{\sqlrow{run_id}{bh_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}{
 
   \processRC{\get{rc}}
   <tr class="pulltestrun \get{class} \if{\not{\eq{\get{prevsha}}{\get{sha}}}}{\set{prevsha}{\get{sha}}newsha}">
@@ -93,8 +92,7 @@
     <td class="result">\get{text}</td>
     <td class="deleted">\get{deleted}</td>
     <td class="sha">\get{sha}</td>
-    <td class="ip">\get{bh_ipaddr}</td>
-    <td class="ip">\get{bh_name}</td>
+    <td class="buildhost"><a href="hosts/details.ghtml?hostid=\get{bh_id}">\get{bh_name}</a></td>
   </tr>
 
 }

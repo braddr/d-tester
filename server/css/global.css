@@ -113,8 +113,16 @@ div.page_menu_selected {
     -moz-border-radius: 12px;
 }
 
-div.failed_master_build {
-    border: 1px solid red;
+div.failed_master_build.page_menu_selected {
+    background: #ff8888;
+    background: -moz-linear-gradient(left, #ff8888, #c8c8c8 50%);
+    background: -webkit-linear-gradient(left, #ff8888, #c8c8c8 50%);
+}
+
+div.failed_master_build.page_menu_unselected {
+    background: #ffc0c0;
+    background: -moz-linear-gradient(left, #ffc0c0, #c8c8c8 50%);
+    background: -webkit-linear-gradient(left, #ffc0c0, #c8c8c8 50%);
 }
 
 div.page_submenu {

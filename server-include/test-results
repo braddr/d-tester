@@ -104,7 +104,7 @@
             \not{\eq{\get{beta_only}}{1}}
             \eq{\get{SERVERNAME}}{d-beta.puremagic.com}
         }{
-            \drawOneMenu{?projectid=\get{pid}}{\get{label}\if{\not{\eq{\get{pull_counts}}{0}}}{\ &diams;}}{\isMenuSelected{\1}{\get{pid}}}{\if{\eq{\get{max_rc}}{0}}{}{failed_master_build}}{\get{pull_counts}\ open pulls}
+            \drawOneMenu{?projectid=\get{pid}}{\get{label}\if{\not{\eq{\get{pull_counts}}{0}}}{\ &diams;}}{\isMenuSelected{\1}{\get{pid}}}{\if{\eq{\get{max_rc}}{0}}{}{failed_master_build}}{\if{\eq{\get{max_rc}}{0}}{}{failed master build - }\get{pull_counts}\ open pulls}
 
             \if{
                 \eq{\get{projectid}}{\get{pid}}

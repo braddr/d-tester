@@ -41,30 +41,19 @@
 
 # \1 == rc
 # \2 == start_time
-\set{processRC}{\quote{
-    \if{\eq{\1}{0}}{
-        \set{class}{pass}
-        \set{text}{P}
+\set{processRCC}{\quote{
+    \if{\not{\2}}{
+        \set{class}{pending}
+        \set{text}{&nbsp;}
     }{
-        \if{\eq{\1}{}}{
-            \if{\2}{
-                \set{class}{running}
-                \set{text}{R}
-            }{
-                \set{class}{pending}
-                \set{text}{&nbsp;}
-            }
-        }{
-            \set{class}{fail}
-            \set{text}{F}
-        }
+        \processRC{\1}
     }
 }}
 
 # \1 == testtype
 # \2 == style
 \set{drawOneTest}{\quote{
-    \processRC{\get{test_\1_rc}}{\get{test_\1_st}}
+    \processRCC{\get{test_\1_rc}}{\get{test_\1_st}}
     <td class="result \get{class} \2\if{\eq{\get{logid}}{\1}}{\ selected}\if{\eq{\1}{6}}{\ bottomright}" title="\get{test_\1_dur}">
         \href{\if{\eq{\1}{1}}{checkout}{\get{text}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\1}
     </td>

@@ -67,22 +67,6 @@
     \set{test_\get{t_type}_dur}{\get{t_dur}}
 }
 
-# \1 == rc
-\set{processRC}{\quote{
-    \if{\eq{\1}{0}}{
-        \set{class}{pass}
-        \set{text}{P}
-    }{
-        \if{\eq{\1}{}}{
-            \set{class}{running}
-            \set{text}{R}
-        }{
-            \set{class}{fail}
-            \set{text}{F}
-        }
-    }
-}}
-
 # \1 == test type
 \set{showrc}{\quote{
   \if{\not{\get{logid}}}{\if{\eq{\get{test_\1_rc}}{1}}{\set{logid}{\1}}}

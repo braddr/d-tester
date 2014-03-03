@@ -63,35 +63,20 @@
 
 # \1 == id of test to check
 \set{resultClass}{\quote{
-    \if{\eq{\get{result_rc_\1}}{0}}{
-        {pass}
-    }{
-        \if{\eq{\get{result_rc_\1}}{}}{
-            \if{\eq{\get{result_st_\1}}{}}{
-                {unknown}
-            }{
-                {running}
-            }
-        }{
-            {fail}
-        }
-    }
+    \processRC{\get{result_rc_\1}}
+    {\get{class}}
 }}
 
 # \1 == id of test to check
 # \2 == execution time
 \set{resultText}{\quote{
-    \if{\eq{\get{result_rc_\1}}{0}}{
+    \if{\not{\eq{\get{result_rc_\1}}{}}}{
         {\2}
     }{
-        \if{\eq{\get{result_rc_\1}}{}}{
-            \if{\eq{\get{result_st_\1}}{}}{
-                {&nbsp;}
-            }{
-                {\2 +}
-            }
+        \if{\eq{\get{result_st_\1}}{}}{
+            {&nbsp;}
         }{
-            {\2}
+            {\2 +}
         }
     }
 }}

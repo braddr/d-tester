@@ -7,22 +7,6 @@
     <link rel="stylesheet" href="/test-results/css/pulls.css" type="text/css">
 }
 
-# \1 == rc
-\set{processRC}{\quote{
-    \if{\eq{\1}{0}}{
-        \set{class}{pass}
-        \set{text}{P}
-    }{
-        \if{\eq{\1}{}}{
-            \set{class}{running}
-            \set{text}{R}
-        }{
-            \set{class}{fail}
-            \set{text}{F}
-        }
-    }
-}}
-
 # \1 == text
 # \2 == platform
 # \3 == title
@@ -111,12 +95,12 @@
 \set{drawcol}{\quote{
   \if{\get{\1_\2_\3_rc}}{
     \processRC{\get{\1_\2_\3_rc}}
-    <td class="pullcell \get{class}\if{\get{\1_\2_\3_deleted}}{\ old}"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}">\get{text}\if{\get{\1_\2_\3_deleted}}{\ (old)}</a></td>
+    <td class="pullcell \get{class}\if{\get{\1_\2_\3_deleted}}{\ old}" title="\get{class}" ><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}">\get{text}</a></td>
   }{
     \if{\get{\1_\2_\3_id}}{
-      <td class="pullcell running"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}">R</a></td>
+      <td class="pullcell running" title="running"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}">R</a></td>
     }{
-      <td class="pullcell unknown">&nbsp;</td>
+      <td class="pullcell unknown" title="unknown">&nbsp;</td>
     }
   }
 }}
@@ -169,14 +153,8 @@
     \if{
       \not{\get{\1_\2_\3_deleted}}
     }{
-      \if{
-        \eq{\get{\1_\2_\3_rc}}{0}
-        \eq{\get{\1_\2_\3_rc}}{}
-      }{
-        {passed}
-      }{
-        {failed}
-      }
+      \processRC{\get{\1_\2_\3_rc}}
+      {\get{class}}
     }
   }
 }}
@@ -198,22 +176,26 @@
   #\set{ss11}{\getastate{\1}{\2}{Darwin_32_64}}
   #\set{ss12}{\getastate{\1}{\2}{Darwin_64_32}}
   \set{i}{1}
+  \set{numpasses}{0}
   \while{\op{11}{>}{\get{i}}}{
     \if{
-      \eq{\get{ss\i}}{failed}
+      \eq{\get{ss\i}}{fail}
     }{
       \set{i}{10}
       \set{result}{hasfailures}
+    }{\if{
+      \eq{\get{ss\i}}{pass}
     }{
-      \if{
-        \eq{\get{ss\i}}{passed}
-      }{
-        \set{result}{haspasses}
-      }
-    }
+      \set{result}{haspasses}
+      \inc{numpasses}
+    }{\if{
+      \eq{\get{ss\i}}{running}
+    }{
+      \set{result}{haspasses}
+    }}}
     \inc{i}
   }
-  {\result}
+  \if{\eq{\get{numpasses}}{10}}{passed}{\result}
 }}
 
 \set{num_repos}{0}
@@ -227,9 +209,11 @@
   \set{num_\get{r_\get{num_repos}_name}_old}{0}
   \set{num_\get{r_\get{num_repos}_name}_hasfailures}{0}
   \set{num_\get{r_\get{num_repos}_name}_haspasses}{0}
+  \set{num_\get{r_\get{num_repos}_name}_passed}{0}
   \set{num_\get{r_\get{num_repos}_name}_autopull_old}{0}
   \set{num_\get{r_\get{num_repos}_name}_autopull_hasfailures}{0}
   \set{num_\get{r_\get{num_repos}_name}_autopull_haspasses}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_passed}{0}
   \inc{num_repos}
 }
 
@@ -249,7 +233,7 @@
     \inc{num_\get{name}}
 }
 
-# \1 == haspasses | hasfailures | old
+# \1 == passed | haspasses | hasfailures | old
 \set{sum_repos}{\quote{
   \set{tot}{0}
   \set{i}{0}
@@ -260,9 +244,11 @@
   \get{tot}
 }}
 
+\set{total_passed}{\sum_repos{passed}}
 \set{total_haspasses}{\sum_repos{haspasses}}
 \set{total_hasfailures}{\sum_repos{hasfailures}}
 \set{total_old}{\sum_repos{old}}
+\set{total_autopull_passed}{\sum_repos{autopull_passed}}
 \set{total_autopull_haspasses}{\sum_repos{autopull_haspasses}}
 \set{total_autopull_hasfailures}{\sum_repos{autopull_hasfailures}}
 \set{total_autopull_old}{\sum_repos{autopull_old}}
@@ -294,21 +280,25 @@
 \set{drawOneSectionRepoBlock}{\quote{
     \set{i}{0}
     \while{ \op{\get{num_\1_\2}}{>}{\get{i}} }{
-        <tr class="pullrow">
-            \if{\firstsecrow}{
-                \set{firstsecrow}{}
+        \if{\firstsecrow}{
+            \set{firstsecrow}{}
+            <tr class="pullrow">
                 <td class="sec" rowspan="\if{\op{\get{total_\2}}{<}{5}}{\op{\get{total_\2}}{+}{1}}{\get{total_\2}}"><div class="rotate">\3</div></td>
-            }
-            \get{\1_\2_\get{i}}
-        </tr>
+                \get{\1_\2_\get{i}}
+            </tr>
+        }{
+            <tr class="pullrow">
+                \get{\1_\2_\get{i}}
+            </tr>
+        }
 
         \inc{i}
     }
     \set{totalrows}{\op{\get{totalrows}}{+}{\get{i}}}
 }}
 
-# \1 == section (haspasses, hasfailures, old)
-# \2 == label (Has Passes, Has Failures, Old)
+# \1 == section (passed, haspasses, hasfailures, old)
+# \2 == label (Passed, Has Passes, Has Failures, Old)
 \set{drawOneSection}{\quote{
   \if{\op{\get{total_\1}}{>}{0}}{
     \set{totalrows}{0}
@@ -324,23 +314,28 @@
           <td colspan="14"></td>
       </tr>
     }{
-      \if{\op{\get{totalrows}}{<}{5}}{<tr><td class="spacer" style="height:3em;" colspan="14">&nbsp;</td></tr>}
+      \if{\op{5}{>}{\get{totalrows}}}{
+        <tr class="filler"><td class="filler" colspan="14" style="height: \op{96}{-}{\op{22}{*}{\get{total_\1}}}px"></td></tr>
+      }
     }
   }
 }}
 
 \if{
+  \op{\get{total_autopull_passed}}{>}{0}
   \op{\get{total_autopull_haspasses}}{>}{0}
   \op{\get{total_autopull_hasfailures}}{>}{0}
   \op{\get{total_autopull_old}}{>}{0}
 }{
   <tr><td colspan="15">Pulls to be auto-merged when successful</td></tr>
+  \drawOneSection{autopull_passed}{&nbsp;&nbsp;&nbsp;Passed}
   \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
   \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
   \drawOneSection{autopull_old}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}
   <tr><td colspan="15">Pulls waiting for review and/or manual pull</td></tr>
 }
 
+\drawOneSection{passed}{&nbsp;&nbsp;&nbsp;Passed}
 \drawOneSection{haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
 \drawOneSection{hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
 \drawOneSection{old}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}

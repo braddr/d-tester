@@ -72,22 +72,6 @@
     <th>Reporter Name</th>
   </tr>
 
-# \1 == rc
-\set{processRC}{\quote{
-    \if{\eq{\1}{0}}{
-        \set{class}{pass}
-        \set{text}{P}
-    }{
-        \if{\eq{\1}{}}{
-            \set{class}{running}
-            \set{text}{R}
-        }{
-            \set{class}{fail}
-            \set{text}{F}
-        }
-    }
-}}
-
 \set{prevsha}{}
 
 \sqlexec{

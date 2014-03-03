@@ -194,3 +194,19 @@
     \htmlfoot
 }}
 
+# \1 == rc
+\set{processRC}{\quote{
+    \if{\eq{\1}{0}}{
+        \set{class}{pass}
+        \set{text}{P}
+    }{\if{\eq{\1}{1}}{
+        \set{class}{fail}
+        \set{text}{F}
+    }{\if{\eq{\1}{2}}{
+        \set{class}{abort}
+        \set{text}{A}
+    }{
+        \set{class}{running}
+        \set{text}{R}
+    }}}
+}}

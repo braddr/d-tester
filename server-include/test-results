@@ -16,13 +16,6 @@
     }
 }}
 
-\set{shouldRun}{\quote{
-    \set{needbuild}{true}
-    \sqlexec{select id from test_runs where platform = "\sqlquote{\1}" and deleted=false and platform = \get{platformid}}
-    \while{\sqlrow{id}}{\set{needbuild}{}}
-    \get{needbuild}
-}}
-
 # \1 == parameter name
 \set{validateURLParameter}{\quote{
     \if{\not{\get{\1}}}{

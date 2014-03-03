@@ -61,7 +61,7 @@
 
 # render the html for one result set
 \set{showResultSet}{\quote{
-    <table class="summary">
+    <table class="whiterounded summary">
         <tr class="time topleft topright">
             <td colspan="5" class="testdatatime">\get{start_time} (\get{duration})</td>
         </tr>

@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/test-results/css/hosts.css" type="text/css">
 }
 
-<table class="hosts">
+<table class="whiterounded">
 
 <tr>
     <th>Host</th>
@@ -54,7 +54,7 @@
     }
 }}
 
-<table class="hosts" id="branchruns">
+<table class="whiterounded" id="branchruns">
   <tr>
     <th>Run ID</th>
     <th>Project</th>
@@ -89,7 +89,7 @@
 
 </table>
 
-<table class="hosts" id="pullruns">
+<table class="whiterounded" id="pullruns">
   <tr>
     <th>Run ID</th>
     <th>Project</th>

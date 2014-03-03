@@ -41,7 +41,7 @@
     <div class="notcollab">Sorry, it looks like you don't have permission to this project at github.</div>
 }
 
-<table class="pulldata" border=1>
+<table class="whiterounded" id="pulldata">
   <tr>
     <th>ID</th>       <td>\get{ghp_id} - (\if{\eq{\get{ghp_open}}{1}}{open}{closed})</td>
   </tr><tr>
@@ -59,7 +59,7 @@
   </tr>
 </table>
 
-<table class="pullruns">
+<table class="whiterounded" id="pullruns">
   <tr>
     <th>Run ID</th>
     <th>Platform</th>

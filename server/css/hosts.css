@@ -1,30 +1,4 @@
-table.hosts {
-    background: #F0F0F0;
-    border: 1px black solid;
-    border-radius: 5px 5px 5px 5px;
-    border-spacing: 0px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-table.hosts th {
-    border-bottom: 1px solid black;
-    vertical-align: top;
-    padding-left:   15px;
-    padding-right:  15px;
-    padding-top:    2px;
-    padding-bottom: 2px;
-}
-
-table.hosts td {
-    vertical-align: top;
-    padding-left:   15px;
-    padding-right:  15px;
-    padding-top:    2px;
-    padding-bottom: 2px;
-}
-
-table.hosts tr:nth-child(even) {
+table.whiterounded tr:nth-child(odd) {
     background: #fff;
 }
 
@@ -32,30 +6,16 @@ td.late {
     font-weight: bold;
 }
 
-table.github_state {
-    background: #F0F0F0;
-    border: 1px black solid;
-    border-radius: 5px 5px 5px 5px;
-    border-spacing: 0px;
+table#github_state {
     margin-top: 20px;
-    margin-left: auto;
-    margin-right: auto;
 }
 
-table.github_state th {
-    vertical-align: top;
-    padding-left:   15px;
-    padding-right:  15px;
-    padding-top:    2px;
-    padding-bottom: 2px;
+table#github_state th {
+    border-bottom: none;
 }
 
-table.github_state td {
-    vertical-align: top;
-    padding-left:   15px;
-    padding-right:  15px;
-    padding-top:    2px;
-    padding-bottom: 2px;
+table#hostprojects {
+    margin-top: 30px;
 }
 
 table#branchruns {

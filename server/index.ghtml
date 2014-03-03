@@ -81,7 +81,7 @@
 \set{showResultSet}{\quote{
     \if{\eq{\get{projectname}}{D-Programming-Language}}{
         \if{\get{result_start}}{
-            <table class="summary">
+            <table class="summary whiterounded">
                 <tr class="time">
                     <td colspan="3" class="time topleft">\get{result_start} (\get{result_duration})</td>
                     \historyBox{1}{\1}{topright}
@@ -112,7 +112,7 @@
                 </tr>
             </table>
         }{
-            <table class="summary pending">
+            <table class="summary whiterounded pending">
                 <tr class="time">
                     <td colspan="3" class="time topleft">X</td>
                     \historyBox{0}{\1}{topright}
@@ -145,7 +145,7 @@
         }
     }{ \if{\eq{\get{projectname}}{D-Programming-GDC}}{
         \if{\get{result_start}}{
-            <table class="summary">
+            <table class="summary whiterounded">
                 <tr class="time">
                     <td colspan="3" class="time topleft">\get{result_start} (\get{result_duration})</td>
                     \historyBox{1}{\1}{topright}
@@ -164,7 +164,7 @@
                 </tr>
             </table>
         }{
-            <table class="summary pending">
+            <table class="summary whiterounded pending">
                 <tr class="time">
                     <td colspan="3" class="time topleft">X</td>
                     \historyBox{0}{\1}{topright}

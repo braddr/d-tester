@@ -29,27 +29,27 @@
 }
 \while{\sqlrow{gu_username}{gu_id}{gp_id}{project_name}{r_name}{gp_pullid}}{
   \if{\firstrow}{
-    <table border=1 class="authtable">
+    <table class="whiterounded" id="authtable">
 
-    <tr class="authheaders">
+    <tr><th colspan=4>Not yet authorized users</th></tr>
+    <tr>
     <th>Username</th>
-    #<th>Userid</th>
     <th>GitHub page</th>
-    \if{\and{\not{\eq{\get{pulls_are_tested}}{}}}{\get{loggedin}}}{
-      <th>Approve testing for this user</th>
-    }
+    <th>Approve testing for this user</th>
     </tr>
-    <tr><td colspan=4>Not yet authorized users</td></tr>
     \set{firstrow}{}
   }
  
   <tr>
     <td>\get{gu_username}</td>
-    #<td>\get{gu_id}</td>
     <td><a href="https://github.com/\get{project_name}/\get{r_name}/pull/\get{gp_pullid}">\get{r_name}/\get{gp_pullid}</a></td>
-    \if{\and{\not{\eq{\get{pulls_are_tested}}{1}}}{\get{loggedin}}}{
-        <td><a href="addv2/approve_pull_requester?projectid=\get{projectid}&amp;userid=\get{gu_id}&amp;csrf=\get{csrf}">Approve</a></td>
-    }
+    <td>
+        \if{\and{\not{\eq{\get{pulls_are_tested}}{1}}}{\get{loggedin}}}{
+            <a href="addv2/approve_pull_requester?projectid=\get{projectid}&amp;userid=\get{gu_id}&amp;csrf=\get{csrf}">Approve</a>
+        }{
+            Must be logged in
+        }
+    </td>
   </tr> 
 }
 \if{\not{\firstrow}}{
@@ -128,7 +128,7 @@
     <td class="pullcell header"><a href="https://github.com/\8/\1/pull/\3">\1/\3</a></td>
     <td class="pullcell header"><a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3" title="\4/\5">\4/\shorten{\5}</a></td>
     <td>\if{\get{loggedin}}{<a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3&amp;ghp_id=\10&amp;from=pulls&amp;csrf=\get{csrf}">\if{\9}{Yes}{No}</a>}{\if{\9}{Yes}{No}}</td>
-    <td class="pullcell header">\7</td>
+    <td class="pullcell lastcommitted">\7</td>
     \drawcol{\1}{\3}{FreeBSD_32}
     \drawcol{\1}{\3}{FreeBSD_64}
     \drawcol{\1}{\3}{Linux_32}
@@ -253,9 +253,9 @@
 \set{total_autopull_hasfailures}{\sum_repos{autopull_hasfailures}}
 \set{total_autopull_old}{\sum_repos{autopull_old}}
 
-<table border=1 class="pulltable">
+<table class="whiterounded" id="pulltable">
 <tr class="pullheaders">
-<td class=""></td>
+<th></th>
 <th>GitHub page</th>
 <th>Test History</th>
 <th>Auto-Merge</th>
@@ -282,8 +282,9 @@
     \while{ \op{\get{num_\1_\2}}{>}{\get{i}} }{
         \if{\firstsecrow}{
             \set{firstsecrow}{}
-            <tr class="pullrow">
-                <td class="sec" rowspan="\if{\op{\get{total_\2}}{<}{5}}{\op{\get{total_\2}}{+}{1}}{\get{total_\2}}"><div class="rotate">\3</div></td>
+            <tr class="secspacer2"><td colspan="15"></td></tr>
+            <tr class="pullrow seclabel">
+                <td class="seclabel" rowspan="\if{\op{\get{total_\2}}{<}{5}}{\op{\get{total_\2}}{+}{1}}{\get{total_\2}}"><div class="rotate">\3</div></td>
                 \get{\1_\2_\get{i}}
             </tr>
         }{
@@ -309,14 +310,17 @@
       \inc{ridx}
     }
     \if{\get{firstsecrow}}{
-      <tr class="pullrow">
-          <td class="sec"><div class="rotate">\2</div></td>
+      <tr class="pullrow seclabel">
+          <td class="seclabel"><div class="rotate">\2</div></td>
           <td colspan="14"></td>
       </tr>
     }{
       \if{\op{5}{>}{\get{totalrows}}}{
         <tr class="filler"><td class="filler" colspan="14" style="height: \op{96}{-}{\op{22}{*}{\get{total_\1}}}px"></td></tr>
       }
+    }
+    \if{\op{\get{ridx}}{>}{0}}{
+        <tr class="secspacer"><td colspan="15"></td></tr>
     }
   }
 }}
@@ -327,19 +331,30 @@
   \op{\get{total_autopull_hasfailures}}{>}{0}
   \op{\get{total_autopull_old}}{>}{0}
 }{
-  <tr><td colspan="15">Pulls to be auto-merged when successful</td></tr>
-  \drawOneSection{autopull_passed}{&nbsp;&nbsp;&nbsp;Passed}
-  \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
-  \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
-  \drawOneSection{autopull_old}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}
-  <tr><td colspan="15">Pulls waiting for review and/or manual pull</td></tr>
+  <tr id="pullsheader"><th></th><th colspan="15">Pulls to be auto-merged when successful</th></tr>
+  \drawOneSection{autopull_passed}{&nbsp;&nbsp;Passed}
+  \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;Has&nbsp;Passes}
+  \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;Has&nbsp;Failures}
+  \drawOneSection{autopull_old}{&nbsp;&nbsp;Old&nbsp;Results}
 }
 
-\drawOneSection{passed}{&nbsp;&nbsp;&nbsp;Passed}
-\drawOneSection{haspasses}{&nbsp;&nbsp;&nbsp;Has&nbsp;Passes}
-\drawOneSection{hasfailures}{&nbsp;&nbsp;&nbsp;Has&nbsp;Failures}
-\drawOneSection{old}{&nbsp;&nbsp;&nbsp;Old&nbsp;Results}
+<tr id="pullsheader"><th></th><th colspan="15">Pulls waiting for review and/or manual pull</th></tr>
+\if{
+  \op{\get{total_passed}}{>}{0}
+  \op{\get{total_haspasses}}{>}{0}
+  \op{\get{total_hasfailures}}{>}{0}
+  \op{\get{total_old}}{>}{0}
+}{
+  \drawOneSection{passed}{&nbsp;&nbsp;Passed}
+  \drawOneSection{haspasses}{&nbsp;&nbsp;Has&nbsp;Passes}
+  \drawOneSection{hasfailures}{&nbsp;&nbsp;Has&nbsp;Failures}
+  \drawOneSection{old}{&nbsp;&nbsp;Old&nbsp;Results}
+}{
+  <tr><td class="nopulls" colspan="15">No pulls</td></tr>
+}
 
+# allow enough room for the rounded corners to render
+<tr><td colspan="15"></td></tr>
 </table>
 
 \pageFooter

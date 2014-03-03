@@ -180,7 +180,7 @@
     }
 }}
 
-<table class="history runs first">
+<table class="whiterounded" id="history">
 <tr>
     <th>Time (duration)</th>
     <th>Checkout</th>

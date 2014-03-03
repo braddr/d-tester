@@ -14,7 +14,7 @@
 }
 \if{\sqlrow{pid}{plabel}{pname}{purl}{ptestpulls}{pbetaonly}{pallowautomerge}}{
 
-    <table class="projectinfo">
+    <table class="whiterounded" id="projectinfo">
         <tr>
             <th>id</th><td>\get{pid}</td>
         </tr><tr>
@@ -35,7 +35,7 @@
             }
     </table>
 
-    <table class="repoinfo">
+    <table class="whiterounded" id="repoinfo">
         <tr>
             <th>Repository</th>
             <th>Branch</th>

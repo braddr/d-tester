@@ -29,8 +29,7 @@
     unknown runid
 }{
 
-<a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\get{repo_id}&amp;pullid=\get{pull_id}">Pull Test History</a>
-<table class="pullmeta" border=1>
+<table class="whiterounded" id="pullmeta">
   <tr>
     <th>Run ID</th><td>\get{id}</td>
   </tr><tr>
@@ -51,6 +50,8 @@
     <th>Result Code</th><td>\get{rc}</td>
   </tr><tr>
     <th>Deleted</th><td>\get{deleted}\if{\and{\get{loggedin}}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="addv2/deprecate_run?projectid=\get{projectid}&amp;runid=\get{runid}&amp;runtype=pull&amp;csrf=\get{csrf}">deprecate</a>}</td>
+  </tr><tr>
+      <th>Past Results</th><td><a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\get{repo_id}&amp;pullid=\get{pull_id}">Pull Test History</a></td>
   </tr>
 </table>
 
@@ -83,7 +84,7 @@
   }
 }}
 
-<table class="onepull" border=1>
+<table class="whiterounded" id="buildsteps">
     <tr class="testrow header">
         <th>checkout</th>
         <th>merge</th>
@@ -116,8 +117,10 @@
 
 \if{\and{\get{logid}}{\op{\get{logid}}{V}}}{
 
-Log:<br>
+<div class="logheader">Log:</div>
+<div class="logbody">
 <iframe class="logframe" id="logframe" src="pull-logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\get{logid}"></iframe>
+</div>
 
 }
 

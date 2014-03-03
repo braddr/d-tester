@@ -1,4 +1,12 @@
-table.pullmeta {
+table#pullmeta {
+}
+
+table#pullmeta th {
+    border-right: 1px solid black;
+}
+
+table#pullmeta tr:last-child th {
+    border-bottom: none;
 }
 
 tr.testrow td {
@@ -11,6 +19,7 @@ tr.testrow td.header {
 
 tr.testrow td.logshown {
     border: 2px solid black;
+    border-radius: 5px;
 }
 
 tr.pass, td.pass {
@@ -20,7 +29,17 @@ tr.fail, td.fail {
     background: #F08080;
 }
 
-table.onepull {
+table#buildsteps {
+    margin-top: 3em;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+div.logheader {
+    margin-top: 15px;
+    border-bottom: 1px solid black;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
 }
 
 iframe.logframe {
@@ -30,20 +49,63 @@ iframe.logframe {
     border: 0;
 }
 
-table.authtable {
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 4em;
+table#authtable {
+    margin-bottom: 3em;
 }
 
-table.pulltable {
-    margin-left: auto;
-    margin-right: auto;
+table#authtable tr:nth-child(even) {
+    background: #fff;
 }
 
-table.pulltable td.sec {
-   height: 7em;
-   vertical-align: top;
+table#pulltable {
+}
+
+table#pulltable tr:nth-child(even) {
+    background: #fff;
+}
+
+table#pulltable th {
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+table#pulltable td {
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+table#pulltable td.lastcommitted {
+    padding-right: 5px;
+}
+
+table#pulltable td.seclabel {
+    height: 6em;
+    vertical-align: top;
+    background: #f0f0f0;
+}
+
+table#pulltable tr.secspacer td {
+    background: #f0f0f0;
+    padding-top: 10px;
+    border-bottom: 1px solid black;
+}
+
+table#pulltable tr.secspacer2 td {
+    padding-bottom: 10px;
+    background: #f0f0f0;
+}
+
+table#pulltable td.filler {
+    background: #f0f0f0;
+}
+
+table#pulltable td.nopulls {
+    text-align: center;
+    font-weight: bold;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 tr.pullrow td {
@@ -58,7 +120,7 @@ td.old {
     opacity: 0.4;
 }
 
-table.pulltable div.rotate {
+table#pulltable div.rotate {
     width: 2em;
     transform:rotate(90deg);
     -ms-transform:rotate(90deg);     /* IE 9 */
@@ -67,26 +129,48 @@ table.pulltable div.rotate {
     -o-transform:rotate(90deg);      /* Opera */
 } 
 
-table.pullruns {
+table#pulltable tr#pullsheader th {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 5px;
+    text-align: left;
+    background: #f0f0f0;
+}
+
+table#pulldata th {
+    border-right: 1px solid black;
+}
+
+table#pulldata tr:last-child th {
+    border-bottom: none;
+}
+
+table#pullruns {
     margin-top: 10px;
     border: 1px solid black;
     border-spacing: 0px;
 }
 
-table.pullruns td {
+table#pullruns th {
+    padding-left: 5px;
+    padding-right: 5px;
+    border-bottom: none;
+}
+
+table#pullruns td {
     padding-left: 5px;
     padding-right: 5px;
 }
 
-table.pullruns td.result {
+table#pullruns td.result {
     text-align: center;
 }
 
-table.pullruns td.deleted {
+table#pullruns td.deleted {
     text-align: center;
 }
 
-table.pullruns tr.newsha > td {
+table#pullruns tr.newsha > td {
     padding-top: 10px;
     border-top: 1px solid black;
 }

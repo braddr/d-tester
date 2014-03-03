@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="/test-results/css/hosts.css" type="text/css">
 }
 
-<table class="hosts">
+<table class="whiterounded">
 
 <tr>
     <th>Host</th>
@@ -107,8 +107,11 @@
 }
 \ignore{\sqlrow{githublastupdate}{delta}{overdue}}
 
-<table class="github_state">
-    <th class="title">Last pull update:</th><td class="date\if{\eq{\get{overdue}}{1}}{\ late}">\get{githublastupdate}\ - \get{delta}</td>
+<table class="whiterounded" id="github_state">
+    <tr>
+        <th class="title">Last pull update:</th>
+        <td class="date\if{\eq{\get{overdue}}{1}}{\ late}">\get{githublastupdate}\ - \get{delta}</td>
+    </tr>
 </table>
 
 \pageFooter

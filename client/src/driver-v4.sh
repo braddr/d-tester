@@ -175,6 +175,9 @@ function runtests
                 logname=${reponame}-merge.log
                 steps=(${steps[@]:2}) # trim extra fields
                 ;;
+            15)
+                src/do_daily_maintenance.sh
+                ;;
         esac
         steps=(${steps[@]:2})
         uploadlog $testid $rundir $logname $runmode

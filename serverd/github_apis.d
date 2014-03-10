@@ -107,7 +107,7 @@ bool setSHAStatus(string owner, string repo, string sha, string desc, string sta
 
     if (!runCurlPOST(curl, responsepayload, responseheaders, url, requestpayload, null, userid, passwd))
     {
-        writelog("  failed to update github");
+        writelog("  failed to update github: %s", responsepayload);
         return false;
     }
 

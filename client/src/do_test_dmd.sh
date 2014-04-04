@@ -41,10 +41,12 @@ case "$2" in
         ;;
     Win_32)
         makecmd=/usr/bin/make
+        EXE=.exe
         ;;
     Win_64)
         makecmd=/usr/bin/make
         MODEL=64
+        EXE=.exe
         ;;
     *)
         echo "unknown os: $2"
@@ -57,7 +59,8 @@ fi
 
 cd $1/dmd/test
 
-$makecmd MODEL=$MODEL test_results/d_do_test >> ../../dmd-unittest.log 2>&1
+# parallelism rules are either too weak or make is broken and occasionally the directory isn't properly created first
+$makecmd MODEL=$MODEL RESULTS_DIR=generated test_results/d_do_test$EXE >> ../../dmd-unittest.log 2>&1
 if [ ! -z "$ARGS" ]; then
     $makecmd MODEL=$MODEL $EXTRA_ARGS RESULTS_DIR=generated ARGS="$ARGS" >> ../../dmd-unittest.log 2>&1
 else

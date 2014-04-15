@@ -7,7 +7,7 @@ create table if not exists audit_entries
     description       varchar(256) not null,
 
     primary key(id),
-    key (change_date)
+    key(change_date)
 );
 
 create table if not exists authorized_addresses
@@ -38,6 +38,8 @@ create table if not exists github_pulls
     r_b_id            int          not null,
     pull_id           int          not null,
     user_id           int          not null,
+    create_date       datetime,
+    close_date        datetime,
     updated_at        datetime     not null,
     open              bool         not null,
     base_git_url      varchar(256) not null,
@@ -51,23 +53,22 @@ create table if not exists github_pulls
 
     primary key(id),
     key(open, id),
-    key(project_id, open),
+    key(r_b_id, open),
     key(updated_at),
-    unique key (repo_id, pull_id)
+    unique key(r_b_id, pull_id)
 );
 
 create table if not exists github_users
 (
     id                int          not null,
     username          varchar(32)  not null,
-    trusted           bool,
     access_token      varchar(1024),
     cookie            char(24),
     csrf              char(12),
     pull_approver     int,
 
     primary key(id),
-    unique key(cookie)
+    key(cookie)
 );
 
 create table if not exists github_posts
@@ -77,7 +78,7 @@ create table if not exists github_posts
     body              text,
 
     primary key(id),
-    key (post_time)
+    key(post_time)
 );
 
 create table if not exists projects
@@ -92,7 +93,7 @@ create table if not exists projects
     allow_auto_pull   bool         not null,
 
     primary key(id),
-    index (name)
+    key(name)
 );
 
 truncate table projects;
@@ -110,8 +111,8 @@ create table if not exists repositories
     project_id        int          not null,
     name              varchar(128) not null,
 
-    primary key (id),
-    index (project_id)
+    primary key(id),
+    key(project_id)
 );
 
 truncate table repositories;
@@ -127,7 +128,7 @@ create table if not exists repo_branches
     name              varchar(128) not null,
 
     primary key(id),
-    index (repository_id)
+    key(repository_id)
 );
 
 insert into repo_branches values (1, 1, "master");
@@ -174,7 +175,9 @@ create table if not exists build_hosts
     clientver         int,
 
     primary key(id),
-    key(ipaddr)
+    key(ipaddr),
+    key(name,enabled),
+    key(ipaddr,name)
 );
 
 create table if not exists build_host_capabilities
@@ -240,8 +243,8 @@ create table if not exists test_runs
     deleted           bool         not null,
 
     primary key(id),
-    index (start_time),
-    index (platform, start_time)
+    key(start_time),
+    key(platform, start_time)
 );
 
 
@@ -250,12 +253,17 @@ create table if not exists test_data
     id                int       not null auto_increment,
     test_run_id       int       not null,
     test_type_id      int       not null,
+    -- is repository_id used anywhere?  all rows have null
+    repository_id     int,
     start_time        datetime  not null,
     end_time          datetime,
     rc                tinyint   not null,
 
     primary key(id),
-    index (test_run_id)
+    key(start_time),
+    key(platform, start_time),
+    key(deleted),
+    key(host_id, startime)
 );
 
 
@@ -273,22 +281,32 @@ create table if not exists pull_test_runs
     deleted           bool         not null,
 
     primary key(id),
-    key (deleted, g_p_id, platform),
-    key (deleted, start_time),
-    key (g_p_id, platform, start_time),
+    key(deleted, g_p_id, platform),
+    key(deleted, start_time),
+    key(g_p_id, platform, start_time),
+    key(host_id, start_time)
 );
 
 create table if not exists pull_test_data
 (
-    id                int       not null auto_increment,
-    test_run_id       int       not null,
-    test_type_id      int       not null,
-    start_time        datetime  not null,
+    id                int          not null auto_increment,
+    test_run_id       int          not null,
+    test_type_id      int          not null,
+    start_time        datetime     not null,
     end_time          datetime,
-    rc                tinyint   not null,
+    rc                tinyint      not null,
 
     primary key(id),
-    key (test_run_id, test_type_id)
+    key(test_run_id, test_type_id)
 );
 
+create table if not exists pull_suppressions
+(
+    id                int          not null auto_increment,
+    g_p_id            int          not null,
+    platform          varchar(32)  not null,
+
+    primary key(id),
+    key(g_p_id, platform)
+);
 

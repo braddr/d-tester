@@ -15,7 +15,7 @@ function callcurl
     if [ "$runid" == "test" ]; then
         return
     fi
-    curl --silent "http://d.puremagic.com/test-results/addv2/$1?clientver=4&$2"
+    curl --silent "https://auto-tester.puremagic.com/addv2/$1?clientver=4&$2"
 }
 
 function detectos
@@ -57,7 +57,7 @@ function detectos
 function uploadlog
 {
     if [ "$runid" != "test" ]; then
-        curl --silent -T $2/$3 "http://d.puremagic.com/test-results/addv2/upload_$4?clientver=3&testid=$1"
+        curl --silent -T $2/$3 "https://auto-tester.puremagic.com/addv2/upload_$4?clientver=3&testid=$1"
     fi
 }
 

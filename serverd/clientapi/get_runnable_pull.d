@@ -1,5 +1,6 @@
 module clientapi.get_runnable_pull;
 
+import config;
 import mysql;
 import master = clientapi.get_runnable_master;
 static import clientapi.finish_pull_run;
@@ -428,6 +429,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     if (!validateInput(raddr, rname, hostid, platform, clientver, outstr))
         return;
+
+    if (!c.builds_enabled)
+    {
+        outstr.put("skip\n");
+        return;
+    }
 
     updateHostLastCheckin(hostid, clientver);
 

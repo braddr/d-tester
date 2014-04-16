@@ -1,5 +1,6 @@
 module clientapi.get_runnable_master;
 
+import config;
 import mysql;
 //static import p_finish_pull_run;
 import serverd;
@@ -129,6 +130,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     if (!validateInput(rname, raddr, hostid, platform, clientver, outstr))
         return;
+
+    if (!c.builds_enabled)
+    {
+        outstr.put("skip\n");
+        return;
+    }
 
     updateHostLastCheckin(hostid, clientver);
     tryToCleanup(hostid);

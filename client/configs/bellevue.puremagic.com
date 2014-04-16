@@ -1,0 +1,3 @@
+CPUS=2
+PARALLELISM=3
+platforms=(FreeBSD_32)

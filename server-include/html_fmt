@@ -1,0 +1,127 @@
+# the HTML format
+
+\include{/include/plain_fmt}
+
+\if{\isset{html_fmt_loaded}}{}{
+
+\set{html_fmt_loaded}{}
+
+# Outputs content-type header and tells env so.
+# Won't output if already done.
+\set{conttype}{\quote{
+  \if{\not{\isset{conttyped}}}{
+    {Content-type: text/html\n\if{\1}{\1\n}\n}
+    \set{conttyped}{}# Don't let it happen more than once!
+  }
+}}
+
+# Starts off an HTML document.
+# Takes one argument, a title.
+# Optionally takes something for H1.
+# Does nothing if header's already been printed.
+#  \1 == title
+#  \2 == header right after body
+#  \3 == omit body tag
+#  \4 == extra contents for header
+#  \5 == pass through to content type, extra http headers
+#  \6 == extra contents before <html> tag
+#  \7 == extra attributes for <body> tag
+\set{htmlhead}{\quote{
+  \if{\not{\isset{htmlheaded}}}{
+    \set{htmlheaded}{}
+    \conttype{\5}
+    \6
+    <html>
+    <head>
+    <title>\1</title>
+    \4#
+    </head>
+
+    \cmode
+    \if{\not{\3}}{
+      <body\if{\7}{ \7}>
+    }
+    \if{\2}{
+      <center>
+      <h1>
+      \2
+      </h1>
+      </center>
+    }
+  }
+}}
+
+# Do the Cookie Set thing
+\set{set_cookie}{\quote{
+  {Set-Cookie: \1=\2; domain=\SERVERDOMAIN; path=/}
+  \if{\3}{
+    \if{\eq{\3}{never}}{
+      {; expires=Fri, 31-Dec-99 23:59:59 GMT}
+    }{
+      \if{\ne{\3}{session}}{
+        {; expires=\3}
+      }
+    }
+  }
+  {\n}
+}}
+
+# End of an HTML document.
+
+\set{htmlfoot}{\quote{
+  \if{
+    \isset{footer}
+  }{
+    \footer
+  }{
+    </body>
+    </html>
+  }
+}}
+
+
+# Dump error to HTML.
+# One argument: the error.
+
+\set{htmlerror}{\quote{
+  \htmlhead{Error!}{An error occured while processing your request.}
+  <i>
+  <font size="+2">
+  Error: \1
+  </font>
+  </i>
+  \htmlfoot#
+}}
+
+\set{shift_args}{\quote{
+  \unset{ARG_1}
+  \set{shift_args__i}{2}
+  \while{
+    \isset{ARG_\shift_args__i}
+  }{
+    \set{ARG_\op{\shift_args__i}{-}{1}}{\get{ARG_\shift_args__i}}
+    \unset{ARG_\shift_args__i}
+    \set{shift_args__i}{\op{\shift_args__i}{+}{1}}
+  }
+  \unset{shift_args__i}
+}}
+
+# Absolute link prefix.
+ 
+\set{absprefix}{\quote{
+  http://\SERVERNAME\PATH#
+}}
+ 
+# Bounce to another URL.
+ 
+\set{bounce}{\quote{
+  Location: \absprefix/\1\if{\2}{?\2}\n\n#
+}}
+
+# \1 == display text
+# \2 == href
+# \3 == extra attributes
+\set{href}{\quote{{<a href="\2" \3>\1</a>}}}
+
+}
+# end

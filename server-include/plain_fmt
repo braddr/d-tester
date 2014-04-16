@@ -1,0 +1,148 @@
+\include{/include/error_fmt}
+
+# This little macro allows you to use \n as a newline.
+\set{n}{\quote{\
+}}
+
+# A tab macro, we hope.
+\set{t}{\quote{\quote{	}}}
+
+# Allows a "not"-like operator.
+\set{not}{\quote{\if{\1}{}{true}}}
+
+# a "not set" operator.  i rarely use it..
+\set{notset}{\quote{\if{\isset{\1}}{}{true}}}
+
+# Creates a "not equal" operator.
+\set{ne}{\quote{\not{\eq{\1}{\2}}}}
+
+# Tests to see if something is an integer.
+\set{isinteger}{\quote{\op{\1}{V}{0}}}
+\set{isfloat}{\quote{\fop{\1}{V}{0}}}
+\set{ismoney}{\quote{\if{\money{\1}}{true}{}}}
+
+# note the syntax change from \isinteger.  horribly abusive, but i don't
+# the other..
+\set{isint}{\quote{\op{\get{\1}}{V}{0}}}
+
+# Ignores contents.
+\set{ignore}{}
+
+# Expand the GUML of an argument.
+\set{expand}{\quote{
+  \set{expand__command}{\1}
+  \expand__command
+  \unset{expand__command}
+}}
+
+# an increment operator.. first arg += second if there, else just 1
+# note that this is an integer operation!  i don't want you \inc'ing
+# floating point values- that's bad grammar.
+\set{inc}{\quote{
+  \set{\1}{\op{\get{\1}}{+}{\if{\2}{\2}{1}}}
+}}
+
+# a decrement operator.. first arg -= second if there, else just 1
+# same precaution as above
+\set{dec}{\quote{
+  \set{\1}{\op{\get{\1}}{-}{\if{\2}{\2}{1}}}
+}}
+
+# an and operators.. logical and of all parameters
+\set{and}{\quote{
+  \set{and__tmp}{true}
+  \set{and__i}{1}
+  \while{
+    \op{\and__i}{<=}{\paramcount}
+  }{
+    \if{
+      \not{\param{\and__i}}
+    }{
+      \set{and__i}{\paramcount}
+      \set{and__tmp}{}
+    }
+    \inc{and__i}
+  }
+  \and__tmp
+  \unset{and__i}
+  \unset{and__tmp}
+}}
+
+# sqlquote for variables..
+\set{sqlvar}{\quote{\sqlquote{\get{\1}}}}
+
+# break text \1 on string \2 into array \3
+# e.g., after executing "\tokenize{yadda blaaah narf}{a}{str}", we have:
+# str_1="ya", str_2="dda" str_3=" bla" str_4="a" str_5="a"
+# str_6="h na" str_7="rf"
+#
+# ..i'm considering making behaviour more like other tokenizers.  or making it
+# a primitive.
+#
+\set{tokenize}{\quote{
+  \set{tokenize__token}{\if{\2}{\2}{\ }}
+  \set{tokenize__text}{\1}
+  \set{tokenize__arrayname}{\3}
+  \set{tokenize__i}{0}
+  \while{
+    \get{tokenize__text}
+  }{
+    \inc{tokenize__i}
+    \set{tokenize__pivot}{\strindex{\get{tokenize__text}}{\get{tokenize__token}}}
+    \if{\tokenize__pivot}{
+      \inc{tokenize__pivot}{\strlength{\get{tokenize__token}}}
+      \set{\get{tokenize__arrayname}_\tokenize__i}{\substr{\get{tokenize__text}}{0}{\tokenize__pivot}}
+      \set{tokenize__text}{
+        \substr{\get{tokenize__text}}{\tokenize__pivot}{
+          \op{\strlength{\get{tokenize__text}}}{-}{\tokenize__pivot}
+        }
+      }
+    }{
+      \set{\get{tokenize__arrayname}_\tokenize__i}{\get{tokenize__text}}
+      \set{tokenize__text}{}
+    }
+  }
+  \unset{tokenize__token}
+  \unset{tokenize__text}
+  \unset{tokenize__arrayname}
+  \unset{tokenize__i}
+  \unset{tokenize__pivot}
+}}
+
+# \replace{text}{from}{to} - return "text" with all instances of string "from"
+# replaced by "to"
+#
+# e.g., \replace{yarrrrrgh}{rrr}{aa} --> "yaaarrgh" (sans quotes)
+#
+\set{replace}{\quote{
+  \set{replace__text}{\1}
+  \set{replace__from}{\2}
+  \set{replace__to}{\3}
+  \set{replace__outtext}{}
+  \while{\get{replace__text}}{
+    \set{replace__pivot}{\strindex{\get{replace__text}}{\get{replace__from}}}
+    \if{\replace__pivot}{
+      \set{replace__outtext}{
+        \get{replace__outtext}\substr{\get{replace__text}}{0}{\replace__pivot}\get{replace__to}
+      }
+      \inc{replace__pivot}{\strlength{\get{replace__from}}}
+      \set{replace__text}{
+        \substr{\get{replace__text}}{\replace__pivot}{
+          \op{\strlength{\get{replace__text}}}{-}{\replace__pivot}
+        }
+      }
+    }{
+      \set{replace__outtext}{\get{replace__outtext}\get{replace__text}}
+      \set{replace__text}{}
+    }
+  }
+  \get{replace__outtext}
+  \unset{replace__text}
+  \unset{replace__from}
+  \unset{replace__to}
+  \unset{replace__outtext}
+  \unset{replace__pivot}
+}}
+
+# end
+

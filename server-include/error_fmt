@@ -1,0 +1,26 @@
+# Error format.
+# Contains handling for error functions.
+
+# call error to bail the program..  
+\set{error}{\quote{
+  \set{ERROR}{
+    \unset{conttyped}
+    \unset{htmlheaded}
+    \htmlhead{Error!}
+    <P>
+    <center>
+    <table width=470><tr><td>
+    <H1>There was an error\if{\isset{section}}{\ in section <i>\get{section}</i>}!</H1>
+    <i>
+    <font size="+2">
+    \1
+    </font>
+    </i>
+    </td></tr></table>
+    </center>
+    \htmlfoot#
+  }
+  \exit
+}}
+
+# End.

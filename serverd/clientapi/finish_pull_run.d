@@ -138,7 +138,7 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
     if (numpending > 0)    { status = "pending"; appenddesc(text("Pending: ",     numpending));    }
     if (numfail > 0)       { status = "failure"; }
 
-    string targeturl = text(`https://d.puremagic.com/test-results/pull-history.ghtml?`
+    string targeturl = text(`https://auto-tester.puremagic.com/pull-history.ghtml?`
                 `projectid=`, projectid, `&repoid=`, repoid, `&pullid=`, pullid);
 
     if (!github.setSHAStatus(projectname, reponame, sha, desc, status, targeturl))

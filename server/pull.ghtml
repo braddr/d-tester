@@ -4,16 +4,6 @@
 \validateURLParameter{projectid}
 \validateURLParameter{runid}
 
-\pageHeader{60}{\get{projectid}}{
-    <link rel="stylesheet" href="/test-results/css/pulls.css" type="text/css">
-}{\ onload="resizeFrame(document.getElementById('logframe'));"}
-
-<script type="text/javascript">
-    function resizeFrame(f) \{
-        f.style.height = (f.contentWindow.document.body.scrollHeight + 30) + "px";
-    \}
-</script>
-
 \sqlexec{
     select ptr.id, g_p_id, p.name, r.name, r.id, ghp.pull_id, bh.id, bh.ipaddr, bh.name, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
       from pull_test_runs ptr, github_pulls ghp, repositories r, repo_branches rb, build_hosts bh, projects p
@@ -25,7 +15,20 @@
             p.id = r.project_id and
             r.id = rb.repository_id
 }
-\if{\not{\sqlrow{id}{g_p_id}{project_name}{repo_name}{repo_id}{pull_id}{bh_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}}{
+\set{end_time}{}
+\set{found}{\sqlrow{id}{g_p_id}{project_name}{repo_name}{repo_id}{pull_id}{bh_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}
+
+\pageHeader{\if{\not{\get{rc}}}{60}}{\get{projectid}}{
+    <link rel="stylesheet" href="/css/pulls.css" type="text/css">
+}{\ onload="resizeFrame(document.getElementById('logframe'));"}
+
+<script type="text/javascript">
+    function resizeFrame(f) \{
+        f.style.height = (f.contentWindow.document.body.scrollHeight + 30) + "px";
+    \}
+</script>
+
+\if{\not{\get{found}}}{
     unknown runid
 }{
 

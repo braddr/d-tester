@@ -19,7 +19,7 @@
 \set{file_11}{phobos-merge}
 
 <pre>
-\htmlquote{\fileread{/test-results/pull-logs/pull-\get{runid}/\get{file_\get{logid}}.log}}
+\htmlquote{\fileread{/pull-logs/pull-\get{runid}/\get{file_\get{logid}}.log}}
 </pre>
 
 \htmlfoot

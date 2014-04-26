@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Auto-tester results on github
-// @namespace           http://d.puremagic.com/test-results/
+// @namespace           http://auto-tester.puremagic.com/
 // @description         add auto tester results to github
 // @include             https://github.com/
 // @include             https://github.com/organizations/D-Programming-Language
@@ -37,14 +37,14 @@ function doLoad()
 
     GM_xmlhttpRequest({
         method:"GET",
-        url:"http://d.puremagic.com/test-results/summary.json.ghtml",
+        url:"http://auto-tester.puremagic.com/summary.json.ghtml",
         onload:function(details) { var results = JSON.parse(details.responseText); showResults(results); }
     });
 }
 
 function addBox()
 {
-    var newhtml = "<div class=\"top-bar\"><h2><a id=\"at_hdr\" href=\"http://d.puremagic.com/test-results/\">Auto-Tester Results</a></h2></div>\n";
+    var newhtml = "<div class=\"top-bar\"><h2><a id=\"at_hdr\" href=\"http://auto-tester.puremagic.com/\">Auto-Tester Results</a></h2></div>\n";
 
     newhtml += "<ul id=\"at_listing\" class=\"repo_list\">\n";
     newhtml += "</ul>\n";

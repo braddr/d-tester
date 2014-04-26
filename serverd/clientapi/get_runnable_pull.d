@@ -482,7 +482,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     try
     {
-        string path = "/home/dwebsite/" ~ (doMaster ? "test-results/" : "pull-results/pull-") ~ runid;
+        string path = "/media/ephemeral0/auto-tester/" ~ (doMaster ? "test-results/" : "pull-results/pull-") ~ runid;
         mkdir(path);
     }
     catch(Exception e) { writelog("  caught exception: %s", e); }

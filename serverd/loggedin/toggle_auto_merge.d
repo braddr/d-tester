@@ -111,7 +111,7 @@ Lerror:
         if (!checkMergeNow(projectid, repoid, pullid, ghp_id, valout)) goto Lerror;
     }
 
-    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/", from, ".ghtml?",
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/", from, ".ghtml?",
                "projectid=", projectid, "&",
                "repoid=", repoid, "&",
                "pullid=", pullid,

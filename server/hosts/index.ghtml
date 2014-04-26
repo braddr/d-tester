@@ -1,7 +1,7 @@
 \include{/include/test-results}
 
 \pageHeader{60}{hosts}{
-    <link rel="stylesheet" href="/test-results/css/hosts.css" type="text/css">
+    <link rel="stylesheet" href="/css/hosts.css" type="text/css">
 }
 
 <table class="whiterounded">
@@ -86,9 +86,9 @@
         \if{\get{ip_repo_name}}{
             <td>\get{p_name}</td>
             <td>\if{\eq{\get{ip_repo_name}}{branch}}{
-                   <a href="/test-results/test_data.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}&logid=1">branch build</a>
+                   <a href="/test_data.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}&logid=1">branch build</a>
                 }{
-                   <a href="/test-results/pull.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}">\get{ip_repo_name}/{\get{ip_pull_id}}</a>
+                   <a href="/pull.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}">\get{ip_repo_name}/{\get{ip_pull_id}}</a>
                 }
             </td>
         }{
@@ -100,9 +100,7 @@
 </table>
 
 \sqlexec{
-    select convert_tz(max(updated_at), 'UTC', 'US/Pacific'),
-           timediff(now(), convert_tz(max(updated_at), 'UTC', 'US/Pacific')),
-          (timediff(now(), convert_tz(max(updated_at), 'UTC', 'US/Pacific'))) > "11:00"
+    select max(updated_at), timediff(now(), max(updated_at)), (timediff(now(), max(updated_at))) > "11:00"
       from github_pulls
 }
 \ignore{\sqlrow{githublastupdate}{delta}{overdue}}

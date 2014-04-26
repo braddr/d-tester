@@ -10,10 +10,11 @@
       from test_runs tr, build_hosts b, projects p
       where tr.id = \get{runid} and tr.host_id = b.id and tr.project_id = p.id
 }
+\set{end_time}{}
 \set{runid_found}{\sqlrow{id}{b_id}{b_ipaddr}{b_name}{os}{start_time}{end_time}{duration}{rc}{deleted}{projectname}}
 
 \pageHeader{\if{\not{\get{end_time}}}{60}}{\get{projectid}}{
-    <link rel="stylesheet" href="/test-results/css/index.css" type="text/css">
+    <link rel="stylesheet" href="/css/index.css" type="text/css">
 }{\ onload="resizeFrame(document.getElementById('logframe'));"}
 
 <script type="text/javascript">

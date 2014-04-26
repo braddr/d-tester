@@ -58,8 +58,8 @@
 # \4 == additional css classes
 # \5 == title text
 \set{drawOneMenu}{\quote{
-    <div class="page_menu_\3\if{\4}{\ \4}" onClick="parent.location='/test-results/\1'"\if{\5}{\ title="\5"}>
-        <a href="/test-results/\1">\2</a>
+    <div class="page_menu_\3\if{\4}{\ \4}" onClick="parent.location='/\1'"\if{\5}{\ title="\5"}>
+        <a href="/\1">\2</a>
     </div>
 }}
 
@@ -121,9 +121,9 @@
         }
     }
     <div class="page_menu_spacer"></div>
-    <div class="page_menu_\isMenuSelected{\1}{hosts}" onClick="parent.location='/test-results/hosts/'"><a href="/test-results/hosts/">Build Hosts</a></div>
-    #<div class="page_menu_\isMenuSelected{\1}{docs}" onClick="parent.location='/test-results/docs/'"><a href="/test-results/docs/">Documentation</a></div>
-    #<div class="page_menu_\isMenuSelected{\1}{admin}" onClick="parent.location='/test-results/create-project.ghtml'"><a href="/test-results/create-project.ghtml">Create New Project</a></div>
+    <div class="page_menu_\isMenuSelected{\1}{hosts}" onClick="parent.location='/hosts/'"><a href="/hosts/">Build Hosts</a></div>
+    #<div class="page_menu_\isMenuSelected{\1}{docs}" onClick="parent.location='/docs/'"><a href="/docs/">Documentation</a></div>
+    #<div class="page_menu_\isMenuSelected{\1}{admin}" onClick="parent.location='/create-project.ghtml'"><a href="/create-project.ghtml">Create New Project</a></div>
     </td></tr>
 
     <tr><td class="page_menupushtop"></td></tr>
@@ -138,9 +138,9 @@
         \sqlexec{ select username, csrf, pull_approver from github_users where cookie = "\sqlquote{\get{testerlogin}}" }
         \set{loggedin}{\sqlrow{github_username}{csrf}{pulls_are_tested}}
     }
-    \set{session_status_page}{\htmlquote{\replace{\get{FILENAME}}{/test-results/}{}|\replace{\get{QUERY_STRING}}{&}{|}}}
+    \set{session_status_page}{\htmlquote{\replace{\get{FILENAME}}{/}{}|\replace{\get{QUERY_STRING}}{&}{|}}}
     \if{\get{loggedin}}{
-        <span id="loginstate" class="loggedin">\get{github_username}\ - <a href="/test-results/addv2/logout?csrf=\get{csrf}&amp;state=\get{session_status_page}">Logout</a></span>
+        <span id="loginstate" class="loggedin">\get{github_username}\ - <a href="/addv2/logout?csrf=\get{csrf}&amp;state=\get{session_status_page}">Logout</a></span>
     }{
         \if{\eq{\get{SERVERNAME}}{d-beta.puremagic.com}}{\set{clientid}{a45bbbdf40a34981ea34}\set{HTTP_PROTOCOL}{http}}{\set{clientid}{efb9cf46977efe7abd51}\set{HTTP_PROTOCOL}{https}}
         <span id="loginstate" class="loggedout"><a href="https://github.com/login/oauth/authorize?scope=public_repo&amp;response_type=code&amp;client_id=\get{clientid}&amp;state=\get{session_status_page}">Login</A></span>
@@ -157,7 +157,7 @@
         \if{\1}{
             <meta http-equiv="refresh" content="\1">
         }
-        <link rel="stylesheet" href="/test-results/css/global.css" type="text/css">
+        <link rel="stylesheet" href="/css/global.css" type="text/css">
         \if{\3}{\3}
     }{}{
         <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
@@ -182,10 +182,10 @@
     # close tag for body
     </td></tr>
 
-    <tr><td class="page_menufoot" colspan="2"><div class="copy">&copy; 2013 PureMagic Software</div></td></tr>
+    <tr><td class="page_menufoot" colspan="2"><div class="copy">&copy; 2014 PureMagic Software</div></td></tr>
 
     #<div>
-    #<a href="http://d.puremagic.com/test-results/greasemonkey.ghtml">GreaseMonkey scripts</a><br>
+    #<a href="http://auto-tester.puremagic.com/greasemonkey.ghtml">GreaseMonkey scripts</a><br>
     #<a href="http://github.com/braddr/d-tester">Source of auto-tester</a>
     #</div>
 

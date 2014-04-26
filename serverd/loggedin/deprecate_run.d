@@ -49,7 +49,7 @@ Lerror:
     sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set deleted = true, end_time = now() where id = ", runid));
     sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_data set end_time = now() where test_run_id = ", runid));
 
-    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/",
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/",
                (runtype == "pull" ? "pull" : "test_data"),
                ".ghtml?",
                "projectid=", projectid, "&",

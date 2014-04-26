@@ -112,7 +112,7 @@
     # build rdate_epoch -> i map
     \sqlexec{
         select unix_timestamp(subdate(date(creation_ts), weekday(creation_ts))) as epoch
-          from dbugs.products p, dbugs.components c, dbugs.bugs b
+          from bugs.products p, bugs.components c, bugs.bugs b
          where b.product_id = p.id and
                b.component_id = c.id and
                p.name = 'D' and
@@ -130,7 +130,7 @@
     # build repo_i -> count map
     \sqlexec{
         select b.bug_severity, unix_timestamp(subdate(date(creation_ts), weekday(creation_ts))) as epoch, count(*)
-          from dbugs.products p, dbugs.components c, dbugs.bugs b
+          from bugs.products p, bugs.components c, bugs.bugs b
          where b.product_id = p.id and
                b.component_id = c.id and
                p.name = 'D' and
@@ -149,7 +149,7 @@
     # build rdate_epoch -> i map
     \sqlexec{
         select unix_timestamp(subdate(date(delta_ts), weekday(delta_ts))) as epoch
-          from dbugs.products p, dbugs.components c, dbugs.bugs b
+          from bugs.products p, bugs.components c, bugs.bugs b
          where b.product_id = p.id and
                b.component_id = c.id and
                p.name = 'D' and
@@ -168,7 +168,7 @@
     # build repo_i -> count map
     \sqlexec{
         select b.bug_severity, unix_timestamp(subdate(date(delta_ts), weekday(delta_ts))) as epoch, count(*)
-          from dbugs.products p, dbugs.components c, dbugs.bugs b
+          from bugs.products p, bugs.components c, bugs.bugs b
          where b.product_id = p.id and
                b.component_id = c.id and
                p.name = 'D' and
@@ -232,6 +232,7 @@ var \1_graph = new Rickshaw.Graph(\{
         element: document.querySelector("\#\1_chart"),
         width: 700,
         height: 250,
+        max: 100,
         renderer: 'line',
         series: [
     \set{snum}{4}
@@ -296,7 +297,7 @@ var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
 
 \set{page_type}{chart}
 \pageHeader{}{\get{projectid}}{
-    <link rel="stylesheet" href="/test-results/css/chart.css">
+    <link rel="stylesheet" href="/css/chart.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.1.0/rickshaw.min.css"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.0.1/d3.v3.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.1.0/rickshaw.min.js"></script>

@@ -84,7 +84,7 @@ bool storeResults(string runid, string testtypeid, string contents, Appender!str
         return false;
     }
 
-    string path = "/home/dwebsite/pull-results/pull-" ~ runid ~ "/" ~ filename;
+    string path = "/media/ephemeral0/auto-tester/pull-results/pull-" ~ runid ~ "/" ~ filename;
     try
     {
         write(path, contents);

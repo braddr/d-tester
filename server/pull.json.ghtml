@@ -22,7 +22,7 @@
     \if{\sqlrow{gp_id}{gp_automerge}}{
 
         \{
-            "historyURL" : "https://d.puremagic.com/test-results/pull-history.ghtml?projectid=1&repoid=\get{repoid}&pullid=\get{pullid}",
+            "historyURL" : "https://auto-tester.puremagic.com/pull-history.ghtml?projectid=1&repoid=\get{repoid}&pullid=\get{pullid}",
             "auto-merge" : \if{\get{gp_automerge}}{\get{gp_automerge}}{null},
             "results"    : [
 
@@ -43,7 +43,7 @@
                         "rc"       : "\get{rc}",
                         "deleted"  : "\get{deleted}",
                         "platform" : "\get{platform}",
-                        "url"      : "https://d.puremagic.com/test-results/pull.ghtml?projectid=1&runid=\get{id}"
+                        "url"      : "https://auto-tester.puremagic.com/pull.ghtml?projectid=1&runid=\get{id}"
                     \}
                 }
 

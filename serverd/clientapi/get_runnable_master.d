@@ -151,7 +151,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         string runid = getNewID(platform, hostid, proj.project_id);
         try
         {
-            string path = "/home/dwebsite/test-results/" ~ runid;
+            string path = "/media/ephemeral0/auto-tester/test-results/" ~ runid;
             mkdir(path);
         }
         catch (Exception e)

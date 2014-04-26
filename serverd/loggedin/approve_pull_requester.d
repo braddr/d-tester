@@ -57,7 +57,7 @@ Lerror:
 
     sql_exec(text("update github_users set pull_approver = ", userid, " where id = ", pull_userid));
 
-    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/test-results/pulls.ghtml?projectid=", projectid));
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/pulls.ghtml?projectid=", projectid));
     outstr.put("\n\n");
 }
 

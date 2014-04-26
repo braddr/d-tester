@@ -4,7 +4,7 @@
 \validateURLParameter{projectid}
 
 \pageHeader{60}{\get{projectid}}{
-    <link rel="stylesheet" href="/test-results/css/pulls.css" type="text/css">
+    <link rel="stylesheet" href="/css/pulls.css" type="text/css">
 }
 
 # \1 == text

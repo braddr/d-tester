@@ -5,7 +5,7 @@
 \validateURLParameter{projectid}
 
 \pageHeader{60}{\get{projectid}}{
-    <link rel="stylesheet" href="/test-results/css/index.css" type="text/css">
+    <link rel="stylesheet" href="/css/index.css" type="text/css">
 }
 
 # get number of test types
@@ -240,7 +240,7 @@
 # \2 == platform
 # \3 == title
 \set{buildHeader}{\quote{
-    <th title="\3"><a href="/test-results/platform-history.ghtml?projectid=\get{projectid}&amp;os=\2">\1</a></th>
+    <th title="\3"><a href="/platform-history.ghtml?projectid=\get{projectid}&amp;os=\2">\1</a></th>
 }}
 
 \if{\not{\get{projectid}}}{

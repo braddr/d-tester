@@ -55,10 +55,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     sql_exec(text("update github_users set access_token = null, cookie = null, csrf = null where cookie = \"", cookie, "\" and csrf = \"", csrf, "\""));
 
-    ret = text("Set-Cookie: testerlogin=; domain=", sn, "; path=/test-results; Expires=Sat, 01 Jan 2000 00:00:00 GMT; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");
+    ret = text("Set-Cookie: testerlogin=; domain=", sn, "; path=/; Expires=Sat, 01 Jan 2000 00:00:00 GMT; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");
 
 Lsend:
-    outstr.put(text("Location: ", getURLProtocol(hash) , "://", sn, "/test-results/", urldata, "\n"));
+    outstr.put(text("Location: ", getURLProtocol(hash) , "://", sn, "/", urldata, "\n"));
     if (ret != "") outstr.put(ret);
     outstr.put("\n");
 }

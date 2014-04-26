@@ -17,7 +17,7 @@ import etc.c.curl;
 
 import mysql;
 
-static const char* USERAGENT = "Auto-Tester. https://d.puremagic.com/test-results/  contact: braddr@puremagic.com";
+static const char* USERAGENT = "Auto-Tester. https://auto-tester.puremagic.com/  contact: braddr@puremagic.com";
 static string LOGNAME = "/tmp/serverd.log";
 
 void writelog(S...)(S s)

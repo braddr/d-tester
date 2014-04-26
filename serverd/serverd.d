@@ -97,8 +97,8 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
         "/upload_pull"            : &clientapi.upload_pull.run,       // for a specific test, receive the resulting log
     ];
 
-    if (uri.startsWith("/test-results/addv2"))
-        uri = uri["/test-results/addv2".length .. $];
+    if (uri.startsWith("/addv2"))
+        uri = uri["/addv2".length .. $];
 
     page_func* func = uri in commands;
     if (!func)

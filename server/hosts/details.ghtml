@@ -3,7 +3,7 @@
 \validateURLParameter{hostid}
 
 \pageHeader{60}{hosts}{
-    <link rel="stylesheet" href="/test-results/css/hosts.css" type="text/css">
+    <link rel="stylesheet" href="/css/hosts.css" type="text/css">
 }
 
 <table class="whiterounded">

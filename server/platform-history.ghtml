@@ -18,7 +18,7 @@
 \set{Win_64}{Windows 64}
 
 \pageHeader{60}{\get{projectid}}{
-    <link rel="stylesheet" href="/test-results/css/history.css" type="text/css">
+    <link rel="stylesheet" href="/css/history.css" type="text/css">
 }
 
 \if{\get{numresults}}{

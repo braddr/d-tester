@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                Auto-tester single pull result on github
-// @namespace           http://d.puremagic.com/test-results/
+// @namespace           http://auto-tester.puremagic.com/
 // @description         show specific pull auto tester results in github
 // @include             https://github.com/D-Programming-Language/dmd/pull/*
 // @include             https://github.com/D-Programming-Language/druntime/pull/*
@@ -18,7 +18,7 @@ function doLoad()
 
     GM_xmlhttpRequest({
         method:"GET",
-        url:"http://d.puremagic.com/test-results/pull.json.ghtml?ref=" + document.location.href,
+        url:"http://auto-tester.puremagic.com/pull.json.ghtml?ref=" + document.location.href,
         onload:function(details) {
             var results = JSON.parse(details.responseText);
 
@@ -50,7 +50,7 @@ function doLoad()
 
 function addBox()
 {
-    var newhtml = "<div class=\"top-bar\"><h3><a id=\"apt_hdr\" href=\"http://d.puremagic.com/test-results/\">Test Results</a></h3></div>\n";
+    var newhtml = "<div class=\"top-bar\"><h3><a id=\"apt_hdr\" href=\"http://auto-tester.puremagic.com/\">Test Results</a></h3></div>\n";
 
     newhtml += "<div id=\"apt_listing\">\n";
     newhtml += "</div>\n";

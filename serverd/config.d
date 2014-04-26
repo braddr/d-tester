@@ -18,6 +18,7 @@ struct Config
     string github_clientsecret;
 
     bool builds_enabled;
+    bool log_env;
 }
 
 Config c;
@@ -35,6 +36,7 @@ void load_config(string filename)
     c.db_passwd = db.object["passwd"].str;
 
     c.builds_enabled = jv.object["builds_enabled"].type == JSON_TYPE.TRUE;
+    c.log_env = jv.object["log_env"].type == JSON_TYPE.TRUE;
 
     JSONValue gh = jv.object["github"];
     c.github_user   = gh.object["user"].str;

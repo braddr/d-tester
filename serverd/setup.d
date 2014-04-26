@@ -1,5 +1,6 @@
 module setup;
 
+import config;
 import serverd;
 import utils;
 import www;
@@ -52,13 +53,19 @@ void processEnv(ref string[string] hash)
         const(char)** envp = environ;
 
     size_t i = 0;
+    if (c.log_env)
+        writelog("  request environment variables");
     while (envp[i] != null)
     {
         string str = envp[i][0 .. strlen(envp[i])].idup;
 
         string key, value;
         if (split_keyvalue(str, key, value, false))
+        {
+            if (c.log_env)
+                writelog("  %s = %s", key, value);
             hash[key] = value;
+        }
         else
             writelog("unable to parse env var: %s", str);
 

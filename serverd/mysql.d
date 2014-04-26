@@ -114,6 +114,8 @@ void sql_shutdown()
 
 bool sql_exec(string sqlstr)
 {
+    if (c.log_sql_queries) writelog ("  query: %s", sqlstr);
+
     if (res)
     {
         mysql_free_result (res);

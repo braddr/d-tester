@@ -19,6 +19,7 @@ struct Config
 
     bool builds_enabled;
     bool log_env;
+    bool log_sql_queries;
 }
 
 Config c;
@@ -37,6 +38,7 @@ void load_config(string filename)
 
     c.builds_enabled = jv.object["builds_enabled"].type == JSON_TYPE.TRUE;
     c.log_env = jv.object["log_env"].type == JSON_TYPE.TRUE;
+    c.log_sql_queries = jv.object["log_sql_queries"].type == JSON_TYPE.TRUE;
 
     JSONValue gh = jv.object["github"];
     c.github_user   = gh.object["user"].str;

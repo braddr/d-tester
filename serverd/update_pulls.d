@@ -380,7 +380,7 @@ void processPull(Project proj, Repository repo, Pull* k, Pull p)
             // new pull request
             writelog("  opening %s/%s/%s", proj.name, repo.name, p.pull_id);
             // TODO: replace second null with p.r_b_id after r_b_id has a meaningful value
-            string sqlcmd = text("insert into github_pulls values (null, ", repo.branch.id, ", ", p.pull_id, ", ", p.user_id, ", '", p.create_date.toISOExtString(), "', ");
+            string sqlcmd = text("insert into github_pulls (id, r_b_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", p.pull_id, ", ", p.user_id, ", '", p.create_date.toISOExtString(), "', ");
 
             if (p.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
                 sqlcmd ~= "null";

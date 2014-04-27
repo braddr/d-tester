@@ -5,6 +5,8 @@ import github_apis;
 import mysql;
 import utils;
 
+import model.user;
+
 import etc.c.curl;
 import std.conv;
 import std.datetime;
@@ -183,39 +185,6 @@ Pull makePullFromRow(sqlrow row)
 
     //writelog("row[0] = %s, row[4] = %s, row[11] = %s, row[12] = %s, row[13] = %s, row[14] = %s", row[0], row[4], row[11], row[12], row[13], row[14]);
     return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]), to!ulong(row[16]));
-}
-
-bool[string] loadUsers()
-{
-    sql_exec(text("select id, pull_approver from github_users"));
-
-    sqlrow[] rows = sql_rows();
-
-    bool[string] users;
-    foreach(row; rows) { bool trusted = row[1] != ""; users[row[0]] = trusted; }
-
-    return users;
-}
-
-bool checkUser(ulong uid, string uname)
-{
-    static bool[string] users;
-
-    if (users.length == 0) users = loadUsers();
-
-    string uidstr = sql_quote(to!string(uid));
-
-    auto found = uidstr in users;
-    if (!found)
-    {
-        writelog("  creating user %s(%s)", uname, uidstr);
-        sql_exec(text("insert into github_users (id, username) values (", uidstr, ", '", sql_quote(uname), "')"));
-
-        users[uidstr] = false;
-        return false;
-    }
-
-    return *found;
 }
 
 Pull loadPullFromGitHub(Project proj, Repository repo, ulong pullid)

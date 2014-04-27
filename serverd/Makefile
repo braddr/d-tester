@@ -7,7 +7,7 @@ DFLAGS=-m64 -gc
 
 LIBS=-L-lmysqlclient -L-lcurl -L-lcrypto
 
-COMMON_SRC=mysql.d config.d utils.d
+COMMON_SRC=mysql.d config.d utils.d model/*.d
 
 SERVERD_SRC=serverd.d clientapi/*.d githubapi/*.d loggedin/*.d setup.d validate.d www.d github_apis.d
 UPDATE_SRC=update_pulls.d github_apis.d

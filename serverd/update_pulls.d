@@ -90,13 +90,24 @@ Pull makePullFromRow(sqlrow row)
     return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]), to!ulong(row[16]));
 }
 
-Pull loadPullFromGitHub(Project proj, Repository repo, ulong pullid)
+Pull loadPullFromGitHub(Project proj, Repository repo, Pull current_pull, ulong pullid)
 {
     JSONValue jv;
     if (!github.getPull(proj.name, repo.name, to!string(pullid), jv))
         return null;
 
-    return makePullFromJson(jv, proj, repo);
+    Pull pull = makePullFromJson(jv, proj, repo);
+
+    if (current_pull.head_sha == pull.head_sha)
+        pull.head_date = current_pull.head_date;
+    else
+    {
+        string date = loadCommitDateFromGithub(proj, repo, pull.head_sha);
+        if (!date) return null;
+        pull.head_date = SysTime.fromISOExtString(date, UTC());;
+    }
+
+    return pull;
 }
 
 string loadCommitDateFromGithub(Project proj, Repository repo, string sha)
@@ -219,16 +230,6 @@ void updatePull(Project proj, Repository repo, Pull current, Pull updated)
 
 void newPull(Project proj, Repository repo, Pull pull)
 {
-    if (!pull.head_usable)
-    {
-        writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", proj.name, repo.name, pull.pull_id);
-        return;
-    }
-
-    string date = loadCommitDateFromGithub(proj, repo, pull.head_sha);
-    if (!date) return;
-    pull.head_date = SysTime.fromISOExtString(date, UTC());;
-
     writelog("  opening %s/%s/%s", proj.name, repo.name, pull.pull_id);
 
     string sqlcmd = text("insert into github_pulls (id, r_b_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
@@ -345,8 +346,10 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
         if (!p) continue;
 
         Pull* tmp = p.pull_id in knownpulls;
+        knownpulls.remove(p.pull_id);
         Pull current_pull = tmp ? *tmp : null;
 
+        bool isNew = false;
         if (!current_pull)
         {
             sql_exec(text("select ", getPullColumns(), " from github_pulls where r_b_id = ", repo.branch.id, " and pull_id = ", p.pull_id));
@@ -354,19 +357,19 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
 
             if (rows == [])
             {
-                newPull(proj, repo, p);
-                continue;
+                if (!p.head_usable)
+                {
+                    writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", proj.name, repo.name, p.pull_id);
+                    continue;
+                }
+
+                isNew = true;
             }
             else
-            {
-                // reopened pull request
-                current_pull = makePullFromRow(rows[0]);
-            }
+                current_pull = makePullFromRow(rows[0]); // reopened pull request
         }
-        else
-            knownpulls.remove(p.pull_id);
 
-        if (current_pull.head_sha == p.head_sha)
+        if (!isNew && current_pull.head_sha == p.head_sha)
             p.head_date = current_pull.head_date;
         else
         {
@@ -375,7 +378,10 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
             p.head_date = SysTime.fromISOExtString(date, UTC());;
         }
 
-        updatePull(proj, repo, current_pull, p);
+        if (isNew)
+            newPull(proj, repo, p);
+        else
+            updatePull(proj, repo, current_pull, p);
     }
 
     return true;
@@ -424,22 +430,10 @@ projloop:
             // any elements left in knownpulls means they're no longer open, so mark closed
             foreach(k; knownpulls.keys)
             {
-                Pull p = loadPullFromGitHub(pv, rv, k);
+                Pull* tmp = k in knownpulls;
+                Pull p = loadPullFromGitHub(pv, rv, *tmp, k);
                 if (p)
-                {
-                    Pull* tmp = k in knownpulls;
-
-                    if (tmp.head_sha == p.head_sha)
-                        p.head_date = tmp.head_date;
-                    else
-                    {
-                        string date = loadCommitDateFromGithub(pv, rv, p.head_sha);
-                        if (!date) return;
-                        p.head_date = SysTime.fromISOExtString(date, UTC());;
-                    }
-
                     updatePull(pv, rv, *tmp, p);
-                }
             }
         }
     }

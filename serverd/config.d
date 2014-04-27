@@ -24,6 +24,23 @@ struct Config
 
 Config c;
 
+bool as_bool(JSONValue jv, string f)
+{
+    JSONValue* v = f in jv.object;
+    if (!v) return false;
+
+    return v.type == JSON_TYPE.TRUE;
+}
+
+string as_string(JSONValue jv, string f, string d = "")
+{
+    JSONValue* v = f in jv.object;
+    if (!v) return d;
+    if (v.type != JSON_TYPE.STRING) return d;
+
+    return v.str;
+}
+
 void load_config(string filename)
 {
     string contents = cast(string)read(filename);
@@ -31,19 +48,19 @@ void load_config(string filename)
     JSONValue jv = parseJSON(contents);
 
     JSONValue db = jv.object["db"];
-    c.db_host   = db.object["host"].str;
-    c.db_db     = db.object["db"].str;
-    c.db_user   = db.object["user"].str;
-    c.db_passwd = db.object["passwd"].str;
+    c.db_host   = db.as_string("host");
+    c.db_db     = db.as_string("db");
+    c.db_user   = db.as_string("user");
+    c.db_passwd = db.as_string("passwd");
 
-    c.builds_enabled = jv.object["builds_enabled"].type == JSON_TYPE.TRUE;
-    c.log_env = jv.object["log_env"].type == JSON_TYPE.TRUE;
-    c.log_sql_queries = jv.object["log_sql_queries"].type == JSON_TYPE.TRUE;
+    c.builds_enabled  = jv.as_bool("builds_enabled");
+    c.log_env         = jv.as_bool("log_env");
+    c.log_sql_queries = jv.as_bool("log_sql_queries");
 
     JSONValue gh = jv.object["github"];
-    c.github_user   = gh.object["user"].str;
-    c.github_passwd = gh.object["passwd"].str;
-    c.github_clientid = gh.object["client_id"].str;
-    c.github_clientsecret = gh.object["client_secret"].str;
+    c.github_user         = gh.as_string("user");
+    c.github_passwd       = gh.as_string("passwd");
+    c.github_clientid     = gh.as_string("client_id");
+    c.github_clientsecret = gh.as_string("client_secret");
 }
 

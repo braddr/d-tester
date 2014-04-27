@@ -125,20 +125,6 @@ void updatePull(Project proj, Repository repo, Pull current, Pull updated)
     bool clearOldResults = false;
     bool clearAutoPull = false;
 
-    bool headDateAccurate = false;
-    if (!current.open || (updated.head_usable && current.head_sha != updated.head_sha))
-    {
-        printHeader();
-        string date = loadCommitDateFromGithub(proj, repo, updated.head_sha);
-        if (!date)
-        {
-            // don't update anything in the db if we can't get the current commit date
-            return;
-        }
-        updated.head_date = SysTime.fromISOExtString(date, UTC());;
-        headDateAccurate = true;
-    }
-
     if (current.open != updated.open)
     {
         printHeader();
@@ -156,7 +142,7 @@ void updatePull(Project proj, Repository repo, Pull current, Pull updated)
         sql_exec(text("update github_pulls set updated_at = '", updated.updated_at.toISOExtString(), "' where id = ", current.id));
     }
 
-    if (headDateAccurate && updated.head_usable && current.head_date != updated.head_date)
+    if (updated.head_usable && current.head_date != updated.head_date)
     {
         printHeader();
         clearOldResults = true;
@@ -244,6 +230,7 @@ void newPull(Project proj, Repository repo, Pull pull)
     pull.head_date = SysTime.fromISOExtString(date, UTC());;
 
     writelog("  opening %s/%s/%s", proj.name, repo.name, pull.pull_id);
+
     string sqlcmd = text("insert into github_pulls (id, r_b_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
 
     if (pull.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
@@ -379,6 +366,15 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
         else
             knownpulls.remove(p.pull_id);
 
+        if (current_pull.head_sha == p.head_sha)
+            p.head_date = current_pull.head_date;
+        else
+        {
+            string date = loadCommitDateFromGithub(proj, repo, p.head_sha);
+            if (!date) continue;
+            p.head_date = SysTime.fromISOExtString(date, UTC());;
+        }
+
         updatePull(proj, repo, current_pull, p);
     }
 
@@ -432,6 +428,16 @@ projloop:
                 if (p)
                 {
                     Pull* tmp = k in knownpulls;
+
+                    if (tmp.head_sha == p.head_sha)
+                        p.head_date = tmp.head_date;
+                    else
+                    {
+                        string date = loadCommitDateFromGithub(pv, rv, p.head_sha);
+                        if (!date) return;
+                        p.head_date = SysTime.fromISOExtString(date, UTC());;
+                    }
+
                     updatePull(pv, rv, *tmp, p);
                 }
             }

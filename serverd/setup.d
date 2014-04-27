@@ -54,7 +54,7 @@ void processEnv(ref string[string] hash)
 
     size_t i = 0;
     if (c.log_env)
-        writelog("  request environment variables");
+        writelog("request environment variables:");
     while (envp[i] != null)
     {
         string str = envp[i][0 .. strlen(envp[i])].idup;

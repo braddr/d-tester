@@ -99,8 +99,8 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     outstr.put("Content-type: text/plain\n\n");
 
     string raddr = lookup(hash, "REMOTE_ADDR");
-    string eventname = "push"; // lookup(hash, "X-GitHub-Event");  // TODO: add to schema and store
-    string eventid = ""; // lookup(hash, "X-GitHub-Delivery"); // TODO: add to schema and store
+    string eventname = lookup(hash, "HTTP_X_GITHUB_EVENT");  // TODO: add to schema and store
+    string eventid = lookup(hash, "HTTP_X_GITHUB_DELIVERY"); // TODO: add to schema and store
     string bodytext = lookup(userhash, "REQUEST_BODY");
 
     // TODO: add auth check

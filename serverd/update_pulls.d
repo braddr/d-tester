@@ -230,6 +230,7 @@ void updatePull(Project proj, Repository repo, Pull current, Pull updated)
         sql_exec(text("update github_pulls set auto_pull = null where id = ", current.id));
     }
 }
+
 void newPull(Project proj, Repository repo, Pull pull)
 {
     if (!pull.head_usable)
@@ -256,32 +257,6 @@ void newPull(Project proj, Repository repo, Pull pull)
                    "'", pull.head_date.toISOExtString(), "', null)");
 
     sql_exec(sqlcmd);
-}
-
-void processPull(Project proj, Repository repo, Pull* k, Pull p)
-{
-    //writelog("  processPull: %s/%s/%s", proj.name, repo.name, p.pull_id);
-    if (k is null)
-    {
-        // try to load specific pull to see if this is a re-opened request
-        sql_exec(text("select ", getPullColumns(), " from github_pulls where r_b_id = ", repo.branch.id, " and pull_id = ", p.pull_id));
-        sqlrow[] rows = sql_rows();
-
-        if (rows == [])
-        {
-            newPull(proj, repo, p);
-        }
-        else
-        {
-            // reopened pull request
-            Pull newP = makePullFromRow(rows[0]);
-            updatePull(proj, repo, newP, p);
-        }
-    }
-    else
-    {
-        updatePull(proj, repo, *k, p);
-    }
 }
 
 Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
@@ -383,9 +358,28 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
         if (!p) continue;
 
         Pull* tmp = p.pull_id in knownpulls;
-        processPull(proj, repo, tmp, p);
+        Pull current_pull = tmp ? *tmp : null;
 
-        knownpulls.remove(p.pull_id);
+        if (!current_pull)
+        {
+            sql_exec(text("select ", getPullColumns(), " from github_pulls where r_b_id = ", repo.branch.id, " and pull_id = ", p.pull_id));
+            sqlrow[] rows = sql_rows();
+
+            if (rows == [])
+            {
+                newPull(proj, repo, p);
+                continue;
+            }
+            else
+            {
+                // reopened pull request
+                current_pull = makePullFromRow(rows[0]);
+            }
+        }
+        else
+            knownpulls.remove(p.pull_id);
+
+        updatePull(proj, repo, current_pull, p);
     }
 
     return true;
@@ -438,7 +432,7 @@ projloop:
                 if (p)
                 {
                     Pull* tmp = k in knownpulls;
-                    processPull(pv, rv, tmp, p);
+                    updatePull(pv, rv, *tmp, p);
                 }
             }
         }

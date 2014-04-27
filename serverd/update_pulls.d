@@ -75,7 +75,7 @@ string getPullColumns()
 
 Pull makePullFromRow(sqlrow row)
 {
-    if (row[11] == "") row[11] = row[4]; // use temporarily until loadCommitFromGitHub can get the right value
+    if (row[11] == "") row[11] = row[4]; // use temporarily until loadCommitDateFromGithub can get the right value
     if (row[4] == "0000-00-00T00:00:00Z") row[4] = "2000-01-01T00:00:00Z";
     if (row[11] == "" || row[11] == "0000-00-00T00:00:00Z") row[11] = "2000-01-01T00:00:00Z";
     if (row[12] == "" || row[12] == "0000-00-00T00:00:00Z") row[12] = "2000-01-01T00:00:00Z";
@@ -99,17 +99,15 @@ Pull loadPullFromGitHub(Project proj, Repository repo, ulong pullid)
     return makePullFromJson(jv, proj, repo);
 }
 
-bool loadCommitFromGitHub(Project proj, Repository repo, Pull p)
+string loadCommitDateFromGithub(Project proj, Repository repo, string sha)
 {
     JSONValue jv;
-    if (!github.getCommit(proj.name, repo.name, p.head_sha, jv))
-        return false;
+    if (!github.getCommit(proj.name, repo.name, sha, jv))
+        return null;
 
     string s = jv.object["commit"].object["committer"].object["date"].str;
-    p.head_date = SysTime.fromISOExtString(s, UTC());
-    //writelog("post fromISO: %s", p.head_date.toISOExtString());
 
-    return true;
+    return s;
 }
 
 void updatePull(Project proj, Repository repo, Pull current, Pull updated)
@@ -131,11 +129,13 @@ void updatePull(Project proj, Repository repo, Pull current, Pull updated)
     if (!current.open || (updated.head_usable && current.head_sha != updated.head_sha))
     {
         printHeader();
-        if (!loadCommitFromGitHub(proj, repo, updated))
+        string date = loadCommitDateFromGithub(proj, repo, updated.head_sha);
+        if (!date)
         {
             // don't update anything in the db if we can't get the current commit date
             return;
         }
+        updated.head_date = SysTime.fromISOExtString(date, UTC());;
         headDateAccurate = true;
     }
 
@@ -242,7 +242,10 @@ void processPull(Project proj, Repository repo, Pull* k, Pull p)
 
         if (rows == [])
         {
-            if (!loadCommitFromGitHub(proj, repo, p)) return;
+            string date = loadCommitDateFromGithub(proj, repo, p.head_sha);
+            if (!date) return;
+            p.head_date = SysTime.fromISOExtString(date, UTC());;
+
             if (!p.head_usable)
             {
                 writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", proj.name, repo.name, p.pull_id);
@@ -362,7 +365,7 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
             h_url,
             h_ref,
             h_sha,
-            SysTime.fromISOExtString(updated_at), // wrong time, but need a value. Will be fixed during loadCommitFromGitHub
+            SysTime.fromISOExtString(updated_at), // wrong time, but need a value. Will be fixed during loadCommitDateFromGithub
             SysTime.fromISOExtString(created_at),
             SysTime.fromISOExtString(closed_at),
             0);

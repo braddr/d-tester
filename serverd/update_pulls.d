@@ -240,7 +240,7 @@ bool loadCommitFromGitHub(Project proj, Repository repo, Pull p)
     return true;
 }
 
-void updatePull(Project proj, Repository repo, Pull* k, Pull p)
+void updatePull(Project proj, Repository repo, Pull current, Pull updated)
 {
     bool headerPrinted = false;
     void printHeader()
@@ -248,18 +248,18 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         if (headerPrinted) return;
         headerPrinted = true;
 
-        string oper = (k.open != p.open) ? (p.open ? "reopening" : "closing") : "updating";
-        writelog("  %s %s/%s/%s:", oper, proj.name, repo.name, p.pull_id);
+        string oper = (current.open != updated.open) ? (updated.open ? "reopening" : "closing") : "updating";
+        writelog("  %s %s/%s/%s:", oper, proj.name, repo.name, updated.pull_id);
     }
 
     bool clearOldResults = false;
     bool clearAutoPull = false;
 
     bool headDateAccurate = false;
-    if (!k.open || (p.head_usable && k.head_sha != p.head_sha))
+    if (!current.open || (updated.head_usable && current.head_sha != updated.head_sha))
     {
         printHeader();
-        if (!loadCommitFromGitHub(proj, repo, p))
+        if (!loadCommitFromGitHub(proj, repo, updated))
         {
             // don't update anything in the db if we can't get the current commit date
             return;
@@ -267,95 +267,95 @@ void updatePull(Project proj, Repository repo, Pull* k, Pull p)
         headDateAccurate = true;
     }
 
-    if (k.open != p.open)
+    if (current.open != updated.open)
     {
         printHeader();
         clearOldResults = true;
-        sql_exec(text("update github_pulls set open = ", p.open, " where id = ", k.id));
+        sql_exec(text("update github_pulls set open = ", updated.open, " where id = ", current.id));
 
-        if (p.open)
-            sql_exec(text("update github_pulls set close_date = null where id = ", k.id));
+        if (updated.open)
+            sql_exec(text("update github_pulls set close_date = null where id = ", current.id));
     }
 
-    if (k.updated_at != p.updated_at)
+    if (current.updated_at != updated.updated_at)
     {
         printHeader();
-        writelog("    updated_at: %s -> %s", k.updated_at.toISOExtString(), p.updated_at.toISOExtString());
-        sql_exec(text("update github_pulls set updated_at = '", p.updated_at.toISOExtString(), "' where id = ", k.id));
+        writelog("    updated_at: %s -> %s", current.updated_at.toISOExtString(), updated.updated_at.toISOExtString());
+        sql_exec(text("update github_pulls set updated_at = '", updated.updated_at.toISOExtString(), "' where id = ", current.id));
     }
 
-    if (headDateAccurate && p.head_usable && k.head_date != p.head_date)
-    {
-        printHeader();
-        clearOldResults = true;
-        writelog("    head_date: %s -> %s", k.head_date.toISOExtString(), p.head_date.toISOExtString());
-        sql_exec(text("update github_pulls set head_date = '", p.head_date.toISOExtString(), "' where id = ", k.id));
-    }
-
-    if (k.base_git_url != p.base_git_url)
+    if (headDateAccurate && updated.head_usable && current.head_date != updated.head_date)
     {
         printHeader();
         clearOldResults = true;
-        clearAutoPull = true;
-        writelog("    base_git_url: %s -> %s", k.base_git_url, p.base_git_url);
-        sql_exec(text("update github_pulls set base_git_url = '", p.base_git_url, "' where id = ", k.id));
+        writelog("    head_date: %s -> %s", current.head_date.toISOExtString(), updated.head_date.toISOExtString());
+        sql_exec(text("update github_pulls set head_date = '", updated.head_date.toISOExtString(), "' where id = ", current.id));
     }
 
-    if (k.base_sha != p.base_sha)
+    if (current.base_git_url != updated.base_git_url)
     {
         printHeader();
         clearOldResults = true;
         clearAutoPull = true;
-        writelog("    base_sha: %s -> %s", k.base_sha, p.base_sha);
-        sql_exec(text("update github_pulls set base_sha = '", p.base_sha, "' where id = ", k.id));
+        writelog("    base_git_url: %s -> %s", current.base_git_url, updated.base_git_url);
+        sql_exec(text("update github_pulls set base_git_url = '", updated.base_git_url, "' where id = ", current.id));
     }
 
-    if (p.head_usable && k.head_git_url != p.head_git_url)
+    if (current.base_sha != updated.base_sha)
     {
         printHeader();
         clearOldResults = true;
         clearAutoPull = true;
-        writelog("    head_git_url: %s -> %s", k.head_git_url, p.head_git_url);
-        sql_exec(text("update github_pulls set head_git_url = '", p.head_git_url, "' where id = ", k.id));
+        writelog("    base_sha: %s -> %s", current.base_sha, updated.base_sha);
+        sql_exec(text("update github_pulls set base_sha = '", updated.base_sha, "' where id = ", current.id));
     }
 
-    if (p.head_usable && k.head_sha != p.head_sha)
+    if (updated.head_usable && current.head_git_url != updated.head_git_url)
     {
         printHeader();
         clearOldResults = true;
         clearAutoPull = true;
-        writelog("    head_sha: %s -> %s", k.head_sha, p.head_sha);
-        sql_exec(text("update github_pulls set head_sha = '", p.head_sha, "' where id = ", k.id));
+        writelog("    head_git_url: %s -> %s", current.head_git_url, updated.head_git_url);
+        sql_exec(text("update github_pulls set head_git_url = '", updated.head_git_url, "' where id = ", current.id));
     }
 
-    if (k.create_date != p.create_date)
+    if (updated.head_usable && current.head_sha != updated.head_sha)
     {
         printHeader();
-        writelog("    create_date: %s -> %s", k.create_date.toISOExtString(), p.create_date.toISOExtString());
-        sql_exec(text("update github_pulls set create_date = '", p.create_date.toISOExtString(), "' where id = ", k.id));
+        clearOldResults = true;
+        clearAutoPull = true;
+        writelog("    head_sha: %s -> %s", current.head_sha, updated.head_sha);
+        sql_exec(text("update github_pulls set head_sha = '", updated.head_sha, "' where id = ", current.id));
     }
 
-    if (k.close_date != p.close_date)
+    if (current.create_date != updated.create_date)
     {
         printHeader();
-        writelog("    close_date: %s -> %s", k.close_date.toISOExtString(), p.close_date.toISOExtString());
-        sql_exec(text("update github_pulls set close_date = '", p.close_date.toISOExtString(), "' where id = ", k.id));
+        writelog("    create_date: %s -> %s", current.create_date.toISOExtString(), updated.create_date.toISOExtString());
+        sql_exec(text("update github_pulls set create_date = '", updated.create_date.toISOExtString(), "' where id = ", current.id));
+    }
+
+    if (current.close_date != updated.close_date)
+    {
+        printHeader();
+        writelog("    close_date: %s -> %s", current.close_date.toISOExtString(), updated.close_date.toISOExtString());
+        sql_exec(text("update github_pulls set close_date = '", updated.close_date.toISOExtString(), "' where id = ", current.id));
     }
 
     if (clearOldResults)
     {
         writelog("    deprecating old test results");
-        sql_exec(text("update pull_test_runs set rc = 2, end_time = now() where rc is null and deleted = 0 and g_p_id = ", k.id));
-        sql_exec(text("update pull_test_runs set deleted = 1 where deleted = 0 and g_p_id = ", k.id));
-        sql_exec(text("delete from pull_suppressions where g_p_id = ", k.id));
+        sql_exec(text("update pull_test_runs set rc = 2, end_time = now() where rc is null and deleted = 0 and g_p_id = ", current.id));
+        sql_exec(text("update pull_test_runs set deleted = 1 where deleted = 0 and g_p_id = ", current.id));
+        sql_exec(text("delete from pull_suppressions where g_p_id = ", current.id));
     }
 
-    if (clearAutoPull && k.auto_pull != 0)
+    if (clearAutoPull && current.auto_pull != 0)
     {
         writelog("    clearing auto-pull state");
         JSONValue jv;
-        github.addPullComment(proj.name, repo.name, to!string(k.pull_id), "Pull updated, auto_merge toggled off", jv);
-        sql_exec(text("update github_pulls set auto_pull = null where id = ", k.id));
+        github.addPullComment(proj.name, repo.name, to!string(current.pull_id), "Pull updated, auto_merge toggled off", jv);
+        sql_exec(text("update github_pulls set auto_pull = null where id = ", current.id));
     }
 }
 
@@ -398,12 +398,12 @@ void processPull(Project proj, Repository repo, Pull* k, Pull p)
         {
             // reopened pull request
             Pull newP = makePullFromRow(rows[0]);
-            updatePull(proj, repo, &newP, p);
+            updatePull(proj, repo, newP, p);
         }
     }
     else
     {
-        updatePull(proj, repo, k, p);
+        updatePull(proj, repo, *k, p);
     }
 }
 

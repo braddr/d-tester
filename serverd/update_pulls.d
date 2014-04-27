@@ -230,6 +230,33 @@ void updatePull(Project proj, Repository repo, Pull current, Pull updated)
         sql_exec(text("update github_pulls set auto_pull = null where id = ", current.id));
     }
 }
+void newPull(Project proj, Repository repo, Pull pull)
+{
+    if (!pull.head_usable)
+    {
+        writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", proj.name, repo.name, pull.pull_id);
+        return;
+    }
+
+    string date = loadCommitDateFromGithub(proj, repo, pull.head_sha);
+    if (!date) return;
+    pull.head_date = SysTime.fromISOExtString(date, UTC());;
+
+    writelog("  opening %s/%s/%s", proj.name, repo.name, pull.pull_id);
+    string sqlcmd = text("insert into github_pulls (id, r_b_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
+
+    if (pull.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
+        sqlcmd ~= "null";
+    else
+        sqlcmd ~= "'" ~ pull.close_date.toISOExtString() ~ "'";
+
+    sqlcmd ~= text(", '", pull.updated_at.toISOExtString(), "', true, "
+                   "'", pull.base_git_url, "', '", pull.base_ref, "', '", pull.base_sha, "', "
+                   "'", pull.head_git_url, "', '", pull.head_ref, "', '", pull.head_sha, "', "
+                   "'", pull.head_date.toISOExtString(), "', null)");
+
+    sql_exec(sqlcmd);
+}
 
 void processPull(Project proj, Repository repo, Pull* k, Pull p)
 {
@@ -242,32 +269,7 @@ void processPull(Project proj, Repository repo, Pull* k, Pull p)
 
         if (rows == [])
         {
-            string date = loadCommitDateFromGithub(proj, repo, p.head_sha);
-            if (!date) return;
-            p.head_date = SysTime.fromISOExtString(date, UTC());;
-
-            if (!p.head_usable)
-            {
-                writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", proj.name, repo.name, p.pull_id);
-                return;
-            }
-
-            // new pull request
-            writelog("  opening %s/%s/%s", proj.name, repo.name, p.pull_id);
-            // TODO: replace second null with p.r_b_id after r_b_id has a meaningful value
-            string sqlcmd = text("insert into github_pulls (id, r_b_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", p.pull_id, ", ", p.user_id, ", '", p.create_date.toISOExtString(), "', ");
-
-            if (p.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
-                sqlcmd ~= "null";
-            else
-                sqlcmd ~= "'" ~ p.close_date.toISOExtString() ~ "'";
-
-            sqlcmd ~= text(", '", p.updated_at.toISOExtString(), "', true, "
-                           "'", p.base_git_url, "', '", p.base_ref, "', '", p.base_sha, "', "
-                           "'", p.head_git_url, "', '", p.head_ref, "', '", p.head_sha, "', "
-                           "'", p.head_date.toISOExtString(), "', null)");
-
-            sql_exec(sqlcmd);
+            newPull(proj, repo, p);
         }
         else
         {

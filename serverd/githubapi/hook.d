@@ -120,10 +120,11 @@ bool processPull(const ref JSONValue jv)
     Pull github_pull = makePullFromJson(*pull_request, proj, repo);
     if (!github_pull) return false;
 
-    Pull db_pull = loadPull(repo.id, number.uinteger);
-    if (!db_pull) return false;
-
-    updatePull(proj, repo, db_pull, github_pull);
+    Pull db_pull = loadPull(repo.id, number.integer);
+    if (db_pull)
+        updatePull(proj, repo, db_pull, github_pull);
+    else
+        newPull(proj, repo, github_pull);
 
     return true;
 }

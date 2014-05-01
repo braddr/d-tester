@@ -97,6 +97,8 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
 
         if (!isNew && current_pull.head_sha == p.head_sha)
             p.head_date = current_pull.head_date;
+        else if (!p.head_usable)
+            continue;
         else
         {
             string date = loadCommitDateFromGithub(proj, repo, p.head_sha);

@@ -3,6 +3,9 @@ module githubapi.hook;
 import mysql;
 import utils;
 
+import model.project;
+import model.pull;
+
 import std.algorithm;
 import std.conv;
 import std.json;
@@ -94,6 +97,37 @@ bool processPush(const ref JSONValue jv)
     return true;
 }
 
+bool processPull(const ref JSONValue jv)
+{
+    const(JSONValue)* action       = "action" in jv.object;
+    const(JSONValue)* number       = "number" in jv.object;
+    const(JSONValue)* pull_request = "pull_request" in jv.object;
+
+    // doesn't look like a Push request, bail out
+    if (!action || !number || !pull_request) return false;
+
+    const(JSONValue)* base           = "base"  in pull_request.object;
+    const(JSONValue)* base_repo      = "repo"  in base.object;
+    const(JSONValue)* base_repo_name = "name"  in base_repo.object;
+
+    const(JSONValue)* base_user      = "user"  in base.object;
+    const(JSONValue)* base_ref       = "ref"   in base.object;
+    const(JSONValue)* owner          = "login" in base_user.object;
+
+    Project proj = loadProject(owner.str, base_repo_name.str, base_ref.str);
+    Repository repo = proj.repositories[base_repo_name.str];
+
+    Pull github_pull = makePullFromJson(*pull_request, proj, repo);
+    if (!github_pull) return false;
+
+    Pull db_pull = loadPull(repo.id, number.uinteger);
+    if (!db_pull) return false;
+
+    updatePull(proj, repo, db_pull, github_pull);
+
+    return true;
+}
+
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
     outstr.put("Content-type: text/plain\n\n");
@@ -119,10 +153,15 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     JSONValue jv;
     if (!parseAndReturn(bodytext, jv)) return;
 
+    bool rc = true;
     switch(eventname)
     {
-        case "push": processPush(jv); break;
-        default:     writelog("  unrecognize event, id: %s", liid[0]); break;
+        case "push":         rc = processPush(jv); break;
+        case "pull_request": rc = processPull(jv); break;
+        default:             writelog("  unrecognized event, id: %s", liid[0]); break;
     }
+
+    if (!rc)
+        writelog("  processing of event id %s failed", liid[0]);
 }
 

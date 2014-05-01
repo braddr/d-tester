@@ -81,10 +81,9 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
         bool isNew = false;
         if (!current_pull)
         {
-            sql_exec(text("select ", getPullColumns(), " from github_pulls where r_b_id = ", repo.branch.id, " and pull_id = ", p.pull_id));
-            sqlrow[] rows = sql_rows();
+            current_pull = loadPull(repo.branch.id, p.pull_id);
 
-            if (rows == [])
+            if (!current_pull)
             {
                 if (!p.head_usable)
                 {
@@ -94,8 +93,6 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
 
                 isNew = true;
             }
-            else
-                current_pull = makePullFromRow(rows[0]); // reopened pull request
         }
 
         if (!isNew && current_pull.head_sha == p.head_sha)

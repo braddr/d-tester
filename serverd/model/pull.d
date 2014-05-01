@@ -289,3 +289,14 @@ void newPull(Project proj, Repository repo, Pull pull)
     sql_exec(sqlcmd);
 }
 
+Pull loadPull(ulong r_b_id, ulong pull_id)
+{
+    sql_exec(text("select ", getPullColumns(), " from github_pulls where r_b_id = ", r_b_id, " and pull_id = ", pull_id));
+    sqlrow[] rows = sql_rows();
+
+    if (rows.length != 1)
+        return null;
+    else
+        return makePullFromRow(rows[0]);
+}
+

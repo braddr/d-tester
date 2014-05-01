@@ -1,6 +1,7 @@
 module model.project;
 
 import mysql;
+import utils;
 
 import std.conv;
 
@@ -102,3 +103,18 @@ Project[ulong] loadProjects()
     return projects;
 }
 
+Project loadProject(string owner, string repo, string branch)
+{
+    sql_exec(text("select p.id, p.name, p.test_pulls from projects p where p.id in (select r.project_id from repositories r, repo_branches rb where r.id = rb.repository_id and r.name = \"", repo, "\" and rb.name = \"", branch, "\") and p.name = \"", owner, "\""));
+
+    sqlrow[] rows = sql_rows();
+
+    if (rows.length != 1)
+    {
+        writelog("  found more than one project matching %s/%s%s, skipping", owner, repo, branch);
+        return null;
+    }
+
+    auto p = new Project(to!ulong(rows[0][0]), rows[0][1], (rows[0][2] == "1"));
+    return p;
+}

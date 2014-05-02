@@ -2,7 +2,6 @@ module clientapi.get_runnable_pull;
 
 import config;
 import mysql;
-import master = clientapi.get_runnable_master;
 static import clientapi.finish_pull_run;
 import serverd;
 import utils;
@@ -50,7 +49,21 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
     foreach(ref row; rows) { openPulls[row[0]] = row; }
 }
 
-master.project loadProjectById(string projectid)
+struct repo_branch
+{
+    string repo_id;
+    string repo_name;
+    string branch_name;
+}
+
+struct project
+{
+    string project_id;
+    string project_name;
+    repo_branch[] branches;
+}
+
+project loadProjectById(string projectid)
 {
     sql_exec(text("select p.id, p.name, r.id, r.name, rb.name "
                   "  from projects p, repositories r, repo_branches rb "
@@ -61,16 +74,16 @@ master.project loadProjectById(string projectid)
 
     sqlrow[] rows = sql_rows();
 
-    master.project[] projects;
-    master.project* proj = null;
+    project[] projects;
+    project* proj = null;
     foreach (row; rows)
     {
         if (!proj || proj.project_id != row[0])
         {
-            projects ~= master.project(row[0], row[1], []);
+            projects ~= project(row[0], row[1], []);
             proj = &(projects[$-1]);
         }
-        proj.branches ~= master.repo_branch(row[2], row[3], row[4]);
+        proj.branches ~= repo_branch(row[2], row[3], row[4]);
     }
 
     return projects[0];
@@ -232,6 +245,16 @@ string recordRunStart(string hostid, string platform, const ref Pull pull)
     return lastidrow[0];
 }
 
+string recordMasterStart(string platform, string hostid, string projectid)
+{
+    sql_exec(text("insert into test_runs (start_time, project_id, host_id, platform, deleted) "
+                  "values (now(), ", projectid, ", \"", hostid, "\", \"", platform, "\", false)"));
+    sql_exec("select last_insert_id()");
+    sqlrow row = sql_row();
+
+    return row[0];
+}
+
 void tryToCleanup(string hostid)
 {
     sql_exec(text("select ptr.id, r.name, ghp.pull_id "
@@ -251,6 +274,17 @@ void tryToCleanup(string hostid)
     }
 }
 
+void tryToCleanupMaster(string hostid)
+{
+    sql_exec(text("select id from test_runs where deleted = 0 and host_id = \"", hostid, "\" and end_time is null"));
+    sqlrow[] rows = sql_rows();
+    foreach (row; rows)
+    {
+        writelog("  cleaning up in progress master run: %s", row[0]);
+        sql_exec(text("update test_runs set deleted = 1 where id = ", row[0]));
+    }
+}
+
 bool validateInput(ref string raddr, ref string rname, ref string hostid, ref string platform, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
@@ -265,7 +299,7 @@ bool validateInput(ref string raddr, ref string rname, ref string hostid, ref st
     return true;
 }
 
-void output(string clientver, string runid, string platform, master.project proj, Pull[] pulls, Appender!string outstr)
+void output(string clientver, string runid, string platform, project proj, Pull[] pulls, Appender!string outstr)
 {
     switch (clientver)
     {
@@ -408,11 +442,65 @@ Pull[] selectPullsToBuild(string hostid, string platform)
     return pulls;
 }
 
-master.project[] selectMasterToBuild(bool force, string hostid, string platform)
+project[] loadProjects(string hostid)
 {
-    master.project[] projects = master.loadProjects(hostid);
+    sql_exec(text("select p.id, p.name, r.id, r.name, rb.name "
+                  "  from projects p, repositories r, repo_branches rb, build_host_projects bhp "
+                  " where r.id = rb.repository_id and "
+                  "       p.id = r.project_id and "
+                  "       p.enabled = true and "
+                  "       bhp.project_id = p.id and "
+                  "       bhp.host_id = ", hostid,
+                  " order by p.id, r.id, rb.id"));
 
-    projects = projects.filter!(a => master.shouldDoBuild(force, platform, a.project_id)).array;
+    sqlrow[] rows = sql_rows();
+
+    project[] projects;
+    project* proj = null;
+    foreach (row; rows)
+    {
+        if (!proj || proj.project_id != row[0])
+        {
+            projects ~= project(row[0], row[1], []);
+            proj = &(projects[$-1]);
+        }
+        proj.branches ~= repo_branch(row[2], row[3], row[4]);
+    }
+
+    return projects;
+}
+
+bool shouldDoBuild(bool force, string platform, string projectid)
+{
+    bool dobuild = force;
+
+    if (dobuild)
+    {
+        writelog("  forced build, deprecating old build(s)");
+        sql_exec(text("update test_runs set deleted=1 where platform = \"", platform, "\" and deleted=0"));
+    }
+
+    if (!dobuild)
+    {
+        sql_exec(text("select id "
+                      "from test_runs "
+                      "where platform = \"", platform, "\" and "
+                      "  project_id = ", projectid, " and "
+                      "  deleted = 0"));
+        sqlrow[] rows = sql_rows();
+
+        if (rows.length == 0)
+            dobuild = true;
+    }
+
+    return dobuild;
+}
+
+project[] selectMasterToBuild(bool force, string hostid, string platform)
+{
+    project[] projects = loadProjects(hostid);
+
+    projects = projects.filter!(a => shouldDoBuild(force, platform, a.project_id)).array;
     return projects;
 }
 
@@ -445,10 +533,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
 
     tryToCleanup(hostid);
-    master.tryToCleanup(hostid);
+    tryToCleanupMaster(hostid);
 
     Pull[] pulls = selectPullsToBuild(hostid, platform);
-    master.project[] projects = selectMasterToBuild(force.length != 0, hostid, platform);
+    project[] projects = selectMasterToBuild(force.length != 0, hostid, platform);
 
     bool doPull = false;
     bool doMaster = false;
@@ -466,7 +554,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
 
     string runid;
-    master.project proj;
+    project proj;
 
     if (doPull)
     {
@@ -477,7 +565,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     {
         pulls = null;
         proj = projects[uniform(0, projects.length)];
-        runid = master.getNewID(platform, hostid, proj.project_id);
+        runid = recordMasterStart(platform, hostid, proj.project_id);
     }
 
     try

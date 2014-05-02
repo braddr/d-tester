@@ -10,7 +10,6 @@ import www;
 import githubapi.hook;
 import githubapi.process_login;
 
-import clientapi.get_runnable_master;
 import clientapi.finish_master_run;
 import clientapi.start_master_test;
 import clientapi.finish_master_test;
@@ -83,7 +82,6 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
         "/approve_pull_requester" : &loggedin.approve_pull_requester.run,
 
         // master checkins
-        "/get_runnable_master"    : &clientapi.get_runnable_master.run, // for a given platform, see if it's time to run
         "/finish_master_run"      : &clientapi.finish_master_run.run,   // mark a master build as complete
         "/start_master_test"      : &clientapi.start_master_test.run,   // start a test phase for a master request build
         "/finish_master_test"     : &clientapi.finish_master_test.run,  // start a test phase for a master request build

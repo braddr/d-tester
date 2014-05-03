@@ -46,8 +46,9 @@ Lerror:
     if (!validateInput(projectid, runid, runtype, logid, valout))
         goto Lerror;
 
-    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set deleted = true, end_time = now() where id = ", runid));
-    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_data set end_time = now() where test_run_id = ", runid));
+    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set deleted = true where id = ", runid));
+    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set end_time = now() where end_time is null and id = ", runid));
+    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_data set end_time = now() where end_time is null and test_run_id = ", runid));
 
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/",
                (runtype == "pull" ? "pull" : "test_data"),

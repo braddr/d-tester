@@ -167,32 +167,6 @@ projloop:
     }
 }
 
-void backfill_pulls()
-{
-    string ids_with_no_repo =
-        "8, "
-        "105, 137, "
-        "203, 204, 206, 241, 257, 268, "
-        "301, 314, 316, 323, 328, "
-        "401, 425, 430, 495, "
-        "505, 519, 540, "
-        "679, "
-        "720, 726, 758, 777, "
-        "810, 856, "
-        "1009, 1027, 1042, 1060, 1072, 1074, "
-        "1137, 1144, 1153, "
-        "1230, 1294, "
-        "1306, 1316, 1321, 1322, 1331, 1340, 1342, 1349, 1350, 1351, 1352, 1360, "
-        "1478, 1479, 1480, 1491, "
-        "2382";
-
-
-
-    // resetting to open where we don't het have a create_date to force a re-populate from github
-    // TODO: build a better mechanism than having to open the request
-    sql_exec(text("update github_pulls set open=1 where open=0 and create_date is null and base_ref = \"master\" and id not in (", ids_with_no_repo, ") limit 10"));
-}
-
 int main(string[] args)
 {
     LOGNAME = "/var/log/update-pulls.log";
@@ -219,7 +193,6 @@ int main(string[] args)
     // loads the tree of Project -> Repositories
     Project[ulong] projects = loadProjects();
 
-    //backfill_pulls();
     update_pulls(projects);
 
     writelog("shutting down");

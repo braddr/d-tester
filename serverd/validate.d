@@ -138,7 +138,6 @@ bool validate_clientver(ref string clientver, Appender!string outstr)
 
     switch (clientver)
     {
-        case "3":
         case "4":
             return true;
         default:

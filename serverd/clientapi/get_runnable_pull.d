@@ -316,6 +316,7 @@ void output(string clientver, string runid, string platform, project proj, Pull[
 
             switch (proj.project_name)
             {
+                case "yebblies":
                 case "D-Programming-Language":
                     formattedWrite(outstr, "1 0\n"); // checkout dummy
 

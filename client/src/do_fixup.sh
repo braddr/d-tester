@@ -16,7 +16,7 @@ fi
 echo -e "\tapplying fixups to checked out source"
 
 case "$3" in
-    D-Programming-Language)
+    yebblies|D-Programming-Language)
         # need a conf files so that dmd can find the imports and libs from within the test
         case "$2" in
             Darwin_32|Darwin_64_32)

@@ -76,7 +76,10 @@
         <tr class="data dmd">
             <td class="metadata header">Reporter</td>
             <td class="metadata data"><a href="hosts/details.ghtml?hostid=\get{b_id}">\get{b_name}&nbsp;(\get{b_ipaddr})</a></td>
-            \if{\eq{\get{projectname}}{D-Programming-Language}}{
+            \if{
+              \eq{\get{projectname}}{yebblies}
+              \eq{\get{projectname}}{D-Programming-Language}
+            }{
                 <td>dmd</td>
                 \drawOneTest{2}{build}
                 \drawOneTest{7}{}
@@ -89,7 +92,10 @@
         <tr class="data druntime">
             <td class="metadata header">Run ID</td>
             <td class="metadata data">\get{id}</td>
-            \if{\eq{\get{projectname}}{D-Programming-Language}}{
+            \if{
+              \eq{\get{projectname}}{yebblies}
+              \eq{\get{projectname}}{D-Programming-Language}
+            }{
                 <td>druntime</td>
                 \drawOneTest{3}{build}
                 \drawOneTest{5}{}
@@ -98,7 +104,10 @@
         <tr class="data phobos">
             <td class="metadata header bottomleft">Obsolete</td>
             <td class="metadata data">\if{\eq{\get{deleted}}{0}}{No}{Yes}\if{\and{\get{loggedin}}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="addv2/deprecate_run?projectid=\get{projectid}&amp;runid=\get{runid}\if{\get{logid}}{&amp;logid=\get{logid}}&amp;runtype=master&amp;csrf=\get{csrf}">deprecate</a>}</td>
-            \if{\eq{\get{projectname}}{D-Programming-Language}}{
+            \if{
+              \eq{\get{projectname}}{yebblies}
+              \eq{\get{projectname}}{D-Programming-Language}
+            }{
                 <td>phobos</td>
                 \drawOneTest{4}{build}
                 \drawOneTest{6}{}

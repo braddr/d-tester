@@ -79,7 +79,10 @@
 # render the html for one result set
 # \1 == platform
 \set{showResultSet}{\quote{
-    \if{\eq{\get{projectname}}{D-Programming-Language}}{
+    \if{
+      \eq{\get{projectname}}{D-Programming-Language}
+      \eq{\get{projectname}}{yebblies}
+    }{
         \if{\get{result_start}}{
             <table class="summary whiterounded">
                 <tr class="time">

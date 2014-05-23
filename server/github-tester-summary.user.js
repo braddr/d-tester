@@ -3,8 +3,8 @@
 // @namespace           http://auto-tester.puremagic.com/
 // @description         add auto tester results to github
 // @include             https://github.com/
-// @include             https://github.com/organizations/D-Programming-Language
-// @version             1.3
+// @include             https://github.com/D-Programming-Language
+// @version             1.4
 // ==/UserScript==
 
 function showResults(results)
@@ -44,26 +44,18 @@ function doLoad()
 
 function addBox()
 {
-    var newhtml = "<div class=\"top-bar\"><h2><a id=\"at_hdr\" href=\"http://auto-tester.puremagic.com/\">Auto-Tester Results</a></h2></div>\n";
+    var newhtml = "<h3 class=\"org-module-title\"><a id=\"at_hdr\" class=\"org-module-link\" href=\"http://auto-tester.puremagic.com/\">Auto-Tester Results</a></h3>\n";
 
-    newhtml += "<ul id=\"at_listing\" class=\"repo_list\">\n";
+    newhtml += "<ul id=\"at_listing\" class=\"org-teams-list\">\n";
     newhtml += "</ul>\n";
-    newhtml += "<div class=\"bottom-bar\"></div>\n";
 
     var newdiv = document.createElement("div");
-    newdiv.setAttribute("class", "repos");
+    newdiv.setAttribute("class", "org-module simple-box");
     newdiv.setAttribute("id", "auto_tester_results");
     newdiv.innerHTML = newhtml;
 
-    var loc = document.getElementById("org_your_repos");
-    if (loc)
-        loc.parentNode.insertBefore(newdiv, null);
-    else
-    {
-        loc = document.getElementById("watched_repos");
-        if (loc)
-            loc.parentNode.insertBefore(newdiv, null);
-    }
+    var sb = document.getElementsByClassName("org-sidebar")[0];
+    sb.insertBefore(newdiv, sb.firstChild);
 }
 
 addBox();

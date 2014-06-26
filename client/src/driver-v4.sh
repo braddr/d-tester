@@ -202,6 +202,7 @@ function runtests
 
     if [ -d "$rundir" -a "$runid" != "test" ]; then
         rm -rf "$rundir"
+        if [ -d /cores ]; then rm -f /cores/*; fi
     fi
 }
 

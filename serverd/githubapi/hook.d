@@ -40,12 +40,20 @@ bool processPush(const ref JSONValue jv)
     // doesn't look like a Push request, bail out
     if (!refname || !repo) return false;
 
-    const(JSONValue)* org      = "organization" in repo.object;
+    const(JSONValue)* owner    = "owner" in repo.object;
     const(JSONValue)* reponame = "name" in repo.object;
 
-    if (!org || !reponame)
+    if (!owner || !reponame)
     {
-        writelog("  missing repo.organization or repo.name, invalid push?");
+        writelog("  missing repo.owner or repo.name, invalid push?");
+        return false;
+    }
+
+    owner = "name" in owner.object;
+
+    if (!owner)
+    {
+        writelog("  missing repo.owner.name, invalid push?");
         return false;
     }
 
@@ -60,12 +68,12 @@ bool processPush(const ref JSONValue jv)
     sql_exec(text("select p.id "
                   "from projects p, repositories r, repo_branches rb "
                   "where p.id = r.project_id and r.id = rb.repository_id and "
-                  "p.name = \"", sql_quote(org.str), "\" and r.name = \"", reponame.str, "\" and rb.name = \"", sql_quote(branch), "\""));
+                  "p.name = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and rb.name = \"", sql_quote(branch), "\""));
     sqlrow[] rows = sql_rows();
 
     if (rows.length == 0)
     {
-        writelog ("  no project found for '%s/%s/%s'", org.str, reponame.str, branch);
+        writelog ("  no project found for '%s/%s/%s'", owner.str, reponame.str, branch);
         return false;
     }
     string projectid = rows[0][0];

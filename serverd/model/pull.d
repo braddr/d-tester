@@ -274,7 +274,7 @@ void newPull(Project proj, Repository repo, Pull pull)
 {
     writelog("  opening %s/%s/%s", proj.name, repo.name, pull.pull_id);
 
-    string sqlcmd = text("insert into github_pulls (id, r_b_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
+    string sqlcmd = text("insert into github_pulls (id, r_b_id, repo_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", repo.branch.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
 
     if (pull.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
         sqlcmd ~= "null";

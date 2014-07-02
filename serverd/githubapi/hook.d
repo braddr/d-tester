@@ -66,9 +66,9 @@ bool processPush(const ref JSONValue jv)
     branch = branch[11 .. $];
 
     sql_exec(text("select p.id "
-                  "from projects p, repositories r, repo_branches rb "
-                  "where p.id = r.project_id and r.id = rb.repository_id and "
-                  "p.name = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and rb.name = \"", sql_quote(branch), "\""));
+                  "from projects p, repositories r "
+                  "where p.id = r.project_id and "
+                  "p.name = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and r.ref = \"", sql_quote(branch), "\""));
     sqlrow[] rows = sql_rows();
 
     if (rows.length == 0)
@@ -82,13 +82,14 @@ bool processPush(const ref JSONValue jv)
     sql_exec(text("update test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and project_id = ", projectid));
 
     // invalidate obsoleted pull_test_runs
-    sql_exec(text("select rb.id "
-                  "from projects p, repositories r, repo_branches rb "
-                  "where p.id = r.project_id and r.id = rb.repository_id and "
+    // TODO: merge these two queries into one query with nesting
+    sql_exec(text("select r.id "
+                  "from projects p, repositories r "
+                  "where p.id = r.project_id and "
                   "p.id = ", projectid));
     rows = sql_rows();
 
-    string query = "update pull_test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and g_p_id in (select id from github_pulls where r_b_id in (";
+    string query = "update pull_test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and g_p_id in (select id from github_pulls where repo_id in (";
     bool first = true;
     foreach(row; rows)
     {

@@ -13,7 +13,7 @@ import std.json;
 class Pull
 {
     ulong   id;
-    ulong   r_b_id;
+    ulong   repo_id;
     ulong   pull_id;
     ulong   user_id;
     SysTime updated_at;
@@ -31,10 +31,10 @@ class Pull
     SysTime close_date;
     ulong   auto_pull;
 
-    this(ulong _id, ulong _r_b_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, bool _base_usable, string _base_git_url, string _base_ref, string _base_sha, bool _head_usable, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date, ulong _auto_pull)
+    this(ulong _id, ulong _repo_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, bool _base_usable, string _base_git_url, string _base_ref, string _base_sha, bool _head_usable, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date, ulong _auto_pull)
     {
         id           = _id;
-        r_b_id       = _r_b_id;
+        repo_id      = _repo_id;
         pull_id      = _pull_id;
         user_id      = _user_id;
         updated_at   = _updated_at;
@@ -58,7 +58,7 @@ string getPullColumns()
 {
     // field 1 is unused now (was repo_id)
     //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15      16
-    return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, r_b_id, auto_pull";
+    return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, repo_id, auto_pull";
 }
 
 Pull makePullFromRow(sqlrow row)
@@ -69,7 +69,7 @@ Pull makePullFromRow(sqlrow row)
     if (row[12] == "" || row[12] == "0000-00-00T00:00:00Z") row[12] = "2000-01-01T00:00:00Z";
     if (row[13] == "" || row[13] == "0000-00-00T00:00:00Z") row[13] = "2000-01-01T00:00:00Z";
 
-    // TODO: remove once r_b_id data is backfilled
+    // TODO: remove once repo_id data is backfilled
     if (row[15] == "") row[15] = "0";
     // null -> 0 for auto_pull userid
     if (row[16] == "") row[16] = "0";
@@ -101,9 +101,9 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
         return null;
     }
     string base_ref = base.object["ref"].str;
-    if (base_ref != repo.branch.name)
+    if (base_ref != repo.refname)
     {
-        //writelog("%s/%s/%s: pull is for %s, not %s", proj.name, repo.name, pullid, base_ref, repo.branch.name);
+        //writelog("%s/%s/%s: pull is for %s, not %s", proj.name, repo.name, pullid, base_ref, repo.refname);
         return null;
     }
 
@@ -148,7 +148,7 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
 
     auto p = new Pull(
             0, // our id not known from github data
-            repo.branch.id,
+            repo.id,
             obj.object["number"].integer,
             uid,
             SysTime.fromISOExtString(updated_at),
@@ -274,7 +274,7 @@ void newPull(Project proj, Repository repo, Pull pull)
 {
     writelog("  opening %s/%s/%s", proj.name, repo.name, pull.pull_id);
 
-    string sqlcmd = text("insert into github_pulls (id, r_b_id, repo_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.branch.id, ", ", repo.branch.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
+    string sqlcmd = text("insert into github_pulls (id, r_b_id, repo_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.id, ", ", repo.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
 
     if (pull.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
         sqlcmd ~= "null";
@@ -289,9 +289,9 @@ void newPull(Project proj, Repository repo, Pull pull)
     sql_exec(sqlcmd);
 }
 
-Pull loadPull(ulong r_b_id, ulong pull_id)
+Pull loadPull(ulong repo_id, ulong pull_id)
 {
-    sql_exec(text("select ", getPullColumns(), " from github_pulls where r_b_id = ", r_b_id, " and pull_id = ", pull_id));
+    sql_exec(text("select ", getPullColumns(), " from github_pulls where repo_id = ", repo_id, " and pull_id = ", pull_id));
     sqlrow[] rows = sql_rows();
 
     if (rows.length != 1)

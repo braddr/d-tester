@@ -81,7 +81,7 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
         bool isNew = false;
         if (!current_pull)
         {
-            current_pull = loadPull(repo.branch.id, p.pull_id);
+            current_pull = loadPull(repo.id, p.pull_id);
 
             if (!current_pull)
             {
@@ -122,9 +122,9 @@ projloop:
     {
         foreach (rk, rv; pv.repositories)
         {
-            writelog("processing pulls for %s/%s branch %s", pv.name, rv.name, rv.branch.name);
+            writelog("processing pulls for %s/%s/%s", pv.name, rv.name, rv.refname);
 
-            sql_exec(text("select ", getPullColumns()," from github_pulls where r_b_id = ", rv.branch.id, " and open = true"));
+            sql_exec(text("select ", getPullColumns()," from github_pulls where repo_id = ", rv.id, " and open = true"));
             sqlrow[] rows = sql_rows();
             Pull[ulong] knownpulls;
             foreach(row; rows)

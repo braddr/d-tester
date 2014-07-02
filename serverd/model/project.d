@@ -5,66 +5,32 @@ import utils;
 
 import std.conv;
 
-class RepoBranch
-{
-    ulong   id;
-    ulong   repo_id;
-    string  name;
-
-    this(ulong _id, ulong _rid, string _name)
-    {
-        id      = _id;
-        repo_id = _rid;
-        name    = _name;
-    }
-}
-
-RepoBranch[string] loadRepoBranches(ulong repo_id)
-{
-    sql_exec(text("select id, name from repo_branches where repository_id = ", repo_id));
-
-    sqlrow[] rows = sql_rows();
-
-    RepoBranch[string] repo_branches;
-    foreach (row; rows)
-    {
-        auto rb = new RepoBranch(to!ulong(row[0]), repo_id, row[1]);
-        repo_branches[row[1]] = rb;
-    }
-
-    return repo_branches;
-}
-
 class Repository
 {
     ulong id;
     ulong project_id;
     string name;
-    RepoBranch branch;
+    string refname;
 
-    this(ulong _id, ulong _pid, string _name)
+    this(ulong _id, ulong _pid, string _name, string _refname)
     {
         id         = _id;
         project_id = _pid;
         name       = _name;
-
-        RepoBranch[string] branches = loadRepoBranches(id);
-        assert(branches.length == 1);
-
-        branch = branches[branches.keys[0]];
+        refname    = _refname;
     }
 }
 
 Repository[string] loadRepositories(ulong pid)
 {
-    sql_exec(text("select id, name from repositories where project_id = ", pid));
+    sql_exec(text("select id, name, ref from repositories where project_id = ", pid));
 
     sqlrow[] rows = sql_rows();
 
     Repository[string] repositories;
     foreach (row; rows)
     {
-        auto r = new Repository(to!ulong(row[0]), pid, row[1]);
+        auto r = new Repository(to!ulong(row[0]), pid, row[1], row[2]);
         repositories[row[1]] = r;
     }
 
@@ -105,7 +71,7 @@ Project[ulong] loadProjects()
 
 Project loadProject(string owner, string repo, string branch)
 {
-    sql_exec(text("select p.id, p.name, p.test_pulls from projects p where p.id in (select r.project_id from repositories r, repo_branches rb where r.id = rb.repository_id and r.name = \"", repo, "\" and rb.name = \"", branch, "\") and p.name = \"", owner, "\""));
+    sql_exec(text("select p.id, p.name, p.test_pulls from projects p where p.id in (select r.project_id from repositories r where r.name = \"", repo, "\" and r.ref = \"", branch, "\") and p.name = \"", owner, "\""));
 
     sqlrow[] rows = sql_rows();
 

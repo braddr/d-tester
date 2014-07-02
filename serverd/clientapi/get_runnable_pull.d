@@ -30,11 +30,10 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
     // get set of pull requests that need to have runs
     //                 0      1     2       3           4            5                6            7              8             9        10    11                  12
     string q = text(
-               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, rb.name, p.id, p.allow_auto_merge, gp.auto_pull "
-               "from github_pulls gp, projects p, repositories r, repo_branches rb, github_users u, build_host_projects bhp "
+               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, r.ref, p.id, p.allow_auto_merge, gp.auto_pull "
+               "from github_pulls gp, projects p, repositories r, github_users u, build_host_projects bhp "
                "where gp.open = true and "
-               "  gp.r_b_id = rb.id and "
-               "  rb.repository_id = r.id and "
+               "  gp.repo_id = r.id and "
                "  p.id = r.project_id and "
                "  gp.user_id = u.id and "
                "  u.pull_approver is not null and "
@@ -65,12 +64,11 @@ struct project
 
 project loadProjectById(string projectid)
 {
-    sql_exec(text("select p.id, p.name, r.id, r.name, rb.name "
-                  "  from projects p, repositories r, repo_branches rb "
-                  " where r.id = rb.repository_id and "
-                  "       p.id = r.project_id and "
+    sql_exec(text("select p.id, p.name, r.id, r.name, r.ref "
+                  "  from projects p, repositories r "
+                  " where p.id = r.project_id and "
                   "       p.id = ", projectid,
-                  " order by p.id, r.id, rb.id"));
+                  " order by p.id, r.id"));
 
     sqlrow[] rows = sql_rows();
 
@@ -258,10 +256,9 @@ string recordMasterStart(string platform, string hostid, string projectid)
 void tryToCleanup(string hostid)
 {
     sql_exec(text("select ptr.id, r.name, ghp.pull_id "
-                  "from pull_test_runs ptr, repositories r, repo_branches rb, github_pulls ghp "
+                  "from pull_test_runs ptr, repositories r, github_pulls ghp "
                   "where ptr.g_p_id = ghp.id and "
-                  "  ghp.r_b_id = rb.id and "
-                  "  rb.repository_id = r.id and "
+                  "  ghp.repo_id = r.id and "
                   "  ptr.deleted = 0 and "
                   "  ptr.host_id = ", hostid, " and "
                   "  ptr.end_time is null"));
@@ -388,14 +385,13 @@ Pull[] selectPullsToBuild(string hostid, string platform)
 
 project[] loadProjects(string hostid)
 {
-    sql_exec(text("select p.id, p.name, r.id, r.name, rb.name "
-                  "  from projects p, repositories r, repo_branches rb, build_host_projects bhp "
-                  " where r.id = rb.repository_id and "
-                  "       p.id = r.project_id and "
+    sql_exec(text("select p.id, p.name, r.id, r.name, r.ref "
+                  "  from projects p, repositories r, build_host_projects bhp "
+                  " where p.id = r.project_id and "
                   "       p.enabled = true and "
                   "       bhp.project_id = p.id and "
                   "       bhp.host_id = ", hostid,
-                  " order by p.id, r.id, rb.id"));
+                  " order by p.id, r.id"));
 
     sqlrow[] rows = sql_rows();
 

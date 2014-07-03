@@ -23,19 +23,19 @@ CURL* curl;
 Github github;
 alias string[] sqlrow;
 
-Pull loadPullFromGitHub(Project proj, Repository repo, Pull current_pull, ulong pullid)
+Pull loadPullFromGitHub(Repository repo, Pull current_pull, ulong pullid)
 {
     JSONValue jv;
-    if (!github.getPull(proj.name, repo.name, to!string(pullid), jv))
+    if (!github.getPull(repo.owner, repo.name, to!string(pullid), jv))
         return null;
 
-    Pull pull = makePullFromJson(jv, proj, repo);
+    Pull pull = makePullFromJson(jv, repo);
 
     if (current_pull.head_sha == pull.head_sha)
         pull.head_date = current_pull.head_date;
     else
     {
-        string date = loadCommitDateFromGithub(proj, repo, pull.head_sha);
+        string date = loadCommitDateFromGithub(repo, pull.head_sha);
         if (!date) return null;
         pull.head_date = SysTime.fromISOExtString(date, UTC());;
     }
@@ -43,10 +43,10 @@ Pull loadPullFromGitHub(Project proj, Repository repo, Pull current_pull, ulong 
     return pull;
 }
 
-string loadCommitDateFromGithub(Project proj, Repository repo, string sha)
+string loadCommitDateFromGithub(Repository repo, string sha)
 {
     JSONValue jv;
-    if (!github.getCommit(proj.name, repo.name, sha, jv))
+    if (!github.getCommit(repo.owner, repo.name, sha, jv))
         return null;
 
     string s = jv.object["commit"].object["committer"].object["date"].str;
@@ -54,24 +54,24 @@ string loadCommitDateFromGithub(Project proj, Repository repo, string sha)
     return s;
 }
 
-void updatePullAndGithub(Project proj, Repository repo, Pull current_pull, Pull github_pull)
+void updatePullAndGithub(Repository repo, Pull current_pull, Pull github_pull)
 {
-    bool rc = updatePull(proj, repo, current_pull, github_pull);
+    bool rc = updatePull(repo, current_pull, github_pull);
 
     if (rc && current_pull.auto_pull != 0)
     {
         writelog("    clearing auto-pull state");
         JSONValue jv;
-        github.addPullComment(proj.name, repo.name, to!string(current_pull.pull_id), "Pull updated, auto_merge toggled off", jv);
+        github.addPullComment(repo.owner, repo.name, to!string(current_pull.pull_id), "Pull updated, auto_merge toggled off", jv);
         sql_exec(text("update github_pulls set auto_pull = null where id = ", current_pull.id));
     }
 }
 
-bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const ref JSONValue jv)
+bool processProject(Pull[ulong] knownpulls, Repository repo, const ref JSONValue jv)
 {
     foreach(ref const JSONValue obj; jv.array)
     {
-        Pull p = makePullFromJson(obj, proj, repo);
+        Pull p = makePullFromJson(obj, repo);
         if (!p) continue;
 
         Pull* tmp = p.pull_id in knownpulls;
@@ -87,7 +87,7 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
             {
                 if (!p.head_usable)
                 {
-                    writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", proj.name, repo.name, p.pull_id);
+                    writelog("ERROR: %s/%s/%s, new pull request with null head.repo, skipping", repo.owner, repo.name, p.pull_id);
                     continue;
                 }
 
@@ -101,15 +101,15 @@ bool processProject(Pull[ulong] knownpulls, Project proj, Repository repo, const
             continue;
         else
         {
-            string date = loadCommitDateFromGithub(proj, repo, p.head_sha);
+            string date = loadCommitDateFromGithub(repo, p.head_sha);
             if (!date) continue;
             p.head_date = SysTime.fromISOExtString(date, UTC());;
         }
 
         if (isNew)
-            newPull(proj, repo, p);
+            newPull(repo, p);
         else
-            updatePullAndGithub(proj, repo, current_pull, p);
+            updatePullAndGithub(repo, current_pull, p);
     }
 
     return true;
@@ -122,7 +122,7 @@ projloop:
     {
         foreach (rk, rv; pv.repositories)
         {
-            writelog("processing pulls for %s/%s/%s", pv.name, rv.name, rv.refname);
+            writelog("processing pulls for %s/%s/%s", rv.owner, rv.name, rv.refname);
 
             sql_exec(text("select ", getPullColumns()," from github_pulls where repo_id = ", rv.id, " and open = true"));
             sqlrow[] rows = sql_rows();
@@ -137,7 +137,7 @@ projloop:
             do
             {
                 JSONValue jv;
-                if (!github.getPulls(pv.name, rv.name, jv, nextlink))
+                if (!github.getPulls(rv.owner, rv.name, jv, nextlink))
                     continue projloop;
 
                 if (jv.type != JSON_TYPE.ARRAY)
@@ -146,7 +146,7 @@ projloop:
                     break;
                 }
 
-                if (!processProject(knownpulls, pv, rv, jv))
+                if (!processProject(knownpulls, rv, jv))
                 {
                     writelog("  failed to process project, skipping repo");
                     continue projloop;
@@ -159,9 +159,9 @@ projloop:
             foreach(k; knownpulls.keys)
             {
                 Pull* tmp = k in knownpulls;
-                Pull p = loadPullFromGitHub(pv, rv, *tmp, k);
+                Pull p = loadPullFromGitHub(rv, *tmp, k);
                 if (p)
-                    updatePullAndGithub(pv, rv, *tmp, p);
+                    updatePullAndGithub(rv, *tmp, p);
             }
         }
     }
@@ -216,7 +216,7 @@ int main(string[] args)
 
     github = new Github(c.github_user, c.github_passwd, c.github_clientid, c.github_clientsecret, curl);
 
-    // loads the tree of Project -> Repository -> RepoBranch
+    // loads the tree of Project -> Repositories
     Project[ulong] projects = loadProjects();
 
     //backfill_pulls();

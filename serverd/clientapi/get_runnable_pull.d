@@ -51,6 +51,7 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
 struct repo_branch
 {
     string repo_id;
+    string owner;
     string repo_name;
     string branch_name;
 }
@@ -58,13 +59,12 @@ struct repo_branch
 struct project
 {
     string project_id;
-    string project_name;
     repo_branch[] branches;
 }
 
 project loadProjectById(string projectid)
 {
-    sql_exec(text("select p.id, p.name, r.id, r.name, r.ref "
+    sql_exec(text("select p.id, r.id, r.owner, r.name, r.ref "
                   "  from projects p, repositories r "
                   " where p.id = r.project_id and "
                   "       p.id = ", projectid,
@@ -78,10 +78,10 @@ project loadProjectById(string projectid)
     {
         if (!proj || proj.project_id != row[0])
         {
-            projects ~= project(row[0], row[1], []);
+            projects ~= project(row[0], []);
             proj = &(projects[$-1]);
         }
-        proj.branches ~= repo_branch(row[2], row[3], row[4]);
+        proj.branches ~= repo_branch(row[1], row[2], row[3], row[4]);
     }
 
     return projects[0];
@@ -303,7 +303,7 @@ void output(string clientver, string runid, string platform, project proj, Pull[
         case "4":
             formattedWrite(outstr, "%s\n", runid);
             formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");
-            formattedWrite(outstr, "%s\n", proj.project_name);
+            formattedWrite(outstr, "%s\n", proj.branches[0].owner);
             formattedWrite(outstr, "%s\n", platform);
 
             // list of repositories
@@ -311,7 +311,7 @@ void output(string clientver, string runid, string platform, project proj, Pull[
             foreach (p; proj.branches)
                 formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
 
-            switch (proj.project_name)
+            switch (proj.branches[0].owner)
             {
                 case "yebblies":
                 case "D-Programming-Language":
@@ -356,7 +356,7 @@ void output(string clientver, string runid, string platform, project proj, Pull[
                     formattedWrite(outstr, "13 0\n"); // test gdc
                     break;
                 default:
-                    writelog ("  unknown project: %s", proj.project_name);
+                    writelog ("  unknown project: %s", proj.branches[0].owner);
                     outstr.put("skip\n");
                     break;
             }
@@ -385,7 +385,7 @@ Pull[] selectPullsToBuild(string hostid, string platform)
 
 project[] loadProjects(string hostid)
 {
-    sql_exec(text("select p.id, p.name, r.id, r.name, r.ref "
+    sql_exec(text("select p.id, r.id, r.owner, r.name, r.ref "
                   "  from projects p, repositories r, build_host_projects bhp "
                   " where p.id = r.project_id and "
                   "       p.enabled = true and "
@@ -401,10 +401,10 @@ project[] loadProjects(string hostid)
     {
         if (!proj || proj.project_id != row[0])
         {
-            projects ~= project(row[0], row[1], []);
+            projects ~= project(row[0], []);
             proj = &(projects[$-1]);
         }
-        proj.branches ~= repo_branch(row[2], row[3], row[4]);
+        proj.branches ~= repo_branch(row[1], row[2], row[3], row[4]);
     }
 
     return projects;

@@ -78,7 +78,7 @@ Pull makePullFromRow(sqlrow row)
     return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]), to!ulong(row[16]));
 }
 
-Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
+Pull makePullFromJson(const JSONValue obj, Repository repo)
 {
     ulong  uid     = obj.object["user"].object["id"].integer;
     string uname   = obj.object["user"].object["login"].str;
@@ -89,7 +89,7 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
 
     if (base.type != JSON_TYPE.OBJECT || base.object.length() == 0)
     {
-        writelog("%s/%s/%s: base is null, skipping", proj.name, repo.name, pullid);
+        writelog("%s/%s/%s: base is null, skipping", repo.owner, repo.name, pullid);
         return null;
     }
 
@@ -97,13 +97,13 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
 
     if (b_repo.type != JSON_TYPE.OBJECT || b_repo.object.length() == 0)
     {
-        writelog("%s/%s/%s: base.repo is null, skipping", proj.name, repo.name, pullid);
+        writelog("%s/%s/%s: base.repo is null, skipping", repo.owner, repo.name, pullid);
         return null;
     }
     string base_ref = base.object["ref"].str;
     if (base_ref != repo.refname)
     {
-        //writelog("%s/%s/%s: pull is for %s, not %s", proj.name, repo.name, pullid, base_ref, repo.refname);
+        //writelog("%s/%s/%s: pull is for %s, not %s", repo.owner, repo.name, pullid, base_ref, repo.refname);
         return null;
     }
 
@@ -114,7 +114,7 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
     const JSONValue head = obj.object["head"];
     if (head.type != JSON_TYPE.OBJECT || head.object.length() == 0)
     {
-        writelog("WARNING: %s/%s/%s: head is null", proj.name, repo.name, pullid);
+        writelog("WARNING: %s/%s/%s: head is null", repo.owner, repo.name, pullid);
         h_isusable = false;
     }
     else
@@ -122,7 +122,7 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
         const JSONValue h_repo = head.object["repo"];
         if (h_repo.type != JSON_TYPE.OBJECT || h_repo.object.length() == 0)
         {
-            writelog("WARNING: %s/%s/%s: head.repo is null", proj.name, repo.name, pullid);
+            writelog("WARNING: %s/%s/%s: head.repo is null", repo.owner, repo.name, pullid);
             h_isusable = false;
         }
         else
@@ -169,7 +169,7 @@ Pull makePullFromJson(const JSONValue obj, Project proj, Repository repo)
     return p;
 }
 
-bool updatePull(Project proj, Repository repo, Pull current, Pull updated)
+bool updatePull(Repository repo, Pull current, Pull updated)
 {
     bool headerPrinted = false;
     void printHeader()
@@ -178,7 +178,7 @@ bool updatePull(Project proj, Repository repo, Pull current, Pull updated)
         headerPrinted = true;
 
         string oper = (current.open != updated.open) ? (updated.open ? "reopening" : "closing") : "updating";
-        writelog("  %s %s/%s/%s:", oper, proj.name, repo.name, updated.pull_id);
+        writelog("  %s %s/%s/%s:", oper, repo.owner, repo.name, updated.pull_id);
     }
 
     bool clearOldResults = false;
@@ -270,9 +270,9 @@ bool updatePull(Project proj, Repository repo, Pull current, Pull updated)
     return clearAutoPull;
 }
 
-void newPull(Project proj, Repository repo, Pull pull)
+void newPull(Repository repo, Pull pull)
 {
-    writelog("  opening %s/%s/%s", proj.name, repo.name, pull.pull_id);
+    writelog("  opening %s/%s/%s", repo.owner, repo.name, pull.pull_id);
 
     string sqlcmd = text("insert into github_pulls (id, r_b_id, repo_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.id, ", ", repo.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
 

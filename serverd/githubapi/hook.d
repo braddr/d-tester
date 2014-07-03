@@ -68,7 +68,7 @@ bool processPush(const ref JSONValue jv)
     sql_exec(text("select p.id "
                   "from projects p, repositories r "
                   "where p.id = r.project_id and "
-                  "p.name = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and r.ref = \"", sql_quote(branch), "\""));
+                  "r.owner = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and r.ref = \"", sql_quote(branch), "\""));
     sqlrow[] rows = sql_rows();
 
     if (rows.length == 0)
@@ -123,17 +123,18 @@ bool processPull(const ref JSONValue jv)
     const(JSONValue)* base_ref       = "ref"   in base.object;
     const(JSONValue)* owner          = "login" in base_user.object;
 
+    // TODO: a single pull may affect multiple projects
     Project proj = loadProject(owner.str, base_repo_name.str, base_ref.str);
     Repository repo = proj.repositories[base_repo_name.str];
 
-    Pull github_pull = makePullFromJson(*pull_request, proj, repo);
+    Pull github_pull = makePullFromJson(*pull_request, repo);
     if (!github_pull) return false;
 
     Pull db_pull = loadPull(repo.id, number.integer);
     if (db_pull)
-        updatePull(proj, repo, db_pull, github_pull);
+        updatePull(repo, db_pull, github_pull);
     else
-        newPull(proj, repo, github_pull);
+        newPull(repo, github_pull);
 
     return true;
 }

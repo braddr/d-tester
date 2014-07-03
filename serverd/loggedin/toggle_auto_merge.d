@@ -46,7 +46,7 @@ bool updateStore(string ghp_id, string loginid, ref bool newstate)
 
 bool checkMergeNow(string projectid, string repoid, string pullid, string ghp_id, Appender!string outstr)
 {
-    sql_exec(text("select p.name, r.name, p.allow_auto_merge, ghp.auto_pull from projects p, repositories r, github_pulls ghp where p.id = ", projectid, " and r.id = ", repoid, " and ghp.id = ", ghp_id));
+    sql_exec(text("select r.owner, r.name, p.allow_auto_merge, ghp.auto_pull from projects p, repositories r, github_pulls ghp where p.id = ", projectid, " and r.id = ", repoid, " and ghp.id = ", ghp_id));
     sqlrow[] rows = sql_rows();
     if (rows.length < 1)
     {
@@ -89,8 +89,9 @@ Lerror:
     if (!validateInput(projectid, repoid, pullid, ghp_id, valout))
         goto Lerror;
 
-    sql_exec(text("select p.name, r.name from projects p, repositories r where p.id = ", projectid, " and r.id = ", repoid));
+    sql_exec(text("select r.owner, r.name from projects p, repositories r where p.id = ", projectid, " and r.id = ", repoid));
     sqlrow[] rows = sql_rows();
+    // TODO: validate a single row and that the projectid and repoid are validly related
 
     string extra_param;
     // TODO: this should be cached data to avoid github load

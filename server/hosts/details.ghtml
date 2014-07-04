@@ -126,13 +126,11 @@
     select ptr.id, r.project_id, p.name, r.name, ghp.pull_id, ptr.platform, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
       from pull_test_runs ptr,
            github_pulls ghp,
-           repo_branches rb,
            repositories r,
            projects p
      where ptr.host_id = \get{hostid} and
            ptr.g_p_id = ghp.id and
-           ghp.r_b_id = rb.id and
-           rb.repository_id = r.id and
+           ghp.repo_id = r.id and
            r.project_id = p.id
      order by ptr.start_time desc
      limit 50

@@ -13,11 +13,10 @@
     }
     \sqlexec{
         select ghp.id, ghp.auto_pull
-          from github_pulls ghp, repositories r, repo_branches rb
+          from github_pulls ghp, repositories r
          where ghp.pull_id = \get{pullid} and
                r.id = \get{repoid} and
-               rb.id = ghp.r_b_id and
-               rb.repository_id = r.id
+               r.id = ghp.repo_id
     }
     \if{\sqlrow{gp_id}{gp_automerge}}{
 

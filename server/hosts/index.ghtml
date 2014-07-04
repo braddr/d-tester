@@ -49,12 +49,10 @@
                       github_pulls ghp,
                       projects p,
                       repositories r,
-                      repo_branches rb,
                       build_hosts bh
                 where ghp.id = ptr.g_p_id and
                       p.id = r.project_id and
-                      r.id = rb.repository_id and
-                      rb.id = ghp.r_b_id and
+                      r.id = ghp.repo_id and
                       bh.id = ptr.host_id and
                       end_time is null and
                       deleted = false

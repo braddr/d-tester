@@ -10,9 +10,9 @@
 \set{drawMenu}{
     <table class="projectlist" style="align: top; border:red 1px solid;"><tr><td>
     \sqlexec{
-        select id, menu_label, name, test_pulls from projects order by name
+        select id, menu_label, test_pulls from projects order by menu_label
     }
-    \while{\sqlrow{pid}{label}{name}{test_pulls}}{
+    \while{\sqlrow{pid}{label}{test_pulls}}{
         \if{\eq{\get{pid}}{\get{projectid}}}{\set{selected}{selected}}{\set{selected}{unselected}}
         <div class="menu_\get{selected}" onClick="parent.location='index.ghtml?projectid=\get{pid}'"><a href="index2.ghtml?projectid=\get{pid}">\get{label}</a></div>
         \if{\eq{\get{test_pulls}}{1}}{

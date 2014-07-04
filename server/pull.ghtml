@@ -6,14 +6,12 @@
 
 \sqlexec{
     select ptr.id, g_p_id, p.name, r.name, r.id, ghp.pull_id, bh.id, bh.ipaddr, bh.name, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
-      from pull_test_runs ptr, github_pulls ghp, repositories r, repo_branches rb, build_hosts bh, projects p
+      from pull_test_runs ptr, github_pulls ghp, repositories r, build_hosts bh, projects p
       where ptr.id = \get{runid} and
             ptr.g_p_id = ghp.id and
-            ghp.r_b_id = rb.id and
-            rb.repository_id = r.id and
+            ghp.repo_id = r.id and
             bh.id = ptr.host_id and
-            p.id = r.project_id and
-            r.id = rb.repository_id
+            p.id = r.project_id
 }
 \set{end_time}{}
 \set{found}{\sqlrow{id}{g_p_id}{project_name}{repo_name}{repo_id}{pull_id}{bh_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}

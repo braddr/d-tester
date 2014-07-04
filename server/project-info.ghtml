@@ -8,19 +8,17 @@
 }
 
 \sqlexec{
-    select id, menu_label, name, project_url, test_pulls, beta_only, allow_auto_merge
+    select id, menu_label, project_url, test_pulls, beta_only, allow_auto_merge
       from projects
      where id = \get{projectid}
 }
-\if{\sqlrow{pid}{plabel}{pname}{purl}{ptestpulls}{pbetaonly}{pallowautomerge}}{
+\if{\sqlrow{pid}{plabel}{purl}{ptestpulls}{pbetaonly}{pallowautomerge}}{
 
     <table class="whiterounded" id="projectinfo">
         <tr>
             <th>id</th><td>\get{pid}</td>
         </tr><tr>
             <th>Menu Label</th><td>\get{plabel}</td>
-        </tr><tr>
-            <th>Github Name</th><td>\get{pname}</td>
         </tr><tr>
             <th>Project URL</th><td><a href="\get{purl}">\get{purl}</a></td>
         </tr><tr>
@@ -37,31 +35,29 @@
 
     <table class="whiterounded" id="repoinfo">
         <tr>
+            <th>Owner</th>
             <th>Repository</th>
             <th>Branch</th>
             <th>Num Open Pulls</th>
         </tr>
     \sqlexec{
-        select r.id, r.name, rb.id, rb.name, ifnull(ghp_data.num, 0)
-          from repositories  r,
-               repo_branches rb
+        select r.id, r.owner, r.name, r.ref, ifnull(ghp_data.num, 0)
+          from repositories r
                left join
                (
-                   select ghp.r_b_id, count(*) as num
+                   select ghp.repo_id, count(*) as num
                     from github_pulls  ghp,
-                         repositories  r,
-                         repo_branches rb
-                   where ghp.r_b_id = rb.id and
-                         rb.repository_id = r.id and
+                         repositories  r
+                   where ghp.repo_id = r.id and
                          r.project_id = \get{projectid} and
                          ghp.open = true
-                   group by r_b_id
-               ) as ghp_data on ghp_data.r_b_id = rb.id
-         where r.id = rb.repository_id and
-               r.project_id = \get{projectid}
+                   group by repo_id
+               ) as ghp_data on ghp_data.repo_id = r.id
+         where r.project_id = \get{projectid}
     }
-    \while{\sqlrow{rid}{rname}{rbid}{rbname}{rbcount}}{
+    \while{\sqlrow{rid}{rowner}{rname}{rbname}{rbcount}}{
         <tr>
+            <td>\get{rowner}</td>
             <td>\get{rname}</td>
             <td>\get{rbname}</td>
             <td>\get{rbcount}</td>

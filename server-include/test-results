@@ -86,8 +86,8 @@
         select p.id, p.menu_label, p.name, p.test_pulls, p.beta_only, ifnull(counts.pull_count, 0) as 'pull_count', ifnull(results.max_rc, 0)
           from projects p left join (
               select p.id as p_id, count(*) as pull_count
-                from projects p, github_pulls ghp, repo_branches rb, repositories r
-               where ghp.r_b_id = r.id and rb.repository_id = r.id and r.project_id = p.id and
+                from projects p, github_pulls ghp, repositories r
+               where ghp.repo_id = r.id and r.project_id = p.id and
                      p.enabled = true and
                      ghp.open = true
                group by p.id

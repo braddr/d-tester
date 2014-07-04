@@ -26,9 +26,8 @@
     # build rdate_epoch -> i map
     \sqlexec{
         select unix_timestamp(subdate(date(close_date), weekday(close_date)))
-         from github_pulls ghp, repositories r, repo_branches rb
-        where ghp.r_b_id = rb.id and
-              rb.repository_id = r.id and
+         from github_pulls ghp, repositories r
+        where ghp.repo_id = r.id and
               r.project_id = \get{projectid} and
               ghp.open = false and
               ghp.close_date is not null and
@@ -46,11 +45,9 @@
     # build repo_i -> count map
     \sqlexec{
         select r.name, unix_timestamp(subdate(date(close_date), weekday(close_date))), count(*)
-          from github_pulls  ghp,
-               repositories  r,
-               repo_branches rb
-         where ghp.r_b_id = rb.id and
-               rb.repository_id = r.id and
+          from github_pulls ghp,
+               repositories r
+         where ghp.repo_id = r.id and
                r.project_id = \get{projectid} and
                ghp.open = false and
                ghp.close_date is not null and
@@ -69,9 +66,8 @@
     # build rdate_epoch -> i map
     \sqlexec{
         select unix_timestamp(subdate(date(create_date), weekday(create_date)))
-         from github_pulls ghp, repositories r, repo_branches rb
-        where ghp.r_b_id = rb.id and
-              rb.repository_id = r.id and
+         from github_pulls ghp, repositories r
+        where ghp.repo_id = r.id and
               r.project_id = \get{projectid} and
               ghp.open = false and
               ghp.create_date is not null and
@@ -89,11 +85,9 @@
     # build repo_i -> count map
     \sqlexec{
         select r.name, unix_timestamp(subdate(date(create_date), weekday(create_date))), count(*)
-          from github_pulls  ghp,
-               repositories  r,
-               repo_branches rb
-         where ghp.r_b_id = rb.id and
-               rb.repository_id = r.id and
+          from github_pulls ghp,
+               repositories r
+         where ghp.repo_id = r.id and
                r.project_id = \get{projectid} and
                ghp.open = false and
                ghp.create_date is not null and

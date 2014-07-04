@@ -95,3 +95,31 @@ Project loadProject(string owner, string repo, string branch)
     auto p = new Project(to!ulong(rows[0][0]), (rows[0][1] == "1"));
     return p;
 }
+
+Project loadProjectById(ulong projectid)
+{
+    sql_exec(text("select id, test_pulls from projects where enabled = true and id = ", projectid));
+
+    sqlrow[] rows = sql_rows();
+    assert(rows.length == 1);
+
+    auto p = new Project(to!ulong(rows[0][0]), (rows[0][1] == "1"));
+
+    return p;
+}
+
+Project[] loadProjectsByHostId(ulong hostid)
+{
+    sql_exec(text("select p.id, p.test_pulls from projects p, build_hosts bh, build_host_projects bhp where p.id = bhp.project_id and bhp.host_id = bh.id and p.enabled = true and bh.id = ", hostid));
+    sqlrow[] rows = sql_rows();
+
+    Project[] projects;
+    foreach (row; rows)
+    {
+        auto p = new Project(to!ulong(row[0]), (row[1] == "1"));
+        projects ~= p;
+    }
+
+    return projects;
+}
+

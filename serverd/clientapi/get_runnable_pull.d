@@ -7,6 +7,8 @@ import serverd;
 import utils;
 import validate;
 
+import model.project;
+
 import std.algorithm;
 import std.conv;
 import std.file;
@@ -46,45 +48,6 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
     sqlrow[] rows = sql_rows();
 
     foreach(ref row; rows) { openPulls[row[0]] = row; }
-}
-
-struct repo_branch
-{
-    string repo_id;
-    string owner;
-    string repo_name;
-    string branch_name;
-}
-
-struct project
-{
-    string project_id;
-    repo_branch[] branches;
-}
-
-project loadProjectById(string projectid)
-{
-    sql_exec(text("select p.id, r.id, r.owner, r.name, r.ref "
-                  "  from projects p, repositories r "
-                  " where p.id = r.project_id and "
-                  "       p.id = ", projectid,
-                  " order by p.id, r.id"));
-
-    sqlrow[] rows = sql_rows();
-
-    project[] projects;
-    project* proj = null;
-    foreach (row; rows)
-    {
-        if (!proj || proj.project_id != row[0])
-        {
-            projects ~= project(row[0], []);
-            proj = &(projects[$-1]);
-        }
-        proj.branches ~= repo_branch(row[1], row[2], row[3], row[4]);
-    }
-
-    return projects[0];
 }
 
 void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls)
@@ -243,7 +206,7 @@ string recordRunStart(string hostid, string platform, const ref Pull pull)
     return lastidrow[0];
 }
 
-string recordMasterStart(string platform, string hostid, string projectid)
+string recordMasterStart(string platform, string hostid, ulong projectid)
 {
     sql_exec(text("insert into test_runs (start_time, project_id, host_id, platform, deleted) "
                   "values (now(), ", projectid, ", \"", hostid, "\", \"", platform, "\", false)"));
@@ -296,22 +259,22 @@ bool validateInput(ref string raddr, ref string rname, ref string hostid, ref st
     return true;
 }
 
-void output(string clientver, string runid, string platform, project proj, Pull[] pulls, Appender!string outstr)
+void output(string clientver, string runid, string platform, Project proj, Pull[] pulls, Appender!string outstr)
 {
     switch (clientver)
     {
         case "4":
             formattedWrite(outstr, "%s\n", runid);
             formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");
-            formattedWrite(outstr, "%s\n", proj.branches[0].owner);
+            formattedWrite(outstr, "%s\n", proj.repositories[0].owner);
             formattedWrite(outstr, "%s\n", platform);
 
             // list of repositories
-            formattedWrite(outstr, "%s\n", proj.branches.length);
-            foreach (p; proj.branches)
-                formattedWrite(outstr, "%s\n%s\n%s\n", p.repo_id, p.repo_name, p.branch_name);
+            formattedWrite(outstr, "%s\n", proj.repositories.length);
+            foreach (r; proj.repositories)
+                formattedWrite(outstr, "%s\n%s\n%s\n", r.id, r.name, r.refname);
 
-            switch (proj.branches[0].owner)
+            switch (proj.repositories[0].owner)
             {
                 case "yebblies":
                 case "D-Programming-Language":
@@ -356,7 +319,7 @@ void output(string clientver, string runid, string platform, project proj, Pull[
                     formattedWrite(outstr, "13 0\n"); // test gdc
                     break;
                 default:
-                    writelog ("  unknown project: %s", proj.branches[0].owner);
+                    writelog ("  unknown project: %s", proj.repositories[0].owner);
                     outstr.put("skip\n");
                     break;
             }
@@ -383,34 +346,7 @@ Pull[] selectPullsToBuild(string hostid, string platform)
     return pulls;
 }
 
-project[] loadProjects(string hostid)
-{
-    sql_exec(text("select p.id, r.id, r.owner, r.name, r.ref "
-                  "  from projects p, repositories r, build_host_projects bhp "
-                  " where p.id = r.project_id and "
-                  "       p.enabled = true and "
-                  "       bhp.project_id = p.id and "
-                  "       bhp.host_id = ", hostid,
-                  " order by p.id, r.id"));
-
-    sqlrow[] rows = sql_rows();
-
-    project[] projects;
-    project* proj = null;
-    foreach (row; rows)
-    {
-        if (!proj || proj.project_id != row[0])
-        {
-            projects ~= project(row[0], []);
-            proj = &(projects[$-1]);
-        }
-        proj.branches ~= repo_branch(row[1], row[2], row[3], row[4]);
-    }
-
-    return projects;
-}
-
-bool shouldDoBuild(bool force, string platform, string projectid)
+bool shouldDoBuild(bool force, string platform, ulong projectid)
 {
     bool dobuild = force;
 
@@ -436,11 +372,11 @@ bool shouldDoBuild(bool force, string platform, string projectid)
     return dobuild;
 }
 
-project[] selectMasterToBuild(bool force, string hostid, string platform)
+Project[] selectMasterToBuild(bool force, string hostid, string platform)
 {
-    project[] projects = loadProjects(hostid);
+    Project[] projects = loadProjectsByHostId(to!ulong(hostid));
 
-    projects = projects.filter!(a => shouldDoBuild(force, platform, a.project_id)).array;
+    projects = projects.filter!(a => shouldDoBuild(force, platform, a.id)).array;
     return projects;
 }
 
@@ -476,7 +412,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     tryToCleanupMaster(hostid);
 
     Pull[] pulls = selectPullsToBuild(hostid, platform);
-    project[] projects = selectMasterToBuild(force.length != 0, hostid, platform);
+    Project[] projects = selectMasterToBuild(force.length != 0, hostid, platform);
 
     bool doPull = false;
     bool doMaster = false;
@@ -494,18 +430,18 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
 
     string runid;
-    project proj;
+    Project proj;
 
     if (doPull)
     {
-        proj = loadProjectById(pulls[0].project_id);
+        proj = loadProjectById(to!ulong(pulls[0].project_id));
         runid = recordRunStart(hostid, platform, pulls[0]);
     }
     else
     {
         pulls = null;
         proj = projects[uniform(0, projects.length)];
-        runid = recordMasterStart(platform, hostid, proj.project_id);
+        runid = recordMasterStart(platform, hostid, proj.id);
     }
 
     try

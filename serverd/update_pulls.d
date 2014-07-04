@@ -195,7 +195,7 @@ void backfill_pulls()
 
 int main(string[] args)
 {
-    LOGNAME = "/tmp/update-pulls.log";
+    LOGNAME = "/var/log/update-pulls.log";
 
     writelog("start app");
 

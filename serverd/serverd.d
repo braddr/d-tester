@@ -106,7 +106,14 @@ void dispatch(string uri, const ref string[string] hash, const ref string[string
         return;
     }
 
-    (*func)(hash, userhash, outdata);
+    try
+    {
+        (*func)(hash, userhash, outdata);
+    }
+    catch (Throwable e)
+    {
+        writelog("caught throwable: %s", e);
+    }
 }
 
 void p_dump(const ref string[string] hash, const ref string[string] userhash, Appender!string outdata)
@@ -157,6 +164,8 @@ extern(C) void handle_sigterm(int sig) @system nothrow
 
 int main(string[] args)
 {
+    LOGNAME = "/var/log/serverd.log";
+
     writelog("start app");
 
     signal(SIGTERM, &handle_sigterm);

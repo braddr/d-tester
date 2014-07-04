@@ -125,7 +125,7 @@ bool processPull(const ref JSONValue jv)
 
     // TODO: a single pull may affect multiple projects
     Project proj = loadProject(owner.str, base_repo_name.str, base_ref.str);
-    Repository repo = proj.repositories[base_repo_name.str];
+    Repository repo = proj.getRepositoryByName(base_repo_name.str);
 
     Pull github_pull = makePullFromJson(*pull_request, repo);
     if (!github_pull) return false;

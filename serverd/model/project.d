@@ -23,17 +23,17 @@ class Repository
     }
 }
 
-Repository[string] loadRepositories(ulong pid)
+Repository[] loadRepositories(ulong pid)
 {
-    sql_exec(text("select id, owner, name, ref from repositories where project_id = ", pid));
+    sql_exec(text("select id, owner, name, ref from repositories where project_id = ", pid, " order by id"));
 
     sqlrow[] rows = sql_rows();
 
-    Repository[string] repositories;
+    Repository[] repositories;
     foreach (row; rows)
     {
         auto r = new Repository(to!ulong(row[0]), pid, row[1], row[2], row[3]);
-        repositories[row[2]] = r;
+        repositories ~= r;
     }
 
     return repositories;
@@ -43,13 +43,24 @@ class Project
 {
     ulong  id;
     bool   test_pulls;
-    Repository[string] repositories;
+    Repository[] repositories;
 
     this(ulong _id, bool _test_pulls)
     {
         id = _id;
         test_pulls = _test_pulls;
         repositories = loadRepositories(id);
+    }
+
+    Repository getRepositoryByName(string reponame)
+    {
+        foreach (r; repositories)
+        {
+            if (r.name == reponame)
+                return r;
+        }
+
+        return null;
     }
 }
 

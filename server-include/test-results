@@ -81,9 +81,7 @@
 
     <tr><td>
     \sqlexec{
-        #select id, menu_label, name, test_pulls, beta_only from projects where enabled=true order by menu_label
-
-        select p.id, p.menu_label, p.name, p.test_pulls, p.beta_only, ifnull(counts.pull_count, 0) as 'pull_count', ifnull(results.max_rc, 0)
+        select p.id, p.menu_label, p.test_pulls, p.beta_only, ifnull(counts.pull_count, 0) as 'pull_count', ifnull(results.max_rc, 0)
           from projects p left join (
               select p.id as p_id, count(*) as pull_count
                 from projects p, github_pulls ghp, repositories r
@@ -99,7 +97,7 @@
           where p.enabled = true
           order by p.menu_label
     }
-    \while{\sqlrow{pid}{label}{name}{test_pulls}{beta_only}{pull_counts}{max_rc}}{
+    \while{\sqlrow{pid}{label}{test_pulls}{beta_only}{pull_counts}{max_rc}}{
         \if{
             \not{\eq{\get{beta_only}}{1}}
             \eq{\get{SERVERNAME}}{d-beta.puremagic.com}
@@ -210,3 +208,12 @@
         \set{text}{R}
     }}}
 }}
+
+# \1 == project id
+\set{setProjectType}{\quote{
+    \sqlexec{
+        select project_type from projects where id = \1
+    }
+    \ignore{\sqlrow{projecttype}}
+}}
+

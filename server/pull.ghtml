@@ -5,7 +5,7 @@
 \validateURLParameter{runid}
 
 \sqlexec{
-    select ptr.id, g_p_id, p.name, r.name, r.id, ghp.pull_id, bh.id, bh.ipaddr, bh.name, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
+    select ptr.id, g_p_id, r.owner, r.name, r.id, ghp.pull_id, bh.id, bh.ipaddr, bh.name, platform, sha, start_time, end_time, timediff(ifnull(end_time, now()), start_time), rc, deleted
       from pull_test_runs ptr, github_pulls ghp, repositories r, build_hosts bh, projects p
       where ptr.id = \get{runid} and
             ptr.g_p_id = ghp.id and
@@ -14,7 +14,7 @@
             p.id = r.project_id
 }
 \set{end_time}{}
-\set{found}{\sqlrow{id}{g_p_id}{project_name}{repo_name}{repo_id}{pull_id}{bh_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}
+\set{found}{\sqlrow{id}{g_p_id}{repo_owner}{repo_name}{repo_id}{pull_id}{bh_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}
 
 \pageHeader{\if{\not{\get{rc}}}{60}}{\get{projectid}}{
     <link rel="stylesheet" href="/css/pulls.css" type="text/css">
@@ -34,7 +34,7 @@
   <tr>
     <th>Run ID</th><td>\get{id}</td>
   </tr><tr>
-    <th>Pull</th><td><a href="https://github.com/\get{project_name}/\get{repo_name}/pull/\get{pull_id}">\get{repo_name}/\get{pull_id}</a></td>
+    <th>Pull</th><td><a href="https://github.com/\get{repo_owner}/\get{repo_name}/pull/\get{pull_id}">\get{repo_owner}/\get{repo_name}/\get{pull_id}</a></td>
   </tr><tr>
     <th>Reporter</th><td><a href="hosts/details.ghtml?hostid=\get{bh_id}">\get{bh_name} (\get{bh_ipaddr})</a></td>
   </tr><tr>

@@ -16,7 +16,7 @@
 
 \set{firstrow}{1}
 \sqlexec{
-  select gu.username, gu.id, gp.id, p.name, r.name, gp.pull_id
+  select gu.username, gu.id, gp.id, r.owner, r.name, gp.pull_id
     from github_pulls gp, github_users gu, repositories r, projects p
    where gp.user_id = gu.id and
          gu.pull_approver is null and
@@ -26,7 +26,7 @@
          p.id = \get{projectid}
    order by gu.username, gu.id
 }
-\while{\sqlrow{gu_username}{gu_id}{gp_id}{project_name}{r_name}{gp_pullid}}{
+\while{\sqlrow{gu_username}{gu_id}{gp_id}{r_owner}{r_name}{gp_pullid}}{
   \if{\firstrow}{
     <table class="whiterounded" id="authtable">
 
@@ -41,7 +41,7 @@
  
   <tr>
     <td>\get{gu_username}</td>
-    <td><a href="https://github.com/\get{project_name}/\get{r_name}/pull/\get{gp_pullid}">\get{r_name}/\get{gp_pullid}</a></td>
+    <td><a href="https://github.com/\get{r_owner}/\get{r_name}/pull/\get{gp_pullid}">\get{r_owner}/\get{r_name}/\get{gp_pullid}</a></td>
     <td>
         \if{\and{\not{\eq{\get{pulls_are_tested}}{1}}}{\get{loggedin}}}{
             <a href="addv2/approve_pull_requester?projectid=\get{projectid}&amp;userid=\get{gu_id}&amp;csrf=\get{csrf}">Approve</a>
@@ -118,7 +118,7 @@
 # \5 == ref
 # \6 == updated_at
 # \7 == head_date
-# \8 == project name (D-Programming-Language)
+# \8 == repo owner (D-Programming-Language)
 # \9 == auto-merge
 # \10 == github_pull.id
 \set{drawrow}{\quote{
@@ -215,17 +215,17 @@
 }
 
 \sqlexec{
-    select p.name, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, date(ghp.head_date), ghp.auto_pull, ghp.id
+    select r.owner, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, date(ghp.head_date), ghp.auto_pull, ghp.id
       from projects p, repositories r, github_pulls ghp, github_users u
      where ghp.repo_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.pull_approver is not null and r.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
 }
-\while{\sqlrow{project_name}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}{ghp_id}}{
+\while{\sqlrow{r_owner}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}{ghp_id}}{
     # get the bucket to place the row in
     \set{name}{\get{r_name}_\if{\get{ghp_autopull}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
 
     # get one row of html and store it in name_num
-    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{project_name}}{\get{ghp_autopull}}{\get{ghp_id}}}
+    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{r_owner}}{\get{ghp_autopull}}{\get{ghp_id}}}
 
     \inc{num_\get{name}}
 }

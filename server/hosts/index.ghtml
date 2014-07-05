@@ -10,16 +10,11 @@
     <th>Host</th>
     <th>IP Address</th>
     <th>Last Heard From</th>
-    <th>Platform</th>
     <th>Project</th>
+    <th>Platform</th>
     <th>Build</th>
     <th>CVer</th>
 </tr>
-
-#\sqlexec{
-#    select id, name, ipaddr, owner_email, enabled, last_heard_from, timediff(now(), last_heard_from), (timediff(now(), last_heard_from) > "00:15:00")
-#      from build_hosts where enabled=1 order by name
-#}
 
 \sqlexec{
     select bh.id,
@@ -31,18 +26,20 @@
            (timediff(now(), last_heard_from) > "00:20:00") as over_due,
            ip.run_id,
            ip.platform,
+           ip.r_owner,
            ip.r_name,
            ip.pull_id,
-           ip.p_name,
+           ip.p_menu_label,
            ip.p_id,
            bh.clientver
       from build_hosts bh left join
            (
                select ptr.id as run_id,
                       ptr.platform,
+                      r.owner as r_owner,
                       r.name as r_name,
                       ghp.pull_id,
-                      p.menu_label as p_name,
+                      p.menu_label as p_menu_label,
                       p.id as p_id,
                       bh.id as bh_id
                  from pull_test_runs ptr,
@@ -54,11 +51,12 @@
                       p.id = r.project_id and
                       r.id = ghp.repo_id and
                       bh.id = ptr.host_id and
-                      end_time is null and
-                      deleted = false
+                      ptr.end_time is null and
+                      ptr.deleted = false
                 union
                select tr.id,
                       tr.platform,
+                      "branch",
                       "branch",
                       -1,
                       p.menu_label,
@@ -75,14 +73,14 @@
 }
 
 
-\while{\sqlrow{h_id}{h_name}{h_ipaddr}{h_email}{h_date}{h_diff}{h_late}{ip_runid}{ip_platform}{ip_repo_name}{ip_pull_id}{p_name}{p_id}{h_clientver}}{
+\while{\sqlrow{h_id}{h_name}{h_ipaddr}{h_email}{h_date}{h_diff}{h_late}{ip_runid}{ip_platform}{ip_repo_owner}{ip_repo_name}{ip_pull_id}{p_menu_label}{p_id}{h_clientver}}{
     <tr class="\if{\eq{\get{h_enabled}}{1}}{enabled}{disabled}">
         <td><a href="details.ghtml?hostid=\get{h_id}">\get{h_name}</a></td>
         <td>\get{h_ipaddr}</td>
         <td \if{\eq{\get{h_late}}{1}}{class="late"}>\if{\get{h_date}}{\get{h_date}\ - \get{h_diff}}</td>
-        <td>\get{ip_platform}</td>
         \if{\get{ip_repo_name}}{
-            <td>\get{p_name}</td>
+            <td>\get{p_menu_label}</td>
+            <td>\get{ip_platform}</td>
             <td>\if{\eq{\get{ip_repo_name}}{branch}}{
                    <a href="/test_data.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}&logid=1">branch build</a>
                 }{
@@ -90,7 +88,7 @@
                 }
             </td>
         }{
-            <td colspan="2">idle</td>
+            <td colspan="3">idle</td>
         }
         <td>\get{h_clientver}</td>
     </tr>

@@ -13,8 +13,7 @@
 \ignore{\sqlrow{numtesttypes}}
 \inc{numtesttypes}
 
-\sqlexec{select name from projects where id = \get{projectid}}
-\ignore{\sqlrow{projectname}}
+\setProjectType{\get{projectid}}
 
 # no inputs, clears a result set
 \set{resetResultSet}{\quote{
@@ -80,8 +79,7 @@
 # \1 == platform
 \set{showResultSet}{\quote{
     \if{
-      \eq{\get{projectname}}{D-Programming-Language}
-      \eq{\get{projectname}}{yebblies}
+        \eq{\get{projecttype}}{1}
     }{
         \if{\get{result_start}}{
             <table class="summary whiterounded">
@@ -146,7 +144,7 @@
                 </tr>
             </table>
         }
-    }{ \if{\eq{\get{projectname}}{D-Programming-GDC}}{
+    }{ \if{\eq{\get{projecttype}}{2}}{
         \if{\get{result_start}}{
             <table class="summary whiterounded">
                 <tr class="time">

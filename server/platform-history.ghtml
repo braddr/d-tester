@@ -37,8 +37,7 @@
 }
 \set{numtypes}{\i}
 
-\sqlexec{select name from projects where id = \get{projectid}}
-\ignore{\sqlrow{projectname}}
+\setProjectType{\get{projectid}}
 
 # no inputs, clears a result set
 \set{resetResultSet}{\quote{
@@ -90,8 +89,7 @@
             \href{\resultText{1}{\get{result_dur_1}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=1}</td>
 
         \if{
-          \eq{\get{projectname}}{D-Programming-Language}
-          \eq{\get{projectname}}{yebblies}
+            \eq{\get{projecttype}}{1}
         }{
             <td class="result \resultClass{2} dmdbuild" title="\get{result_dur_2}">
                 \href{\resultText{2}{\get{result_dur_2}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=2}</td>
@@ -107,7 +105,7 @@
                 \href{\resultText{4}{\get{result_dur_4}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=4}</td>
             <td class="result \resultClass{6} phobostest"  title="\get{result_dur_6}">
                 \href{\resultText{6}{\get{result_dur_6}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=6}</td>
-        }{ \if{\eq{\get{projectname}}{D-Programming-GDC}}{
+        }{ \if{\eq{\get{projecttype}}{2}}{
             <td class="result \resultClass{12} dmdbuild" title="\get{result_dur_12}">
                 \href{\resultText{12}{\get{result_dur_12}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=12}</td>
             <td class="result \resultClass{13} dmdtest"  title="\get{result_dur_13}">
@@ -188,8 +186,7 @@
     <th>Time (duration)</th>
     <th>Checkout</th>
     \if{
-      \eq{\get{projectname}}{yebblies}
-      \eq{\get{projectname}}{D-Programming-Language}
+      \eq{\get{projecttype}}{1}
     }{
         <th>DMD Build</th>
         <th>DMD Test</th>
@@ -197,7 +194,7 @@
         <th>Runtime Test</th>
         <th>Phobos Build</th>
         <th>Phobos Test</th>
-    }{ \if{\eq{\get{projectname}}{D-Programming-GDC}}{
+    }{ \if{\eq{\get{projecttype}}{2}}{
         <th>GDC Build</th>
         <th>GDC Test</th>
     }}

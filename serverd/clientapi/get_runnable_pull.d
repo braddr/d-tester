@@ -108,6 +108,8 @@ stat[string] loadCurrentRunStatistics()
     stat[string] stats;
     foreach(row; rows)
     {
+        if (row[1] != "0" && row[1] != "1") continue;
+
         if (row[0] !in stats)
         {
             stat s;

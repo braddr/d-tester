@@ -35,7 +35,7 @@ insert into authorized_addresses values (null, "54.240.196.185",  true, "amazon 
 create table if not exists github_pulls
 (
     id                int          not null auto_increment,
-    r_b_id            int          not null,
+    repo_id           int          not null,
     pull_id           int          not null,
     user_id           int          not null,
     create_date       datetime,
@@ -53,9 +53,9 @@ create table if not exists github_pulls
 
     primary key(id),
     key(open, id),
-    key(r_b_id, open),
+    key(repo_id, open),
     key(updated_at),
-    unique key(r_b_id, pull_id)
+    unique key(repo_id, pull_id)
 );
 
 create table if not exists github_users
@@ -85,8 +85,8 @@ create table if not exists projects
 (
     id                int          not null auto_increment,
     menu_label        varchar(128) not null,
-    name              varchar(128) not null,
     project_url       varchar(128) not null,
+    project_type      int          not null,
     test_pulls        bool         not null,
     beta_only         bool         not null,
     enabled           bool         not null,
@@ -98,18 +98,20 @@ create table if not exists projects
 
 truncate table projects;
 
-insert into projects values (1, "D2 master",   "D-Programming-Language", "http://dlang.org",       1, 0);
-insert into projects values (2, "GDC",         "D-Programming-GDC",      "http://gdcproject.org/", 1, 1);
-insert into projects values (3, "LDC",         "ldc-developers",         "",                       1, 1);
-insert into projects values (4, "D2 staging",  "D-Programming-Language", "http://dlang.org",       1, 0);
-insert into projects values (5, "D2 2.061",    "D-Programming-Language", "http://dlang.org",       1, 0);
+insert into projects values (1, "D2 master",   "http://dlang.org",       1, 1, 0, 1, 1);
+insert into projects values (2, "GDC",         "http://gdcproject.org/", 2, 1, 0, 1, 0);
+insert into projects values (3, "LDC",         "",                       3, 1, 1, 0, 0);
+insert into projects values (4, "D2 staging",  "http://dlang.org",       1, 1, 0, 0, 1);
+insert into projects values (5, "D2 2.061",    "http://dlang.org",       1, 1, 0, 0, 1);
 
 
 create table if not exists repositories
 (
     id                int          not null auto_increment,
     project_id        int          not null,
+    owner             varchar(128) not null,
     name              varchar(128) not null,
+    ref               varchar(128) not null,
 
     primary key(id),
     key(project_id)
@@ -117,23 +119,9 @@ create table if not exists repositories
 
 truncate table repositories;
 
-insert into repositories values (1, 1, "dmd");
-insert into repositories values (2, 1, "druntime");
-insert into repositories values (3, 1, "phobos");
-
-create table if not exists repo_branches
-(
-    id                int          not null auto_increment,
-    repository_id     int          not null,
-    name              varchar(128) not null,
-
-    primary key(id),
-    key(repository_id)
-);
-
-insert into repo_branches values (1, 1, "master");
-insert into repo_branches values (2, 2, "master");
-insert into repo_branches values (3, 3, "master");
+insert into repositories values (1, 1, "D-Programming-Language", "dmd",      "master");
+insert into repositories values (2, 1, "D-Programming-Language", "druntime", "master");
+insert into repositories values (3, 1, "D-Programming-Language", "phobos",   "master");
 
 create table if not exists platforms
 (
@@ -235,8 +223,8 @@ create table if not exists test_runs
 (
     id                int          not null auto_increment,
     host_id           int          not null,
-    platform          varchar(32)  not null,
     project_id        int          not null,
+    platform          varchar(32)  not null,
     start_time        datetime     not null,
     end_time          datetime,
     rc                int,

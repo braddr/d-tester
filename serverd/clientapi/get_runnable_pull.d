@@ -265,21 +265,33 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
 {
     switch (clientver)
     {
+        case "5":
+            formattedWrite(outstr, "data=(\n");
         case "4":
             formattedWrite(outstr, "%s\n", runid);
             formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");
-            formattedWrite(outstr, "%s\n", proj.repositories[0].owner);
+            if (clientver == "4")
+                formattedWrite(outstr, "%s\n", proj.repositories[0].owner);
+            else
+            {
+                formattedWrite(outstr, "\"%s\"\n", proj.menu_label);
+                formattedWrite(outstr, "%s\n", proj.project_type);
+            }
+
             formattedWrite(outstr, "%s\n", platform);
 
             // list of repositories
             formattedWrite(outstr, "%s\n", proj.repositories.length);
-            foreach (r; proj.repositories)
-                formattedWrite(outstr, "%s\n%s\n%s\n", r.id, r.name, r.refname);
+            if (clientver == "4")
+                foreach (r; proj.repositories)
+                    formattedWrite(outstr, "%s\n%s\n%s\n", r.id, r.name, r.refname);
+            else
+                foreach (r; proj.repositories)
+                    formattedWrite(outstr, "%s\n%s\n%s\n%s\n", r.id, r.owner, r.name, r.refname);
 
-            switch (proj.repositories[0].owner)
+            switch (proj.project_type)
             {
-                case "yebblies":
-                case "D-Programming-Language":
+                case 1:
                     formattedWrite(outstr, "1 0\n"); // checkout dummy
 
                     //  merge(9|10|11) repoindex(0|1|2) url ref
@@ -303,7 +315,7 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
                     formattedWrite(outstr, "6 2\n"); // test phobos
                     formattedWrite(outstr, "7 0\n"); // test dmd
                     break;
-                case "D-Programming-GDC":
+                case 2:
                     formattedWrite(outstr, "1 0\n"); // checkout dummy
 
                     // merge(14) repoindex(0) url ref
@@ -321,10 +333,11 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
                     formattedWrite(outstr, "13 0\n"); // test gdc
                     break;
                 default:
-                    writelog ("  unknown project: %s", proj.repositories[0].owner);
+                    writelog ("  unknown project type: %s", proj.project_type);
                     outstr.put("skip\n");
                     break;
             }
+            if (clientver == "5") formattedWrite(outstr, ")\n");
             break;
         default:
             writelog("  illegal clientver: %s", clientver);

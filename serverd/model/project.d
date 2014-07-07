@@ -42,12 +42,21 @@ Repository[] loadRepositories(ulong pid)
 class Project
 {
     ulong  id;
+    string menu_label;
+    int    project_type;
     bool   test_pulls;
     Repository[] repositories;
 
-    this(ulong _id, bool _test_pulls)
+    this(sqlrow row)
+    {
+        this(to!ulong(row[0]), row[1], to!int(row[2]), (row[3] == "1"));
+    }
+
+    this(ulong _id, string _label, int _type, bool _test_pulls)
     {
         id = _id;
+        menu_label = _label;
+        project_type = _type;
         test_pulls = _test_pulls;
         repositories = loadRepositories(id);
     }
@@ -66,14 +75,14 @@ class Project
 
 Project[ulong] loadProjects()
 {
-    sql_exec(text("select id, test_pulls from projects where enabled = true"));
+    sql_exec(text("select id, menu_label, project_type, test_pulls from projects where enabled = true"));
 
     sqlrow[] rows = sql_rows();
 
     Project[ulong] projects;
     foreach (row; rows)
     {
-        auto p = new Project(to!ulong(row[0]), (row[1] == "1"));
+        auto p = new Project(row);
         projects[to!ulong(row[0])] = p;
     }
 
@@ -82,7 +91,7 @@ Project[ulong] loadProjects()
 
 Project loadProject(string owner, string repo, string branch)
 {
-    sql_exec(text("select p.id, p.test_pulls from projects p where p.id in (select r.project_id from repositories r where r.owner = \"", owner, "\" and r.name = \"", repo, "\" and r.ref = \"", branch, "\")"));
+    sql_exec(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p where p.id in (select r.project_id from repositories r where r.owner = \"", owner, "\" and r.name = \"", repo, "\" and r.ref = \"", branch, "\")"));
 
     sqlrow[] rows = sql_rows();
 
@@ -92,31 +101,31 @@ Project loadProject(string owner, string repo, string branch)
         return null;
     }
 
-    auto p = new Project(to!ulong(rows[0][0]), (rows[0][1] == "1"));
+    auto p = new Project(rows[0]);
     return p;
 }
 
 Project loadProjectById(ulong projectid)
 {
-    sql_exec(text("select id, test_pulls from projects where enabled = true and id = ", projectid));
+    sql_exec(text("select id, menu_label, project_type, test_pulls from projects where enabled = true and id = ", projectid));
 
     sqlrow[] rows = sql_rows();
     assert(rows.length == 1);
 
-    auto p = new Project(to!ulong(rows[0][0]), (rows[0][1] == "1"));
+    auto p = new Project(rows[0]);
 
     return p;
 }
 
 Project[] loadProjectsByHostId(ulong hostid)
 {
-    sql_exec(text("select p.id, p.test_pulls from projects p, build_hosts bh, build_host_projects bhp where p.id = bhp.project_id and bhp.host_id = bh.id and p.enabled = true and bh.id = ", hostid));
+    sql_exec(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p, build_hosts bh, build_host_projects bhp where p.id = bhp.project_id and bhp.host_id = bh.id and p.enabled = true and bh.id = ", hostid));
     sqlrow[] rows = sql_rows();
 
     Project[] projects;
     foreach (row; rows)
     {
-        auto p = new Project(to!ulong(row[0]), (row[1] == "1"));
+        auto p = new Project(row);
         projects ~= p;
     }
 

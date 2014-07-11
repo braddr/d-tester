@@ -77,7 +77,7 @@
       from pull_test_runs ptr, build_hosts bh
      where ptr.g_p_id = \get{ghp_id} and
            ptr.host_id = bh.id
-     order by start_time desc
+     order by ptr.deleted, start_time desc
      limit 100
 }
 \while{\sqlrow{run_id}{bh_id}{bh_ipaddr}{bh_name}{platform}{sha}{start_time}{end_time}{duration}{rc}{deleted}}{

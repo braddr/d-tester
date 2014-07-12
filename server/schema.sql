@@ -38,7 +38,7 @@ create table if not exists github_pulls
     repo_id           int          not null,
     pull_id           int          not null,
     user_id           int          not null,
-    create_date       datetime,
+    create_date       datetime     not null,
     close_date        datetime,
     updated_at        datetime     not null,
     open              bool         not null,
@@ -48,7 +48,7 @@ create table if not exists github_pulls
     head_git_url      varchar(256) not null,
     head_ref          varchar(256) not null,
     head_sha          varchar(256) not null,
-    head_date         datetime,
+    head_date         datetime     not null,
     auto_pull         int,
 
     primary key(id),

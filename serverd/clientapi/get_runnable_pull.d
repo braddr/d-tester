@@ -30,7 +30,7 @@ struct Pull
 void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
 {
     // get set of pull requests that need to have runs
-    //                 0      1     2       3           4            5                6            7              8             9        10    11                  12
+    //                 0      1     2       3           4            5                6            7              8             9      10    11                  12
     string q = text(
                "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, r.ref, p.id, p.allow_auto_merge, gp.auto_pull "
                "from github_pulls gp, projects p, repositories r, github_users u, build_host_projects bhp "

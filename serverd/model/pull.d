@@ -146,6 +146,14 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
     if (closed_at  == "") { closed_at  = "2000-01-01T00:00:00Z"; }
     // writelog("%s %s %s", updated_at, created_at, closed_at);
 
+    const(JSONValue)* merged_by = "merged_by" in obj.object;
+    ulong auto_pull = 0;
+    if (merged_by && merged_by.type == JSON_TYPE.OBJECT)
+    {
+        const JSONValue id = merged_by.object["id"];
+        if (id.type == JSON_TYPE.INTEGER) auto_pull = id.integer;
+    }
+
     auto p = new Pull(
             0, // our id not known from github data
             repo.id,
@@ -164,7 +172,7 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
             SysTime.fromISOExtString(updated_at), // wrong time, but need a value. Will be fixed during loadCommitDateFromGithub
             SysTime.fromISOExtString(created_at),
             SysTime.fromISOExtString(closed_at),
-            0);
+            auto_pull);
 
     return p;
 }
@@ -184,6 +192,7 @@ bool updatePull(Repository repo, Pull current, Pull updated)
     bool clearOldResults = false;
     bool clearAutoPull = false;
 
+    //writelog("  c.o = %s, u.o = %s, c.ap = %s, u.ap = %s", current.open, updated.open, current.auto_pull, updated.auto_pull);
     if (current.open != updated.open)
     {
         printHeader();
@@ -192,6 +201,11 @@ bool updatePull(Repository repo, Pull current, Pull updated)
 
         if (updated.open)
             sql_exec(text("update github_pulls set close_date = null where id = ", current.id));
+        else if (current.auto_pull != updated.auto_pull)
+        {
+            writelog("    auto_pull: %s -> %s", current.auto_pull, updated.auto_pull);
+            sql_exec(text("update github_pulls set auto_pull = ", updated.auto_pull, " where id = ", current.id));
+        }
     }
 
     if (current.updated_at != updated.updated_at)

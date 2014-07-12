@@ -133,16 +133,16 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
         }
     }
 
-    const JSONValue jvU = obj.object["updated_at"];
-    string updated_at   = jvU.type == JSON_TYPE.STRING ? jvU.str : "";
+    const(JSONValue)* jvU = "updated_at" in obj.object;
+    string updated_at   = (jvU && jvU.type == JSON_TYPE.STRING) ? jvU.str : "";
     if (updated_at == "") { updated_at = "2000-01-01T00:00:00Z"; }
 
-    const JSONValue jvC = obj.object["created_at"];
-    string created_at   = jvC.type == JSON_TYPE.STRING ? jvC.str : "";
+    const(JSONValue)* jvC = "created_at" in obj.object;
+    string created_at   = (jvC && jvC.type == JSON_TYPE.STRING) ? jvC.str : "";
     if (created_at == "") { created_at = "2000-01-01T00:00:00Z"; }
 
-    const JSONValue jvD = obj.object["closed_at"];
-    string closed_at    = jvD.type == JSON_TYPE.STRING ? jvD.str : "";
+    const(JSONValue)* jvD = "closed_at" in obj.object;
+    string closed_at    = (jvD && jvD.type == JSON_TYPE.STRING) ? jvD.str : "";
     if (closed_at  == "") { closed_at  = "2000-01-01T00:00:00Z"; }
     // writelog("%s %s %s", updated_at, created_at, closed_at);
 

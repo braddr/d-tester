@@ -69,8 +69,6 @@ Pull makePullFromRow(sqlrow row)
     if (row[12] == "" || row[12] == "0000-00-00T00:00:00Z") row[12] = "2000-01-01T00:00:00Z";
     if (row[13] == "" || row[13] == "0000-00-00T00:00:00Z") row[13] = "2000-01-01T00:00:00Z";
 
-    // TODO: remove once repo_id data is backfilled
-    if (row[15] == "") row[15] = "0";
     // null -> 0 for auto_pull userid
     if (row[16] == "") row[16] = "0";
 

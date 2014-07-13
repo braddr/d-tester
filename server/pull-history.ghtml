@@ -54,7 +54,12 @@
   </tr><tr>
     <th>Merge into</th> <td><a href="https://github.com/\get{repo_owner}/\get{repo_name}/tree/\get{ghp_base_ref}">\get{ghp_base_ref}</a></td>
   </tr><tr>
-  <th>Auto Merge</th> <td>\if{\get{ghp_auto_pull}}{Yes - (by \get{pull_authorizer})}{No}\if{\get{loggedin}}{\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;from=pull-history&amp;csrf=\get{csrf}">Toggle</a>}</td>
+    <th>\if{\eq{\get{ghp_open}}{0}}{Merged By}{Auto-Merge}
+    <td>\if{\eq{\get{ghp_open}}{0}}{
+          \if{\get{ghp_auto_pull}}{\get{pull_authorizer}}{Closed without Merging}
+        }{
+          \if{\get{ghp_auto_pull}}{Yes - (by \get{pull_authorizer})}{No}\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;from=pull-history&amp;csrf=\get{csrf}">Toggle</a></td>
+        }
   </tr>
 </table>
 

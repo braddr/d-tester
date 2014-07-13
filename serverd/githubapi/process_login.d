@@ -131,8 +131,9 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
             goto Lsend;
     }
 
-    ret = text("Set-Cookie: testerlogin=", cookievalue, "; domain=", sn, "; path=/; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");
+    ret = text("Set-Cookie: testerlogin=", cookievalue, "; domain=", sn, "; path=/; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""));
     writelog("  login returning: %s", ret);
+    ret ~= "\n";
 
     urldata = parsestate(state);
 

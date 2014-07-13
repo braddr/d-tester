@@ -57,10 +57,10 @@
     }
     \while{\sqlrow{rid}{rowner}{rname}{rbname}{rbcount}}{
         <tr>
-            <td>\get{rowner}</td>
-            <td>\get{rname}</td>
-            <td>\get{rbname}</td>
-            <td>\get{rbcount}</td>
+            <td><a href="https://github.com/\get{rowner}/">\get{rowner}</a></td>
+            <td><a href="https://github.com/\get{rowner}/\get{rname}/">\get{rname}</a></td>
+            <td><a href="https://github.com/\get{rowner}/\get{rname}/tree/\get{rbname}">\get{rbname}</a></td>
+            <td><a href="https://github.com/\get{rowner}/\get{rname}/pulls">\get{rbcount}</a></td>
         </tr>
     }
     </table>

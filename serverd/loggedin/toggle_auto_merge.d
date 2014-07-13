@@ -27,8 +27,13 @@ bool validateInput(ref string projectid, ref string repoid, ref string pullid, r
 
 bool updateStore(string ghp_id, string loginid, ref bool newstate)
 {
-    sql_exec(text("select auto_pull from github_pulls where id = ", ghp_id));
+    sql_exec(text("select auto_pull, open from github_pulls where id = ", ghp_id));
     sqlrow[] rows = sql_rows();
+
+    // do nothing if the pull is already closed
+    // NOTE: not transactionally sound
+    if (rows[0][1] == "0")
+        return true;
 
     if (rows[0][0] == "")
     {

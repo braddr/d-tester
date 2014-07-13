@@ -46,13 +46,13 @@
   </tr><tr>
     <th>Pull</th>     <td><a href="https://github.com/\get{repo_owner}/\get{repo_name}/pull/\get{pullid}">\get{repo_owner}/\get{repo_name}/\get{pullid}</a></td>
   </tr><tr>
-    <th>Branch</th>   <td>\get{username}/\get{ghp_head_ref}</td>
+    <th>Branch</th>   <td><a href="https://github.com/\get{username}/\get{repo_name}/tree/\get{ghp_head_ref}">\get{username}/\get{ghp_head_ref}</a></td>
   </tr><tr>
     <th>Commit Date</th><td>\get{ghp_head_date}</td>
   </tr><tr>
     <th>Updated</th>  <td>\get{ghp_updated_at}</td>
   </tr><tr>
-    <th>Based On</th> <td>\get{ghp_base_ref}</td>
+    <th>Merge into</th> <td><a href="https://github.com/\get{repo_owner}/\get{repo_name}/tree/\get{ghp_base_ref}">\get{ghp_base_ref}</a></td>
   </tr><tr>
   <th>Auto Merge</th> <td>\if{\get{ghp_auto_pull}}{Yes - (by \get{pull_authorizer})}{No}\if{\get{loggedin}}{\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;from=pull-history&amp;csrf=\get{csrf}">Toggle</a>}</td>
   </tr>

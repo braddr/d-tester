@@ -7,7 +7,7 @@
 # args:
 #   1) directory to create and use
 #   2) os
-#   3) project
+#   3) owner
 #   4) repository
 #   5) branch
 
@@ -21,7 +21,7 @@ fi
 top=$PWD
 
 if [ $# != 5 ]; then
-    echo -e "\t3 args required: testdir, os, project, repository, branch"
+    echo -e "\t3 args required: testdir, os, owner, repository, branch"
     exit 1
 fi
 
@@ -48,7 +48,7 @@ if [ -d $top/source/phobos ]; then
 fi
 
 # 1 == logfile
-# 2 == project
+# 2 == owner
 # 3 == repo
 function update_repo()
 {
@@ -82,7 +82,7 @@ function update_repo()
 }
 
 # 1 == logfile
-# 2 == project
+# 2 == owner
 # 3 == repo
 # 4 == branch
 # 5 == build dir

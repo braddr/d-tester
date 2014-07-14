@@ -16,6 +16,9 @@ echo -e "\tbuilding dmd"
 
 cd $1/dmd/src
 
+# expose temporary hack to make a dmd compiler available
+export PATH=$PATH:$1/dmd/src/master-test-$OS/dmd/src
+
 makecmd=make
 makefile=posix.mak
 MODEL=32

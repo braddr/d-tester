@@ -146,6 +146,17 @@ bool getPull(string owner, string repo, string pullid, ref JSONValue jv)
     return parseAndReturn(responsepayload, jv);
 }
 
+string loadCommitDateFromGithub(string owner, string repo, string sha)
+{
+    JSONValue jv;
+    if (!getCommit(owner, repo, sha, jv))
+        return null;
+
+    string s = jv.object["commit"].object["committer"].object["date"].str;
+
+    return s;
+}
+
 bool getCommit(string owner, string repo, string sha, ref JSONValue jv)
 {
     string url = text("https://api.github.com/repos/", owner, "/", repo, "/commits/", sha);

@@ -131,6 +131,20 @@ bool processPull(const ref JSONValue jv)
     if (!github_pull) return false;
 
     Pull db_pull = loadPull(repo.id, number.integer);
+
+// TODO: figureout how to make this work cleanly here.. currently using github's updated_at field which
+//       updates more frequently than when commits are made.  Luckily, this hook is only supposed to
+//       be called when a commit has been made, so it's roughly the same.
+//
+//    if (db_pull.head_sha == github_pull.head_sha)
+//        github_pull.head_date = db_pull.head_date;
+//    else
+//    {
+//        string date = github.loadCommitDateFromGithub(repo.owner, repo.name, github_pull.head_sha);
+//        if (!date) return false;
+//        github_pull.head_date = SysTime.fromISOExtString(date, UTC());;
+//    }
+
     if (db_pull)
         updatePull(repo, db_pull, github_pull);
     else

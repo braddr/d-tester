@@ -35,23 +35,12 @@ Pull loadPullFromGitHub(Repository repo, Pull current_pull, ulong pullid)
         pull.head_date = current_pull.head_date;
     else
     {
-        string date = loadCommitDateFromGithub(repo, pull.head_sha);
+        string date = github.loadCommitDateFromGithub(repo.owner, repo.name, pull.head_sha);
         if (!date) return null;
         pull.head_date = SysTime.fromISOExtString(date, UTC());;
     }
 
     return pull;
-}
-
-string loadCommitDateFromGithub(Repository repo, string sha)
-{
-    JSONValue jv;
-    if (!github.getCommit(repo.owner, repo.name, sha, jv))
-        return null;
-
-    string s = jv.object["commit"].object["committer"].object["date"].str;
-
-    return s;
 }
 
 void updatePullAndGithub(Repository repo, Pull current_pull, Pull github_pull)
@@ -101,7 +90,7 @@ bool processProject(Pull[ulong] knownpulls, Repository repo, const ref JSONValue
             continue;
         else
         {
-            string date = loadCommitDateFromGithub(repo, p.head_sha);
+            string date = github.loadCommitDateFromGithub(repo.owner, repo.name, p.head_sha);
             if (!date) continue;
             p.head_date = SysTime.fromISOExtString(date, UTC());;
         }

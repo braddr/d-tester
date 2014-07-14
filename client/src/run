@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+rm stop
+
 while [ 1 ]; do
     if [ -f stop ]; then
         exit 0

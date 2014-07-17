@@ -27,6 +27,7 @@ MODEL=32
 EXTRA_ARGS="-j$PARALLELISM"
 case "$2" in
     Darwin_32*)
+        MODEL=64
         ;;
     Darwin_64*)
         MODEL=64

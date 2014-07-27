@@ -23,9 +23,11 @@ MODEL=32
 EXTRA_ARGS="-j$PARALLELISM"
 case "$2" in
     Darwin_32*)
+        BINDIR=bin
         ;;
     Darwin_64*)
         MODEL=64
+        BINDIR=bin
         ;;
     FreeBSD_32)
         makecmd=gmake
@@ -54,8 +56,12 @@ case "$2" in
         exit 1
 esac
 
+if [ "x$BINDIR" == "x" ]; then
+    BINDIR=bin$MODEL
+fi
+
 # expose a prebuilt dmd
-HOST_DC=`ls -1 $top/release-build/install/*/bin$MODEL/dmd`
+HOST_DC=`ls -1 $top/release-build/install/*/$BINDIR/dmd`
 echo "HOST_DC=$HOST_DC" >> ../../dmd-build.log 2>&1
 
 $makecmd MODEL=$MODEL HOST_DC=$HOST_DC $EXTRA_ARGS -f $makefile dmd >> ../../dmd-build.log 2>&1

@@ -17,10 +17,6 @@ echo -e "\tbuilding dmd"
 top=$PWD
 cd $1/dmd/src
 
-# expose temporary hack to make a dmd compiler available
-export PATH=$PATH:$top/master-test-$2/dmd/src
-which dmd >> ../../dmd-build.log 2>&1
-
 makecmd=make
 makefile=posix.mak
 MODEL=32
@@ -58,9 +54,19 @@ case "$2" in
         exit 1
 esac
 
-$makecmd MODEL=$MODEL $EXTRA_ARGS -f $makefile dmd >> ../../dmd-build.log 2>&1
+# expose a prebuilt dmd
+HOST_DC=`ls -1 $top/release-build/install/*/bin$MODEL/dmd`
+echo "HOST_DC=$HOST_DC" >> ../../dmd-build.log 2>&1
+
+$makecmd MODEL=$MODEL HOST_DC=$HOST_DC $EXTRA_ARGS -f $makefile dmd >> ../../dmd-build.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tfailed to build dmd"
+    exit 1
+fi
+
+$makecmd MODEL=$MODEL HOST_DC=$HOST_DC $EXTRA_ARGS -f $makefile install >> ../../dmd-build.log 2>&1
+if [ $? -ne 0 ]; then
+    echo -e "\tfailed to install $repo"
     exit 1
 fi
 

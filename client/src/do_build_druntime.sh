@@ -61,3 +61,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+$makecmd DMD=../dmd/src/dmd MODEL=$MODEL $EXTRA_ARGS -f $makefile install >> ../druntime-build.log 2>&1
+if [ $? -ne 0 ]; then
+    echo -e "\tfailed to install $repo"
+    exit 1
+fi
+

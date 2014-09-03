@@ -1,0 +1,3 @@
+CPUS=8
+PARALLELISM=10
+platforms=(FreeBSD_64)

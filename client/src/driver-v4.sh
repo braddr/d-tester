@@ -70,7 +70,7 @@ function checkoutRepeat
 {
     rc=1
     while [ $rc -ne 0 ]; do
-        src/do_checkout.sh "$1" "$2" "$3" "$4" "$5"
+        timelimit -p -t $TESTER_TIMEOUT src/do_checkout.sh "$1" "$2" "$3" "$4" "$5"
         rc=$?
         if [ $rc -ne 0 ]; then
             sleep 60
@@ -160,17 +160,17 @@ function runtests
                 logname=checkout.log
                 ;;
             2|3|4|12)
-                src/do_build_${reponame}.sh "$rundir" "$OS"
+                timelimit -p -t $TESTER_TIMEOUT src/do_build_${reponame}.sh "$rundir" "$OS"
                 step_rc=$?
                 logname=${reponame}-build.log
                 ;;
             5|6|7|13)
-                src/do_test_${reponame}.sh "$rundir" "$OS" "$runmode"
+                timelimit -p -t $TESTER_TIMEOUT src/do_test_${reponame}.sh "$rundir" "$OS" "$runmode"
                 step_rc=$?
                 logname=${reponame}-unittest.log
                 ;;
             9|10|11|14)
-                src/do_pull.sh "$rundir" "$OS" "$reponame" "${steps[2]}" "${steps[3]}"
+                timelimit -p -t $TESTER_TIMEOUT src/do_pull.sh "$rundir" "$OS" "$reponame" "${steps[2]}" "${steps[3]}"
                 step_rc=$?
                 logname=${reponame}-merge.log
                 steps=(${steps[@]:2}) # trim extra fields
@@ -206,6 +206,7 @@ function runtests
     fi
 }
 
+TESTER_TIMEOUT=3600
 platforms=($(detectos))
 
 function pretest

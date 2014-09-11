@@ -1,21 +1,3 @@
-diff --git a/etc/c/zlib/win64.mak b/etc/c/zlib/win64.mak
-index 1edfd0e..7e6d8ee 100644
---- a/etc/c/zlib/win64.mak
-+++ b/etc/c/zlib/win64.mak
-@@ -1,10 +1,8 @@
- # Makefile for zlib64
-
--VCDIR=\Program Files (x86)\Microsoft Visual Studio 10.0\VC
--
--CC="$(VCDIR)\bin\amd64\cl"
--LD="$(VCDIR)\bin\amd64\link"
--LIB="$(VCDIR)\bin\amd64\lib"
-+CC="$(VCBIN_DIR)\cl"
-+LD="$(VCBIN_DIR)\link"
-+LIB="$(VCBIN_DIR)\lib"
-
- CFLAGS=/O2 /nologo /I"$(VCDIR)\INCLUDE"
- LIBFLAGS=/nologo
 diff --git a/win64.mak b/win64.mak
 index 9746daf..a35184b 100644
 --- a/win64.mak
@@ -44,12 +26,3 @@ index 9746daf..a35184b 100644
  MAKE=make
  
  ## D compiler
-@@ -447,7 +443,7 @@ html : $(DOCS)
- 
- $(ZLIB): $(SRC_ZLIB)
- 	cd etc\c\zlib
--	$(MAKE) -f win$(MODEL).mak zlib$(MODEL).lib "CC=\$(CC)"\"" "LIB=\$(AR)"\"" "VCDIR=$(VCDIR)"
-+	$(MAKE) -f win$(MODEL).mak zlib$(MODEL).lib "CC=\$(CC)"\"" "LIB=\$(AR)"\""
- 	cd ..\..\..
- 
- ################## DOCS ####################################

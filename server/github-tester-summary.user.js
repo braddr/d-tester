@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name                Auto-tester results on github
-// @namespace           http://auto-tester.puremagic.com/
+// @namespace           https://auto-tester.puremagic.com/
 // @description         add auto tester results to github
 // @include             https://github.com/
 // @include             https://github.com/D-Programming-Language
-// @version             1.4
+// @version             1.5
+// @grant               GM_xmlhttpRequest
+// @downloadURL         https://auto-tester.puremagic.com/github-tester-summary.user.js
 // ==/UserScript==
 
 function showResults(results)
@@ -37,14 +39,14 @@ function doLoad()
 
     GM_xmlhttpRequest({
         method:"GET",
-        url:"http://auto-tester.puremagic.com/summary.json.ghtml",
+        url:"https://auto-tester.puremagic.com/summary.json.ghtml",
         onload:function(details) { var results = JSON.parse(details.responseText); showResults(results); }
     });
 }
 
 function addBox()
 {
-    var newhtml = "<h3 class=\"org-module-title\"><a id=\"at_hdr\" class=\"org-module-link\" href=\"http://auto-tester.puremagic.com/\">Auto-Tester Results</a></h3>\n";
+    var newhtml = "<h3 class=\"org-module-title\"><a id=\"at_hdr\" class=\"org-module-link\" href=\"https://auto-tester.puremagic.com/\">Auto-Tester Results</a></h3>\n";
 
     newhtml += "<ul id=\"at_listing\" class=\"org-teams-list\">\n";
     newhtml += "</ul>\n";

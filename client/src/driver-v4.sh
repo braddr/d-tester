@@ -179,7 +179,7 @@ function runtests
                 src/do_daily_maintenance.sh
                 ;;
         esac
-        if [ $step_rc -gt 0 ]; then
+        if [ $step_rc -gt 1 ]; then
             echo "timed out after $TESTER_TIMEOUT seconds, step failed" >> $rundir/$logname
             step_rc=1
         fi

@@ -1,0 +1,5 @@
+CPUS=8
+PARALLELISM=10
+TESTER_TIMEOUT=1200
+platforms=(Linux_32 Linux_64_64 Linux_32_64 Linux_64_32)
+platforms=(Linux_32 )

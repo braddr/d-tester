@@ -14,6 +14,7 @@
 \set{FreeBSD_64_32}{FreeBSD 64/32}
 \set{Darwin_32}{OSX 32}
 \set{Darwin_64_64}{OSX 64}
+\set{Darwin_64_32}{OSX 64/32}
 \set{Win_32}{Windows 32}
 \set{Win_64}{Windows 64}
 

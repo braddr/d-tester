@@ -132,10 +132,10 @@
     \drawcol{\1}{\3}{Linux_64_64}
     \drawcol{\1}{\3}{Linux_32_64}
     \drawcol{\1}{\3}{Linux_64_32}
-    \drawcol{\1}{\3}{Darwin_32}
+    #\drawcol{\1}{\3}{Darwin_32}
     \drawcol{\1}{\3}{Darwin_64_64}
     #\drawcol{\1}{\3}{Darwin_32_64}
-    #\drawcol{\1}{\3}{Darwin_64_32}
+    \drawcol{\1}{\3}{Darwin_64_32}
     \drawcol{\1}{\3}{Win_32}
     \drawcol{\1}{\3}{Win_64}
 }}
@@ -168,10 +168,10 @@
   \set{ss6}{\getastate{\1}{\2}{Linux_64_64}}
   \set{ss7}{\getastate{\1}{\2}{Linux_32_64}}
   \set{ss8}{\getastate{\1}{\2}{Linux_64_32}}
-  \set{ss9}{\getastate{\1}{\2}{Darwin_32}}
-  \set{ss10}{\getastate{\1}{\2}{Darwin_64_64}}
-  #\set{ss11}{\getastate{\1}{\2}{Darwin_32_64}}
-  #\set{ss12}{\getastate{\1}{\2}{Darwin_64_32}}
+  \set{ss9}{\getastate{\1}{\2}{Darwin_64_64}}
+  \set{ss10}{\getastate{\1}{\2}{Darwin_64_32}}
+  \set{ss11}{\getastate{\1}{\2}{Darwin_32}}
+  #\set{ss12}{\getastate{\1}{\2}{Darwin_32_64}}
   \set{i}{1}
   \set{numpasses}{0}
   \while{\op{11}{>}{\get{i}}}{
@@ -263,10 +263,10 @@
 \buildHeader{L 64}{Linux_64_64}{Linux with a 64 bit compiler binary and 64 bit output}
 \buildHeader{L 3/6}{Linux_32_64}{Linux with a 32 bit compiler binary and 64 bit output}
 \buildHeader{L 6/3}{Linux_64_32}{Linux with a 64 bit compiler binary and 32 bit output}
-\buildHeader{O 32}{Darwin_32}{OS/X with a 32 bit compiler binary and 32 bit output}
 \buildHeader{O 64}{Darwin_64_64}{OS/X with a 64 bit compiler binary and 64 bit output}
+\buildHeader{O 6/3}{Darwin_64_32}{OSX with a 64 bit compiler binary and 32 bit output}
+#\buildHeader{O 32}{Darwin_32}{OS/X with a 32 bit compiler binary and 32 bit output}
 #\buildHeader{O 3/6}{Darwin_32_64}{OSX with a 32 bit compiler binary and 64 bit output}
-#\buildHeader{O 6/3}{Darwin_64_32}{OSX with a 64 bit compiler binary and 32 bit output}
 \buildHeader{W 32}{Win_32}{Windows with a 32 bit compiler binary and 32 bit output}
 \buildHeader{W 64}{Win_64}{Windows with a 32 bit compiler binary and 64 bit output}
 </tr>

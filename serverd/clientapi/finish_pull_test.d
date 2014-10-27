@@ -72,6 +72,9 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     updateHostLastCheckin(hostid, clientver);
 
+    // temporarily made rc be just 0 and 1
+    if (rc != "0") rc = "1";
+
     sql_exec(text("update pull_test_data set end_time=now(), rc=", rc, " where id=", testid));
 
     if (isPullRunAborted(runid))

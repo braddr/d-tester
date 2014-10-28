@@ -51,14 +51,15 @@ case "$2" in
         exit 1;
 esac
 
-#GCC_VER=4.8.1
-#GCC_VER=4.9-20130929
-#GCC_VER=4.9-20131117
-#GCC_VER=4.9-20131201
-#GCC_VER=4.10-20140518
-#GCC_VER=4.10-20140521
-#GCC_VER=4.10-20140608
-GCC_VER=4.10-20140629
+#GCC_VER=5-20140831
+GCC_VER=`cat gcc.version`
+GCC_VER=${GCC_VER#gcc-}
+
+if [ ! -f ../../src/gcc-$GCC_VER.tar.bz2 ]; then
+    echo "Downloading gcc-$GCC_VER.tar.bz2 from www.netgull.com gcc mirror"
+    curl --silent --output ../../src/gcc-$GCC_VER.tar.bz2 http://www.netgull.com/gcc/snapshots/$GCC_VER/gcc-$GCC_VER.tar.bz2
+fi
+
 tar jxf ../../src/gcc-$GCC_VER.tar.bz2 >> ../GDC-build.log 2>&1
 ./setup-gcc.sh gcc-$GCC_VER >> ../GDC-build.log 2>&1
 mkdir output-dir

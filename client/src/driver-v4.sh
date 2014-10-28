@@ -94,21 +94,31 @@ function runtests
 
     if [ "$2" == "test-DMD" ]; then
         data=("test" "master" "D-Programming-Language" "$OS")
-        data=(${data[@]} "3" "1" "dmd" "master" "2" "druntime" "master" "3" "phobos" "master")
+        data=(${data[@]} "3")
+        data=(${data[@]} "1" "dmd" "master")
+        data=(${data[@]} "2" "druntime" "master")
+        data=(${data[@]} "3" "phobos" "master")
         data=(${data[@]} 1 0)
         #if [ "$runmode" == "pull" ]; then
         #    data=(${data[@]} 9 0 "https://github.com/yebblies/dmd.git" "issue4923")
         #fi
-        data=(${data[@]} 2 0 3 1 4 2 5 1 6 2 7 0)
+        data=(${data[@]} 2 0)
+        data=(${data[@]} 3 1)
+        data=(${data[@]} 4 2)
+        data=(${data[@]} 5 1)
+        data=(${data[@]} 6 2)
+        data=(${data[@]} 7 0)
     elif [ "$2" == "test-GDC" ]; then
         data=("test" "master" "D-Programming-GDC" "$OS")
-        data=(${data[@]} "1" "13" "GDC" "master")
+        data=(${data[@]} "1")
+        data=(${data[@]} "13" "GDC" "master")
         data=(${data[@]} 1 0)
         #if [ "$runmode" == "pull" ]; then
         #    # fix
         #    data=(${data[@]} 14 0 "https://github.com/yebblies/dmd.git" "issue4923")
         #fi
-        data=(${data[@]} 12 0 13 0)
+        data=(${data[@]} 12 0)
+        data=(${data[@]} 13 0)
     else
         data=($(callcurl get_runnable_pull "os=$OS&hostname=`hostname`$extraargs"))
     fi

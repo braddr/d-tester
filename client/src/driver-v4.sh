@@ -143,7 +143,7 @@ function runtests
     run_rc=0
     while [ $run_rc -eq 0 -a ${#steps[@]} -gt 0 ]; do
         testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}")
-        if [ "x$testid" == "xabort" ]; then
+        if [ "x$testid" == "xabort" -o "x$testid" == "xbad input" ]; then
             run_rc=3
             break
         fi

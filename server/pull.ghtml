@@ -56,71 +56,67 @@
   </tr>
 </table>
 
-\sqlexec{
-    select id, test_type_id, rc, start_time, end_time, timediff(ifnull(end_time, now()), start_time)
-      from pull_test_data
-     where test_run_id = \get{runid}
-}
-\while{\sqlrow{t_id}{t_type}{t_rc}{t_st}{t_et}{t_dur}}{
-    \set{test_\get{t_type}_id}{\get{t_id}}
-    \set{test_\get{t_type}_rc}{\get{t_rc}}
-    \set{test_\get{t_type}_st}{\get{t_st}}
-    \set{test_\get{t_type}_et}{\get{t_et}}
-    \set{test_\get{t_type}_dur}{\get{t_dur}}
-}
-
-# \1 == test type
-\set{showrc}{\quote{
-  \if{\not{\get{logid}}}{\if{\eq{\get{test_\1_rc}}{1}}{\set{logid}{\1}}}
-  \if{\eq{\get{logid}}{\1}}{\set{extraclass}{logshown}}{\set{extraclass}{}}
-  \if{\get{test_\1_et}}{
-    \processRC{\get{test_\1_rc}}
-    <td class="testcell \get{class} \get{extraclass}"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\1">\get{text}<br>\get{test_\1_dur}</a></td>
-  }{
-    \if{\get{test_\1_id}}{
-      <td class="testcell running \get{extraclass}">R<br>\get{test_\1_dur}+</td>
+# uses sqlrow names
+\set{drawheader}{\quote{
+    <th>
+    \if{\eq{\get{tt_name}}{checkout}}{
+        checkout
+    }{\if{ \eq{\strindex{\get{tt_name}}{merge}}{0} }{
+        merge
     }{
-      <td class="testcell unknown \get{extraclass}">&nbsp;</td>
-    }
+        \get{tt_name}\if{\get{r_name}}{&nbsp;\get{r_name}}
+    }}
+    </th>
+}}
+
+# uses sqlrow names
+\set{drawdata}{\quote{
+  # if no log is selected already, and this test didn't succeed, select it
+  \if{\not{\get{dataid}}}{\if{\eq{\get{t_rc}}{1}}{\set{dataid}{\get{t_id}}}}
+  \if{\eq{\get{dataid}}{\get{t_id}}}{\set{extraclass}{logshown}}{\set{extraclass}{}}
+  \if{\get{t_et}}{
+    \processRC{\get{t_rc}}
+    <td class="testcell \get{class} \get{extraclass}"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;dataid=\get{t_id}">\get{text}<br>\get{t_dur}</a></td>
+  }{
+    # impossible to be null, see TODO below
+    #\if{\get{t_id}}{
+      <td class="testcell running \get{extraclass}">R<br>\get{t_dur}+</td>
+    #}{
+    #  <td class="testcell unknown \get{extraclass}">&nbsp;</td>
+    #}
   }
 }}
 
+# TODO: this version looses knowledge of not-yet-started tests since there
+# is no row created until that point
+\sqlexec{
+    select ptd.id, ptd.test_type_id, tt.name, r.name, rc, ptd.start_time, ptd.end_time, timediff(ifnull(ptd.end_time, now()), ptd.start_time)
+      from test_types tt, pull_test_data ptd left join repositories r on r.id = ptd.repository_id
+     where test_run_id = \get{runid} and
+           tt.id = ptd.test_type_id
+     order by ptd.id
+}
+\set{headers}{}
+\set{rows}{}
+\while{\sqlrow{t_id}{t_type}{tt_name}{r_name}{t_rc}{t_st}{t_et}{t_dur}}{
+    \set{headers}{\get{headers} \drawheader}
+    \set{rows}{\get{rows} \drawdata}
+}
+
 <table class="whiterounded" id="buildsteps">
     <tr class="testrow header">
-        <th>checkout</th>
-        <th>merge</th>
-        <th>build&nbsp;dmd</th>
-        <th>build&nbsp;druntime</th>
-        <th>build&nbsp;phobos</th>
-        <th>test&nbsp;dmd</th>
-        <th>test&nbsp;druntime</th>
-        <th>test&nbsp;phobos</th>
+        \get{headers}
     </tr>
     <tr class="testrow results">
-        \showrc{1}
-        \if{\get{test_9_id}}{
-            \showrc{9}
-        }{ \if{\get{test_10_id}}{
-            \showrc{10}
-        }{ \if{\get{test_11_id}}{
-            \showrc{11}
-        }{
-            <td>&nbsp;</td>
-        }}}
-        \showrc{2}
-        \showrc{3}
-        \showrc{4}
-        \showrc{7}
-        \showrc{5}
-        \showrc{6}
+        \get{rows}
     </tr>
 </table>
 
-\if{\and{\get{logid}}{\op{\get{logid}}{V}}}{
+\if{\and{\get{dataid}}{\op{\get{dataid}}{V}}}{
 
 <div class="logheader">Log:</div>
 <div class="logbody">
-<iframe class="logframe" id="logframe" src="pull-logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;logid=\get{logid}"></iframe>
+<iframe class="logframe" id="logframe" src="pull-logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;dataid=\get{dataid}"></iframe>
 </div>
 
 }

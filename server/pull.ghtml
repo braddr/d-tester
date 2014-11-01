@@ -116,7 +116,7 @@
 
 <div class="logheader">Log:</div>
 <div class="logbody">
-<iframe class="logframe" id="logframe" src="pull-logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;dataid=\get{dataid}"></iframe>
+<iframe class="logframe" id="logframe" src="logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;dataid=\get{dataid}&isPull=true"></iframe>
 </div>
 
 }

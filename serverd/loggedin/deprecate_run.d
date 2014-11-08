@@ -7,13 +7,13 @@ import mysql;
 import utils;
 import validate;
 
-bool validateInput(ref string projectid, ref string runid, ref string runtype, ref string logid, Appender!string outstr)
+bool validateInput(ref string projectid, ref string runid, ref string runtype, ref string dataid, Appender!string outstr)
 {
     if (!validate_id(projectid, "projectit", outstr))
         return false;
     if (!validate_id(runid, "runid", outstr))
         return false;
-    if (logid != "" && !validate_id(logid, "logid", outstr))
+    if (dataid != "" && !validate_id(dataid, "dataid", outstr))
         return false;
     if (!validateNonEmpty(runtype, "runtype", outstr))
         return false;
@@ -40,10 +40,10 @@ Lerror:
 
     string projectid = lookup(userhash, "projectid");
     string runid = lookup(userhash, "runid");
-    string logid = lookup(userhash, "logid");
+    string dataid = lookup(userhash, "dataid");
     string runtype = lookup(userhash, "runtype");
 
-    if (!validateInput(projectid, runid, runtype, logid, valout))
+    if (!validateInput(projectid, runid, runtype, dataid, valout))
         goto Lerror;
 
     sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set deleted = true where id = ", runid));
@@ -51,12 +51,11 @@ Lerror:
     sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_data set end_time = now() where end_time is null and test_run_id = ", runid));
 
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/",
-               (runtype == "pull" ? "pull" : "test_data"),
-               ".ghtml?",
+               "show-run.ghtml?",
                "projectid=", projectid, "&",
                "runid=", runid));
-    if (logid != "")
-        outstr.put(text("&logid=", logid));
+    if (dataid != "")
+        outstr.put(text("&dataid=", dataid));
     outstr.put("\n\n");
 }
 

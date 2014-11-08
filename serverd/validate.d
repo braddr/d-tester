@@ -115,7 +115,7 @@ bool validate_id(ref string id, string idname, Appender!string outstr)
     return true;
 }
 
-bool validate_testtype(ref string type, Appender!string outstr)
+bool validate_testtype(ref string type, string clientver, Appender!string outstr)
 {
     if (!validateNonEmpty(type, "type", outstr)) return false;
     if (!validateNumber(type))
@@ -127,6 +127,23 @@ bool validate_testtype(ref string type, Appender!string outstr)
     type = sql_quote(type);
 
     // TODO: bounce the type against the db to make sure it's a known type
+    auto tt = to!ulong(type);
+    if (clientver == "5")
+    {
+        if (!(tt == 1 || (tt >= 15 && tt <= 17)))
+        {
+            formattedWrite(outstr, "type must be 1, 15 .. 17");
+            return false;
+        }
+    }
+    else
+    {
+        if (!(tt >= 1 && tt <= 14))
+        {
+            formattedWrite(outstr, "type must be 1 .. 14");
+            return false;
+        }
+    }
 
     return true;
 }

@@ -10,9 +10,15 @@ import std.file;
 import std.format;
 import std.range;
 
-bool validate_testidState(string testid, ref string hostid, ref string testtypeid, ref string runid, Appender!string outstr)
+bool validate_testidState(string testid, string clientver, ref string hostid, ref string testtypeid, ref string reponame, ref string runid, Appender!string outstr)
 {
-    if (!sql_exec(text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id from test_data td, test_runs tr where tr.id = td.test_run_id and td.id = ", testid)))
+    string sqlstr;
+    if (clientver == "5")
+        sqlstr = text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id, r.name from test_data td, test_runs tr, repositories r where r.id = td.repository_id and tr.id = td.test_run_id and td.id = ", testid);
+    else
+        sqlstr = text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id from test_data td, test_runs tr where tr.id = td.test_run_id and td.id = ", testid);
+
+    if (!sql_exec(sqlstr))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -34,12 +40,14 @@ bool validate_testidState(string testid, ref string hostid, ref string testtypei
         runid = row[2];
         testtypeid = row[3];
         hostid = row[4];
+        if (clientver == "5")
+            reponame = row[5];
     }
 
     return true;
 }
 
-bool validateInput(ref string raddr, ref string hostid, ref string testid, ref string runid, ref string testtypeid, ref string clientver, Appender!string outstr)
+bool validateInput(ref string raddr, ref string hostid, ref string testid, ref string runid, ref string testtypeid, ref string reponame, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
         return false;
@@ -48,13 +56,13 @@ bool validateInput(ref string raddr, ref string hostid, ref string testid, ref s
     if (!validate_clientver(clientver, outstr))
         return false;
 
-    if (!validate_testidState(testid, hostid, testtypeid, runid, outstr))
+    if (!validate_testidState(testid, clientver, hostid, testtypeid, reponame, runid, outstr))
         return false;
 
     return true;
 }
 
-string mapTTIDtoFilename(string testtypeid)
+string mapTTIDtoFilename(string testtypeid, string reponame)
 {
     int num = to!int(testtypeid);
 
@@ -74,13 +82,16 @@ string mapTTIDtoFilename(string testtypeid)
         case 12: return "GDC-build.log";
         case 13: return "GDC-unittest.log";
         case 14: return "GDC-merge.log";
+        case 15: return reponame ~ "-build.log";
+        case 16: return reponame ~ "-unittest.log";
+        case 17: return reponame ~ "-merge.log";
         default: return "";
     }
 }
 
-bool storeResults(string runid, string testtypeid, string contents, Appender!string outstr)
+bool storeResults(string runid, string testtypeid, string reponame, string contents, Appender!string outstr)
 {
-    string filename = mapTTIDtoFilename(testtypeid);
+    string filename = mapTTIDtoFilename(testtypeid, reponame);
     if (filename == "")
     {
         formattedWrite(outstr, "error: unknown test_type_id: %s\n", testtypeid);
@@ -112,12 +123,13 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string hostid;
     string runid;
     string testtypeid;
+    string reponame;
 
-    if (!validateInput(raddr, hostid, testid, runid, testtypeid, clientver, outstr))
+    if (!validateInput(raddr, hostid, testid, runid, testtypeid, reponame, clientver, outstr))
         return;
 
     updateHostLastCheckin(hostid, clientver);
 
-    if (!storeResults(runid, testtypeid, logcontents, outstr))
+    if (!storeResults(runid, testtypeid, reponame, logcontents, outstr))
         return;
 }

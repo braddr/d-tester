@@ -20,7 +20,9 @@ struct Pull
 {
     string g_p_id;
     string project_id;
-    string repo;
+    ulong  repo_project_index; // index of this repo in the project.repositories array
+    ulong  repo_id;
+    string repo_name;
     string giturl;
     string gitref;
     string sha;
@@ -70,7 +72,7 @@ void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls
         if (pull == null)
             continue; // happens when there's multiple runs for the same pull.  After the head matching run is processed, the rest will not find a match.
 
-        //writelog("  repo: %s, pull_id: %s, head_sha: %s, last_sha: %s", (*pull)[2], (*pull)[3], (*pull)[4], row[2]);
+        //writelog("  repo_id: %s, repo_name: %s, pull_id: %s, head_sha: %s, last_sha: %s", (*pull)]1, (*pull)[2], (*pull)[3], (*pull)[4], row[2]);
         if ((*pull)[4] == row[2])
             openPulls.remove(row[1]);
     }
@@ -263,31 +265,33 @@ bool validateInput(ref string raddr, ref string rname, ref string hostid, ref st
 
 void output(string clientver, string runid, string platform, Project proj, Pull[] pulls, Appender!string outstr)
 {
+    if (clientver != "4" && clientver != "5")
+    {
+        writelog("  illegal clientver: %s", clientver);
+        outstr.put("skip\n");
+        return;
+    }
+
+    if (proj.project_type != 1 && proj.project_type != 2)
+    {
+        writelog ("  unknown project type: %s", proj.project_type);
+        outstr.put("skip\n");
+        return;
+    }
+
     switch (clientver)
     {
-        case "5":
-            formattedWrite(outstr, "data=(\n");
         case "4":
             formattedWrite(outstr, "%s\n", runid);
             formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");
-            if (clientver == "4")
-                formattedWrite(outstr, "%s\n", proj.repositories[0].owner);
-            else
-            {
-                formattedWrite(outstr, "\"%s\"\n", proj.menu_label);
-                formattedWrite(outstr, "%s\n", proj.project_type);
-            }
+            formattedWrite(outstr, "%s\n", proj.repositories[0].owner);
 
             formattedWrite(outstr, "%s\n", platform);
 
             // list of repositories
             formattedWrite(outstr, "%s\n", proj.repositories.length);
-            if (clientver == "4")
-                foreach (r; proj.repositories)
-                    formattedWrite(outstr, "%s\n%s\n%s\n", r.id, r.name, r.refname);
-            else
-                foreach (r; proj.repositories)
-                    formattedWrite(outstr, "%s\n%s\n%s\n%s\n", r.id, r.owner, r.name, r.refname);
+            foreach (r; proj.repositories)
+                formattedWrite(outstr, "%s\n%s\n%s\n", r.id, r.name, r.refname);
 
             switch (proj.project_type)
             {
@@ -298,7 +302,7 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
                     foreach (p; pulls)
                     {
                         int step, repoindex;
-                        switch (p.repo)
+                        switch (p.repo_name)
                         {
                             case "dmd":      step =  9; repoindex = 0; break;
                             case "druntime": step = 10; repoindex = 1; break;
@@ -322,7 +326,7 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
                     foreach (p; pulls)
                     {
                         int step, repoindex;
-                        switch (p.repo)
+                        switch (p.repo_name)
                         {
                             case "GDC": step = 14; repoindex = 0; break;
                             default: assert(false, "unknown repository");
@@ -332,16 +336,38 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
                     formattedWrite(outstr, "12 0\n"); // build gdc
                     formattedWrite(outstr, "13 0\n"); // test gdc
                     break;
-                default:
-                    writelog ("  unknown project type: %s", proj.project_type);
-                    outstr.put("skip\n");
-                    break;
+                default: assert(false);
             }
-            if (clientver == "5") formattedWrite(outstr, ")\n");
             break;
-        default:
-            writelog("  illegal clientver: %s", clientver);
-            outstr.put("skip\n");
+
+        case "5":
+            formattedWrite(outstr, "%s\n", runid);
+            formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");
+            formattedWrite(outstr, "%s\n", proj.project_type);
+
+            formattedWrite(outstr, "%s\n", platform);
+
+            // list of repositories
+            formattedWrite(outstr, "%s\n", proj.repositories.length);
+            foreach (r; proj.repositories)
+                formattedWrite(outstr, "%s\n%s\n%s\n%s\n", r.id, r.owner, r.name, r.refname);
+
+            formattedWrite(outstr, "1 0\n"); // checkout dummy
+
+            // merge
+            foreach (p; pulls)
+                formattedWrite(outstr, "17 %s %s %s\n", p.repo_project_index, p.giturl, p.gitref);
+
+            // build
+            foreach (i; 0 .. proj.repositories.length)
+                formattedWrite(outstr, "15 %s\n", i);
+
+            // test
+            foreach (i; 0 .. proj.repositories.length)
+                formattedWrite(outstr, "16 %s\n", i);
+
+            break;
+        default: assert(false);
     }
 }
 
@@ -357,7 +383,7 @@ Pull[] selectPullsToBuild(string hostid, string platform)
         return null;
 
     sqlrow pull = selectOnePull(openPulls);
-    Pull[] pulls = [Pull(pull[0], pull[10], pull[2], pull[5], pull[6], pull[4], (pull[11] == "1" && pull[12] != ""))];
+    Pull[] pulls = [Pull(pull[0], pull[10], 0, to!ulong(pull[1]), pull[2], pull[5], pull[6], pull[4], (pull[11] == "1" && pull[12] != ""))];
     return pulls;
 }
 
@@ -395,6 +421,22 @@ Project[] selectMasterToBuild(bool force, string hostid, string platform)
     return projects;
 }
 
+void mapPullsToProj(Project proj, Pull[] pulls)
+{
+PullLoop:
+    foreach(ref p; pulls)
+    {
+        foreach(i, r; proj.repositories)
+        {
+            if (r.id == p.repo_id)
+            {
+                p.repo_project_index = i;
+                continue PullLoop;
+            }
+        }
+    }
+}
+
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
     outstr.put("Content-type: text/plain\n\n");
@@ -409,9 +451,11 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (!validateInput(raddr, rname, hostid, platform, clientver, outstr))
         return;
 
+    string skip = "skip\n";
+
     if (!c.builds_enabled)
     {
-        outstr.put("skip\n");
+        outstr.put(skip);
         return;
     }
 
@@ -419,7 +463,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     if (exists("/tmp/serverd.suspend"))
     {
-        outstr.put("skip\n");
+        outstr.put(skip);
         return;
     }
 
@@ -440,7 +484,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     if (!doPull && !doMaster)
     {
-        outstr.put("skip\n");
+        outstr.put(skip);
         return;
     }
 
@@ -450,6 +494,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     if (doPull)
     {
         proj = loadProjectById(to!ulong(pulls[0].project_id));
+        mapPullsToProj(proj, pulls);
         runid = recordRunStart(hostid, platform, pulls[0]);
     }
     else

@@ -82,9 +82,9 @@
             <td>\get{p_menu_label}</td>
             <td>\get{ip_platform}</td>
             <td>\if{\eq{\get{ip_repo_name}}{branch}}{
-                   <a href="/test_data.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}&logid=1">branch build</a>
+                   <a href="/show-run.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}">branch build</a>
                 }{
-                   <a href="/pull.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}">\get{ip_repo_name}/{\get{ip_pull_id}}</a>
+                   <a href="/show-run.ghtml?runid=\get{ip_runid}&projectid=\get{p_id}&isPull=true">\get{ip_repo_name}/{\get{ip_pull_id}}</a>
                 }
             </td>
         }{

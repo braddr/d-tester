@@ -91,6 +91,32 @@ table.summary.pending td.build {
     color: black;
 }
 
+table.summary td.history.historyBox0 {
+    border-bottom: 1px solid black;
+    opacity: 1.0;
+}
+table.summary td.history.historyBox1 {
+    border-bottom: 1px solid black;
+    opacity: 0.8;
+}
+table.summary td.history.historyBox2 {
+    border-bottom: 1px solid black;
+    opacity: 0.6;
+}
+table.summary td.history.historyBox3 {
+    border-bottom: 1px solid black;
+    opacity: 0.4;
+}
+table.summary td.history.historyBox4 {
+    opacity: 0.2;
+}
+
+table.summary tr.data.bottom td {
+    border-bottom: 0px;
+    padding-bottom: 3px;
+}
+
+/* begin deprecate once index-v5 is the only version */
 table.summary tr.time td.history {
     border-bottom: 1px solid black;
     opacity: 1.0;
@@ -118,6 +144,7 @@ table.summary tr.phobos td {
 table.summary tr.GDC td {
     padding-bottom: 3px;
 }
+/* end deprecation */
 
 table.summary td.historyPassed {
     background: #CAFF70;

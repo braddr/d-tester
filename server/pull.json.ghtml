@@ -42,7 +42,7 @@
                         "rc"       : "\get{rc}",
                         "deleted"  : "\get{deleted}",
                         "platform" : "\get{platform}",
-                        "url"      : "https://auto-tester.puremagic.com/pull.ghtml?projectid=1&runid=\get{id}"
+                        "url"      : "https://auto-tester.puremagic.com/show-run.ghtml?projectid=1&runid=\get{id}&isPull=true"
                     \}
                 }
 

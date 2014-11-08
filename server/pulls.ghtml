@@ -92,10 +92,10 @@
 \set{drawcol}{\quote{
   \if{\get{\1_\2_\3_rc}}{
     \processRC{\get{\1_\2_\3_rc}}
-    <td class="pullcell \get{class}\if{\get{\1_\2_\3_deleted}}{\ old}" title="\get{class}" ><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}">\get{text}</a></td>
+    <td class="pullcell \get{class}\if{\get{\1_\2_\3_deleted}}{\ old}" title="\get{class}" ><a href="show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}&amp;isPull=true">\get{text}</a></td>
   }{
     \if{\get{\1_\2_\3_id}}{
-      <td class="pullcell running" title="running"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}">R</a></td>
+      <td class="pullcell running" title="running"><a href="show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{\1_\2_\3_id}&isPull=true">R</a></td>
     }{
       <td class="pullcell unknown" title="unknown">&nbsp;</td>
     }

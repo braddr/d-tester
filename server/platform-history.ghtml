@@ -87,30 +87,30 @@
     <tr\if{\1}{\ class="last"}>
         <td class="time">\get{result_start} (\get{result_duration})</td>
         <td class="result \resultClass{1} checkout">
-            \href{\resultText{1}{\get{result_dur_1}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=1}</td>
+            \href{\resultText{1}{\get{result_dur_1}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_1}}</td>
 
         \if{
             \eq{\get{projecttype}}{1}
         }{
             <td class="result \resultClass{2} dmdbuild" title="\get{result_dur_2}">
-                \href{\resultText{2}{\get{result_dur_2}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=2}</td>
+                \href{\resultText{2}{\get{result_dur_2}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_2}}</td>
             <td class="result \resultClass{7} dmdtest"  title="\get{result_dur_7}">
-                \href{\resultText{7}{\get{result_dur_7}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=7}</td>
+                \href{\resultText{7}{\get{result_dur_7}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_7}}</td>
 
             <td class="result \resultClass{3} druntimebuild" title="\get{result_dur_3}">
-                \href{\resultText{3}{\get{result_dur_3}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=3}</td>
+                \href{\resultText{3}{\get{result_dur_3}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_3}}</td>
             <td class="result \resultClass{5} druntimetest"  title="\get{result_dur_5}">
-                \href{\resultText{5}{\get{result_dur_5}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=5}</td>
+                \href{\resultText{5}{\get{result_dur_5}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_5}}</td>
 
             <td class="result \resultClass{4} phobosbuild" title="\get{result_dur_4}">
-                \href{\resultText{4}{\get{result_dur_4}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=4}</td>
+                \href{\resultText{4}{\get{result_dur_4}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_4}}</td>
             <td class="result \resultClass{6} phobostest"  title="\get{result_dur_6}">
-                \href{\resultText{6}{\get{result_dur_6}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=6}</td>
+                \href{\resultText{6}{\get{result_dur_6}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_6}}</td>
         }{ \if{\eq{\get{projecttype}}{2}}{
             <td class="result \resultClass{12} dmdbuild" title="\get{result_dur_12}">
-                \href{\resultText{12}{\get{result_dur_12}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=12}</td>
+                \href{\resultText{12}{\get{result_dur_12}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_12}}</td>
             <td class="result \resultClass{13} dmdtest"  title="\get{result_dur_13}">
-                \href{\resultText{13}{\get{result_dur_13}}}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=13}</td>
+                \href{\resultText{13}{\get{result_dur_13}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_13}}</td>
         }}
     </tr>
 }}

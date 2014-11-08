@@ -89,7 +89,7 @@
 
   \processRC{\get{rc}}
   <tr class="pulltestrun \get{class} \if{\not{\eq{\get{prevsha}}{\get{sha}}}}{\set{prevsha}{\get{sha}}newsha}">
-    <td class="id"><a href="pull.ghtml?projectid=\get{projectid}&amp;runid=\get{run_id}">\get{run_id}</a></td>
+    <td class="id"><a href="show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{run_id}&amp;isPull=true">\get{run_id}</a></td>
     <td class="platform">\get{platform}</td>
     <td class="starttime">\get{start_time}</td>
     <td class="duration">\get{duration}</td>

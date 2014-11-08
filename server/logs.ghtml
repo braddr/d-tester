@@ -18,6 +18,7 @@
           from \if{\get{isPull}}{pull_}test_data td left join repositories r on r.id = td.repository_id,
                test_types tt
          where td.id = \get{dataid} and
+               td.test_run_id = \get{runid} and
                tt.id = td.test_type_id
     }
     \set{found_row}{}
@@ -32,10 +33,11 @@
         No such dataid
         \exit
     }
-    \if{\not{\eq{\get{rid}}{\get{runid}}}}{
-        runid doesn't match up with dataid
-        \exit
-    }
+}
+
+\if{\not{\get{logid}\get{dataid}}}{
+    must include either dataid or logid
+    \exit
 }
 
 \htmlhead

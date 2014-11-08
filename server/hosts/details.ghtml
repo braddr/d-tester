@@ -98,7 +98,7 @@
 \while{\sqlrow{run_id}{menu_label}{project_id}{platform}{start_time}{end_time}{duration}{rc}{deleted}}{
   \processRC{\get{rc}}
   <tr class="pulltestrun \get{class}">
-    <td class="id"><a href="../test_data.ghtml?projectid=\get{project_id}&runid=\get{run_id}&logid=1">\get{run_id}</a></td>
+    <td class="id"><a href="../show-run.ghtml?projectid=\get{project_id}&runid=\get{run_id}">\get{run_id}</a></td>
     <td class="project"><a href="../?projectid=\get{project_id}">\get{menu_label}</a></td>
     <td class="platform">\get{platform}</td>
     <td class="starttime">\get{start_time}</td>
@@ -138,7 +138,7 @@
 \while{\sqlrow{run_id}{project_id}{p_label}{r_owner}{r_name}{pull_id}{platform}{start_time}{end_time}{duration}{rc}{deleted}}{
   \processRC{\get{rc}}
   <tr class="pulltestrun \get{class}">
-    <td class="id"><a href="../pull.ghtml?projectid=\get{project_id}&amp;runid=\get{run_id}">\get{run_id}</a></td>
+    <td class="id"><a href="../show-run.ghtml?projectid=\get{project_id}&amp;runid=\get{run_id}&amp;isPull=true">\get{run_id}</a></td>
     <td class="project"><a href="../?projectid=\get{project_id}">\get{p_label}</a></td>
     <td class="pullid"><a href="https://github.com/\get{r_owner}/\get{r_name}/pull/\get{pull_id}">\get{r_owner}/\get{r_name}/\get{pull_id}</a></td>
     <td class="platform">\get{platform}</td>

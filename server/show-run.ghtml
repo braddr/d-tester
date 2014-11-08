@@ -1,0 +1,153 @@
+\include{/include/test-results}
+\set{page_type}{pulls}
+
+\validateURLParameter{projectid}
+\validateURLParameter{runid}
+
+\set{isPull}{\if{\get{isPull}}{true}}
+
+\sqlexec{
+    select tr.id, tr.platform, tr.start_time, tr.end_time, tr.rc, tr.deleted,
+           timediff(ifnull(tr.end_time, now()), tr.start_time),
+           bh.id, bh.ipaddr, bh.name
+           \if{\isPull}{, tr.sha, ghp.pull_id, r.id, r.owner, r.name}
+      from \if{\isPull}{repositories r, github_pulls ghp, pull_}test_runs tr,
+           build_hosts bh, projects p
+     where tr.id = \get{runid} and
+           bh.id = tr.host_id and
+           p.id = \get{projectid} and
+           \if{\isPull}{
+               tr.g_p_id = ghp.id and
+               ghp.repo_id = r.id and
+               r.project_id = p.id
+           }{
+               tr.project_id = p.id
+           }
+}
+\set{end_time}{}
+\set{found}{\sqlrow{id}{platform}{start_time}{end_time}{rc}{deleted}{duration}{bh_id}{bh_ipaddr}{bh_name}{sha}{pull_id}{repo_id}{repo_owner}{repo_name}}
+
+\pageHeader{\if{\not{\get{rc}}}{60}}{\get{projectid}}{
+    <link rel="stylesheet" href="/css/pulls.css" type="text/css">
+}{\ onload="resizeFrame(document.getElementById('logframe'));"}
+
+<script type="text/javascript">
+    function resizeFrame(f) \{
+        f.style.height = (f.contentWindow.document.body.scrollHeight + 30) + "px";
+    \}
+</script>
+
+\if{\not{\get{found}}}{
+    unknown runid
+}{
+
+<table class="whiterounded" id="pullmeta">
+    <tr>
+        <th>Run ID</th><td>\get{id}</td>
+    </tr>
+    
+    \if{\isPull}{
+        <tr>
+            <th>Pull</th><td><a href="https://github.com/\get{repo_owner}/\get{repo_name}/pull/\get{pull_id}">\get{repo_owner}/\get{repo_name}/\get{pull_id}</a></td>
+        </tr><tr>
+            <th>SHA</th><td>\get{sha}</td>
+        </tr>
+    }
+    
+    <tr>
+        <th>Reporter</th><td><a href="hosts/details.ghtml?hostid=\get{bh_id}">\get{bh_name} (\get{bh_ipaddr})</a></td>
+    </tr><tr>
+        <th>Platform</th><td>\get{platform}</td>
+    </tr><tr>
+        <th>Start Time</th><td>\get{start_time}</td>
+    </tr><tr>
+        <th>End Time</th><td>\get{end_time}</td>
+    </tr><tr>
+        <th>Duration</th><td>\get{duration}</td>
+    </tr><tr>
+        <th>Result Code</th><td>\get{rc}</td>
+    </tr><tr>
+        <th>Deleted</th><td>\get{deleted}\if{\and{\get{loggedin}}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="addv2/deprecate_run?projectid=\get{projectid}&amp;runid=\get{runid}&amp;runtype=pull&amp;csrf=\get{csrf}">deprecate</a>}</td>
+    </tr>
+    
+    \if{\isPull}{
+        <tr>
+            <th>Past Results</th><td><a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\get{repo_id}&amp;pullid=\get{pull_id}">Pull Test History</a></td>
+        </tr>
+    }
+</table>
+
+# uses sqlrow names
+\set{drawheader}{\quote{
+    <th>
+    \if{\eq{\get{tt_name}}{checkout}}{
+        checkout
+    }{\if{ \eq{\strindex{\get{tt_name}}{merge}}{0} }{
+        merge
+    }{
+        \get{tt_name}\if{\get{r_name}}{&nbsp;\get{r_name}}
+    }}
+    </th>
+}}
+
+# uses sqlrow names
+\set{drawdata}{\quote{
+  # if no log is selected already, and this test didn't succeed, select it
+  \if{\not{\get{dataid}}}{\if{\eq{\get{t_rc}}{1}}{\set{dataid}{\get{t_id}}}}
+  \if{\eq{\get{dataid}}{\get{t_id}}}{\set{extraclass}{logshown}}{\set{extraclass}{}}
+  \if{\get{t_et}}{
+    \processRC{\get{t_rc}}
+    <td class="testcell \get{class} \get{extraclass}"><a href="show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;dataid=\get{t_id}\if{\isPull}{&amp;isPull=true}">\get{text}<br>\get{t_dur}</a></td>
+  }{
+    # impossible to be null, see TODO below
+    #\if{\get{t_id}}{
+      <td class="testcell running \get{extraclass}">R<br>\get{t_dur}+</td>
+    #}{
+    #  <td class="testcell unknown \get{extraclass}">&nbsp;</td>
+    #}
+  }
+}}
+
+# TODO: this version looses knowledge of not-yet-started tests since there
+# is no row created until that point
+\sqlexec{
+    select td.id, td.test_type_id, td.rc, td.start_time, td.end_time,
+           timediff(ifnull(td.end_time, now()), td.start_time),
+           tt.name, r.name
+      from test_types tt,
+           \if{\isPull}{pull_}test_data td left join repositories r on
+               r.id = td.repository_id
+     where test_run_id = \get{runid} and
+           tt.id = td.test_type_id
+     order by td.id
+}
+\set{headers}{}
+\set{rows}{}
+\while{\sqlrow{t_id}{t_type}{t_rc}{t_st}{t_et}{t_dur}{tt_name}{r_name}}{
+    \set{headers}{\get{headers} \drawheader}
+    \set{rows}{\get{rows} \drawdata}
+}
+
+<table class="whiterounded" id="buildsteps">
+    <tr class="testrow header">
+        \get{headers}
+    </tr>
+    <tr class="testrow results">
+        \get{rows}
+    </tr>
+</table>
+
+\if{\and{\get{dataid}}{\op{\get{dataid}}{V}}}{
+
+<div class="logheader">Log:</div>
+<div class="logbody">
+    <iframe class="logframe" id="logframe" src="logs.ghtml?projectid=\get{projectid}&amp;runid=\get{runid}&amp;dataid=\get{dataid}\if{\isPull}{&isPull=true}"></iframe>
+</div>
+
+}
+
+
+}
+
+\pageFooter
+

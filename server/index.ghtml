@@ -9,31 +9,54 @@
 }
 
 # get number of test types
-\sqlexec{select count(*) from test_types}
-\ignore{\sqlrow{numtesttypes}}
-\inc{numtesttypes}
+\set{numtesttypes}{0}
+\sqlexec{select id, name from test_types}
+\while{\sqlrow{ttid}{ttname}}{
+    \set{tt_\get{ttid}_name}{\get{ttname}}
+    \set{tt_\get{ttname}_id}{\get{ttid}}
+    \inc{numtesttypes}
+}
 
-\setProjectType{\get{projectid}}
+\set{numRepos}{0}
+\sqlexec{
+    select id, name from repositories where project_id = \get{projectid}
+}
+\while{\sqlrow{repo_\get{numRepos}_id}{repo_\get{numRepos}_name}}{
+    \set{repoid_\get{repo_\get{numRepos}}_id}{\get{numRepos}}
+    \inc{numRepos}
+}
 
 # no inputs, clears a result set
 \set{resetResultSet}{\quote{
+    \set{result_id}{}
+    \set{result_start}{}
+    \set{result_end}{}
+    \set{result_duration}{}
+    \set{result_platform}{}
+
     \set{i}{1}
     \while{
         \op{\numtesttypes}{>}{\i}
     }{
-        \set{result_id}{}
-        \set{result_start}{}
-        \set{result_end}{}
-        \set{result_duration}{}
-        \set{result_platform}{}
-        \set{result_rc_\i}{}
-        \set{result_st_\i}{}
-        \set{result_et_\i}{}
-        \set{result_dur_\i}{}
-        \set{result_id_\i}{}
+        \set{repo}{0}
+        \while{\op{\numRepos}{>}{\repo}}{
+            \if{\eq{\get{i}}{1}}{
+                \set{key}{checkout}
+            }{
+                \set{key}{\getStepName{\get{i}}_\get{repo_\get{repo}_name}}
+            }
+            \set{result_ttid_\key}{}
+            \set{result_rc_\key}{}
+            \set{result_st_\key}{}
+            \set{result_et_\key}{}
+            \set{result_dur_\key}{}
+            \set{result_id_\key}{}
+            \inc{repo}
+        }
 
         \inc{i}
     }
+
     \set{i}{0}
     \while{
         \op{5}{>}{\i}
@@ -47,144 +70,121 @@
 }}
 
 # \1 == index into history data
-# \2 == platform
+# \2 == index box number
 # \3 == style
 \set{historyBox}{\quote{
     \if{\op{\get{index}}{>}{\1}}{
-        <td class="\if{\op{\get{history_sum_\1}}{>}{0}}{
-            {history historyFailed}
-        }{
-            {history historyPassed}
-        }\if{\3}{\ \3}" title="\get{history_st_\1}" onClick="window.location.href='test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{history_id_\1}&amp;logid=1'"></td>
+        <td class="history historyBox\2 history\if{\op{\get{history_sum_\1}}{>}{0}}{Failed}{Passed}\if{\3}{\ \3}" title="\get{history_st_\1}" onClick="window.location.href='show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{history_id_\1}'"></td>
     }{
-        <td class="history\if{\3}{\ \3}">U</td>
+        <td class="history historyBox\2 \if{\3}{\ \3}"></td>
     }
 }}
 
-# \1 == id of test to check
+# \1 == testtype
+# \2 == reponame
 \set{resultText}{\quote{
-    \if{\eq{\get{result_st_\1}}{}}{&nbsp;}{\processRC{\get{result_rc_\1}}\get{text}}
+    \set{key}{\if{\2}{\1_\2}{\1}}
+    \if{\eq{\get{result_st_\get{key}}}{}}{&nbsp;}{\processRC{\get{result_rc_\get{key}}}\get{text}}
 }}
 
 # \1 == testtype
-# \2 == label
-# \3 == style
+# \2 == reponame
+# \3 == label
 \set{drawOneTest}{\quote{
-    \processRC{\get{result_rc_\1}}
-    <td class="result \get{class} \3" title="\get{result_dur_\1}">
-        \href{\2}{test_data.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;logid=\1}</td>
+    \set{key}{\if{\2}{\1_\2}{\1}}
+    \processRC{\get{result_rc_\1_\2}}
+    <td class="result \get{class} \1" title="\get{result_dur_\get{key}}">
+        \href{\3}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_\get{key}}}</td>
+}}
+
+# \1 == test_type_id
+\set{getStepName}{\quote{
+    \set{index}{\strindex{\get{tt_\1_name}}{\ }}
+    \if{\get{index}}{\substr{\get{tt_\1_name}}{0}{\get{index}}}{\get{tt_\1_name}}
 }}
 
 # render the html for one result set
 # \1 == platform
 \set{showResultSet}{\quote{
-    \if{
-        \eq{\get{projecttype}}{1}
-    }{
-        \if{\get{result_start}}{
-            <table class="summary whiterounded">
-                <tr class="time">
-                    <td colspan="3" class="time topleft">\get{result_start} (\get{result_duration})</td>
-                    \historyBox{1}{\1}{topright}
-                </tr>
-                <tr class="data header">
-                    \drawOneTest{1}{checkout}{checkout}
-                    <td class="build">build</td>
-                    <td class="test">test</td>
-                    \historyBox{2}{\1}
-                </tr>
-                <tr class="data dmd">
-                    <td>dmd</td>
-                    \drawOneTest{2}{\resultText{2}}{build}
-                    \drawOneTest{7}{\resultText{7}}{test}
-                    \historyBox{3}{\1}
-                </tr>
-                <tr class="data druntime">
-                    <td>druntime</td>
-                    \drawOneTest{3}{\resultText{3}}{build}
-                    \drawOneTest{5}{\resultText{5}}{test}
-                    \historyBox{4}{\1}
-                </tr>
-                <tr class="data phobos">
-                    <td class="bottomleft">phobos</td>
-                    \drawOneTest{4}{\resultText{4}}{build}
-                    \drawOneTest{6}{\resultText{6}}{test}
-                    \historyBox{5}{\1}{bottomright}
-                </tr>
-            </table>
-        }{
-            <table class="summary whiterounded pending">
-                <tr class="time">
-                    <td colspan="3" class="time topleft">X</td>
-                    \historyBox{0}{\1}{topright}
-                </tr>
-                <tr class="data header">
-                    <td class="checkout">X</td>
+    \set{isRunning}{\if{\get{result_start}}{true}}
+
+    \set{historyIndex}{0}
+    \set{historyCount}{0}
+    \if{\isRunning}{ \inc{historyIndex} }
+
+    <table class="summary whiterounded\if{\not{\isRunning}}{\ pending}">
+
+        <tr class="time">
+            <td colspan="3" class="time topleft">
+                \if{\isRunning}{\get{result_start}\ (\get{result_duration})}{X}
+            </td>
+            \historyBox{\get{historyIndex}}{\get{historyCount}}{topright}
+            \inc{historyIndex}
+            \inc{historyCount}
+        </tr>
+
+        <tr class="data header">
+            \if{\isRunning}{
+                \drawOneTest{checkout}{}{checkout}
+                <td class="build">build</td>
+                <td class="test">test</td>
+            }{
+                <td class="checkout">X</td>
+                <td class="build">\if{\eq{\get{numRepos}}{1}}{Pending}</td>
+                <td class="test"></td>
+            }
+            \historyBox{\get{historyIndex}}{\get{historyCount}}
+            \inc{historyIndex}
+            \inc{historyCount}
+        </tr>
+
+        \set{i}{0}
+        \while{\op{\get{numRepos}}{>}{\get{i}}}{
+            \set{isBottomRow}{\if{\op{ \op{\get{numRepos}}{-}{1} }{=}{\get{i}}}{true}}
+            \set{isCenterRow}{\if{
+                \op{ \op{ \op{\get{numRepos}}{-}{3} }{/}{2} }{=}{\get{i}}
+            }{true}}
+
+            <tr class="data\if{\isBottomRow}{\ bottom}">
+            \if{\isRunning}{
+                \set{temp_name}{\get{repo_\get{i}_name}}
+                <td>\get{temp_name}</td>
+
+                \if{\get{result_st_build_\get{temp_name}}}{
+                    \drawOneTest{build}{\get{temp_name}}{\resultText{build}{\get{temp_name}}}
+                }{
                     <td class="build"></td>
+                }
+                \if{\get{result_st_test_\get{temp_name}}}{
+                    \drawOneTest{test}{\get{temp_name}}{\resultText{test}{\get{temp_name}}}
+                }{
                     <td class="test"></td>
-                    \historyBox{1}{\1}
-                </tr>
-                <tr class="data dmd">
-                    <td>X</td>
-                    <td class="build">Pending</td>
-                    <td class="test"></td>
-                    \historyBox{2}{\1}
-                </tr>
-                <tr class="data druntime">
-                    <td>X</td>
-                    <td class="build"></td>
-                    <td class="test"></td>
-                    \historyBox{3}{\1}
-                </tr>
-                <tr class="data phobos">
-                    <td class="bottomleft">X</td>
-                    <td class="build"></td>
-                    <td class="test"></td>
-                    \historyBox{4}{\1}{bottomright}
-                </tr>
-            </table>
+                }
+            }{
+                <td \if{\isBottomRow}{class="bottomleft"}>X</td>
+                <td class="build">\if{\isCenterRow}{Pending}</td>
+                <td class="test"></td>
+            }
+
+            \historyBox{\get{historyIndex}}{\get{historyCount}}{\if{\isBottomRow}{bottomright}}
+            \inc{historyIndex}
+            \inc{historyCount}
+            </tr>
+
+            \inc{i}
         }
-    }{ \if{\eq{\get{projecttype}}{2}}{
-        \if{\get{result_start}}{
-            <table class="summary whiterounded">
-                <tr class="time">
-                    <td colspan="3" class="time topleft">\get{result_start} (\get{result_duration})</td>
-                    \historyBox{1}{\1}{topright}
-                </tr>
-                <tr class="data header">
-                    \drawOneTest{1}{checkout}{checkout}
-                    <td class="build">build</td>
-                    <td class="test">test</td>
-                    \historyBox{2}{\1}
-                </tr>
-                <tr class="data GDC">
-                    <td class="bottomleft">GDC</td>
-                    \drawOneTest{12}{\resultText{12}}{build}
-                    \drawOneTest{13}{\resultText{13}}{test}
-                    \historyBox{3}{\1}{bottomright}
-                </tr>
-            </table>
-        }{
-            <table class="summary whiterounded pending">
-                <tr class="time">
-                    <td colspan="3" class="time topleft">X</td>
-                    \historyBox{0}{\1}{topright}
-                </tr>
-                <tr class="data header">
-                    <td class="checkout">X</td>
-                    <td class="build">Pending</td>
-                    <td class="test"></td>
-                    \historyBox{1}{\1}
-                </tr>
-                <tr class="data GDC">
-                    <td class="bottomleft">X</td>
-                    <td class="build"></td>
-                    <td class="test"></td>
-                    \historyBox{2}{\1}{bottomright}
-                </tr>
-            </table>
-        }
-    }}
+
+    </table>
+}}
+
+# \1 == test_type_id
+\set{getRname}{\quote{
+    \set{temp}{\get{tt_\1_name}}
+    \set{index}{\strindex{\get{temp}}{\ }}
+    \if{\get{index}}{
+        \inc{index}
+        \substr{\get{temp}}{\get{index}}
+    }{\get{temp}}
 }}
 
 # \1 == platform
@@ -203,16 +203,26 @@
     \if{\get{result_id}}{
         # get details of most recent run
         \sqlexec{
-            select td.id, td.test_type_id, td.start_time, td.end_time, timediff(ifnull(td.end_time,now()), td.start_time), td.rc
-              from test_data td
-             where td.test_run_id = \get{result_id}
+            select td.id, td.test_type_id, tt.name, r.id, r.name, td.start_time, td.end_time, timediff(ifnull(td.end_time,now()), td.start_time), td.rc
+              from test_data td left join repositories r on td.repository_id = r.id,
+                   test_types tt
+             where td.test_run_id = \get{result_id} and
+                   td.test_type_id = tt.id
         }
-        \while{\sqlrow{tdid}{tdtid}{tdst}{tdet}{tddur}{tdrc}}{
-            \set{result_rc_\get{tdtid}}{\get{tdrc}}
-            \set{result_st_\get{tdtid}}{\get{tdst}}
-            \set{result_et_\get{tdtid}}{\get{tdet}}
-            \set{result_dur_\get{tdtid}}{\get{tddur}}
-            \set{result_id_\get{tdtid}}{\get{tdid}}
+        \while{\sqlrow{tdid}{tdtid}{ttname}{rid}{rname}{tdst}{tdet}{tddur}{tdrc}}{
+            \if{\eq{\get{ttname}}{checkout}}{
+                \set{key}{checkout}
+            }{
+                \if{\not{\get{rname}}}{\set{rname}{\getRname{\get{tdtid}}}}
+                \set{key}{\getStepName{\get{tdtid}}_\get{rname}}
+            }
+            #<pre>tdtid:\get{tdtid}, rname:\get{rname}, key:\get{key}</pre>
+            \set{result_ttid_\key}{\get{tdtid}} #
+            \set{result_rc_\key}{\get{tdrc}} #
+            \set{result_st_\key}{\get{tdst}} #
+            \set{result_et_\key}{\get{tdet}} #
+            \set{result_dur_\key}{\get{tddur}} #
+            \set{result_id_\key}{\get{tdid}} #
         }
     }
 

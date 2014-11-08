@@ -53,7 +53,8 @@ Lerror:
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/",
                "show-run.ghtml?",
                "projectid=", projectid, "&",
-               "runid=", runid));
+               "runid=", runid,
+               (runtype == "pull" ? "&isPull=true" : "")));
     if (dataid != "")
         outstr.put(text("&dataid=", dataid));
     outstr.put("\n\n");

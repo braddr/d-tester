@@ -67,7 +67,7 @@
     </tr><tr>
         <th>Result Code</th><td>\get{rc}</td>
     </tr><tr>
-        <th>Deleted</th><td>\get{deleted}\if{\and{\get{loggedin}}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="addv2/deprecate_run?projectid=\get{projectid}&amp;runid=\get{runid}&amp;runtype=pull&amp;csrf=\get{csrf}">deprecate</a>}</td>
+        <th>Deleted</th><td>\get{deleted}\if{\and{\get{loggedin}}{\eq{\get{deleted}}{0}}}{\ &ndash; <a href="addv2/deprecate_run?projectid=\get{projectid}&amp;runid=\get{runid}&amp;runtype=\if{\isPull}{pull}{master}&amp;\if{\get{dataid}}{dataid=\get{dataid}&amp;}csrf=\get{csrf}">deprecate</a>}</td>
     </tr>
     
     \if{\isPull}{

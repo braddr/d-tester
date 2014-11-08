@@ -35,8 +35,8 @@ for i in 1 2 3; do
     if [ $? -eq 0 ]; then
         break
     fi
-    echo -e "\tfailed to fetch from pull repo"
     if [ $i -eq $N ]; then
+        echo -e "\tfailed to fetch from pull repo"
         exit 1
     fi
     sleep 5

@@ -23,7 +23,7 @@ function callcurl
         curloutput=`curl --silent --fail "https://auto-tester.puremagic.com/addv2/$1?clientver=5&$2"`
         rc=$?
         if [ $rc -ne 0 ]; then
-            echo -e "\tcurl failed, retrying in $sleepdur seconds..." 1>&2
+            echo -e "\tcurl failed, rc=$rc, retrying in $sleepdur seconds..." 1>&2
             sleep $sleepdur
             trycount=$(expr $trycount + 1)
             sleepdur=$(expr $sleepdur \* 2)
@@ -54,7 +54,7 @@ function uploadlog
         curloutput=`curl --silent --fail -T $2/$3 "https://auto-tester.puremagic.com/addv2/upload_$4?clientver=5&testid=$1"`
         rc=$?
         if [ $rc -ne 0 ]; then
-            echo -e "\tcurl failed, retrying in $sleepdur seconds..." 1>&2
+            echo -e "\tcurl failed, rc=$rc, 1=$1, 2=$2, 3=$3, 4=$4, retrying in $sleepdur seconds..." 1>&2
             sleep $sleepdur
             trycount=$(expr $trycount + 1)
             sleepdur=$(expr $sleepdur \* 2)
@@ -194,7 +194,7 @@ function runtests
         repoid=${repobranches[${steps[1]}*4]}
         reponame=${repobranches[${steps[1]}*4 + 2]}
         testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}&repoid=$repoid")
-        if [ "x$testid" == "xabort" -o "x$testid" == "xbad input" ]; then
+        if [ "x${testid:0:5}" == "xabort" -o "x${testid:0:9}" == "xbad input" ]; then
             run_rc=3
             break
         fi
@@ -238,7 +238,7 @@ function runtests
         curlrc=$(callcurl finish_${runmode}_test "testid=$testid&rc=$step_rc")
         if [ "$runmode" == "pull" -a $step_rc -ne 0 ]; then
             run_rc=1
-        elif [ "x$curlrc" == "xabort" ]; then
+        elif [ "x${curlrc:0:5}" == "xabort" -o "x${curlrc:0:9}" == "xbad input" ]; then
             run_rc=3
         fi
     done

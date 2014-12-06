@@ -14,9 +14,9 @@ index daee7f6..b381a34 100644
 -CC="$(VCDIR)\bin\amd64\cl"
 -LD="$(VCDIR)\bin\amd64\link"
 -AR="$(VCDIR)\bin\amd64\lib"
-+CC="$(VCBIN_DIR)\cl"
-+LD="$(VCBIN_DIR)\link"
-+AR="$(VCBIN_DIR)\lib"
++CC="$(VCDIR)\bin\x86_amd64\cl"
++LD="$(VCDIR)\bin\x86_amd64\link"
++AR="$(VCDIR)\bin\x86_amd64\lib"
  CP=cp
 
  DOCDIR=doc

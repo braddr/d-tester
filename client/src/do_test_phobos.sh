@@ -44,13 +44,11 @@ case "$2" in
     Win_32)
         makefile=win32.mak
         EXTRA_ARGS=""
-        cp ../../../win32libs/dmd2/windows/bin/*.dll .
         ;;
     Win_64)
         makefile=win64.mak
         EXTRA_ARGS=""
         MODEL=64
-        cp ../../../win64libs/dmd2/windows/bin/* .
         ;;
     *)
         echo "unknown os: $2"

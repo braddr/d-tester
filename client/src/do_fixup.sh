@@ -40,13 +40,13 @@ case "$3" in
             stub)
                 ;;
             Win_32)
-                cp src/sc$2.ini $1/dmd/src/sc.ini
+                cp src/sc.ini $1/dmd/src/sc.ini
 
                 # move minit.obj to be newer than minit.asm
                 touch $1/druntime/src/rt/minit.obj
                 ;;
             Win_64)
-                cp src/sc$2.ini $1/dmd/src/sc.ini
+                cp src/sc.ini $1/dmd/src/sc.ini
 
                 # move minit.obj to be newer than minit.asm
                 touch $1/druntime/src/rt/minit.obj

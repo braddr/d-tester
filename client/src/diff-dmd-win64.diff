@@ -7,7 +7,7 @@ index 2a3b525..80bacb0 100755
          {
              case "win32": envData.ccompiler = "dmc"; break;
 -            case "win64": envData.ccompiler = `\"Program Files (x86)"\"Microsoft Visual Studio 10.0"\VC\bin\amd64\cl.exe`; break;
-+            case "win64": envData.ccompiler = `c:\"Program Files (x86)"\"Microsoft Visual Studio 11.0"\VC\bin\x86_amd64\cl.exe`; break;
++            case "win64": envData.ccompiler = `c:\"Program Files (x86)"\"Microsoft Visual Studio 12.0"\VC\bin\x86_amd64\cl.exe`; break;
              default:      envData.ccompiler = "g++"; break;
          }
      }

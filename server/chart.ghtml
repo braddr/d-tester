@@ -226,7 +226,7 @@ var \1_graph = new Rickshaw.Graph(\{
         element: document.querySelector("\#\1_chart"),
         width: 700,
         height: 250,
-        max: 100,
+        max: 75,
         renderer: 'line',
         series: [
     \set{snum}{4}

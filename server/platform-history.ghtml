@@ -30,44 +30,45 @@
     \set{numresults}{50}
 }
 
-# build list of test types
-\sqlexec{select id, name from test_types order by id}
-\set{i}{1}
-\while{\sqlrow{type_\get{i}_id}{type_\get{i}_name}}{
-    \inc{i}
-}
-\set{numtypes}{\i}
-
 \setProjectType{\get{projectid}}
+
+# \1 == test type id
+# \2 == repo id
+\set{getKey}{\quote{
+    \if{\eq{\1}{1}}{1}{\1_\2}
+}}
 
 # no inputs, clears a result set
 \set{resetResultSet}{\quote{
-    \set{i}{1}
+    \set{result_id}{}
+    \set{result_start}{}
+    \set{result_end}{}
+    \set{result_duration}{}
+    \set{result_platform}{}
+
+    \set{i}{0}
     \while{
-        \op{\numtypes}{>}{\i}
+        \op{\typelist_len}{>}{\i}
     }{
-        \set{result_id}{}
-        \set{result_start}{}
-        \set{result_end}{}
-        \set{result_duration}{}
-        \set{result_platform}{}
-        \set{result_rc_\i}{}
-        \set{result_st_\i}{}
-        \set{result_et_\i}{}
-        \set{result_dur_\i}{}
-        \set{result_id_\i}{}
+        \set{key}{\getKey{\get{typelist_\get{i}_id}}{\get{typelist_\get{i}_rid}}}
+
+        \set{result_rc_\key}{}
+        \set{result_st_\key}{}
+        \set{result_et_\key}{}
+        \set{result_dur_\key}{}
+        \set{result_id_\key}{}
 
         \inc{i}
     }
 }}
 
-# \1 == id of test to check
+# \1 == key of test to check
 \set{resultClass}{\quote{
     \processRC{\get{result_rc_\1}}
     {\get{class}}
 }}
 
-# \1 == id of test to check
+# \1 == key of test to check
 # \2 == execution time
 \set{resultText}{\quote{
     \if{\not{\eq{\get{result_rc_\1}}{}}}{
@@ -86,62 +87,85 @@
 \set{showResultSet}{\quote{
     <tr\if{\1}{\ class="last"}>
         <td class="time">\get{result_start} (\get{result_duration})</td>
-        <td class="result \resultClass{1} checkout">
-            \href{\resultText{1}{\get{result_dur_1}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_1}}</td>
 
-        \if{
-            \eq{\get{projecttype}}{1}
+        \set{i}{0}
+        \while{
+            \op{\typelist_len}{>}{\i}
         }{
-            <td class="result \resultClass{2} dmdbuild" title="\get{result_dur_2}">
-                \href{\resultText{2}{\get{result_dur_2}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_2}}</td>
-            <td class="result \resultClass{7} dmdtest"  title="\get{result_dur_7}">
-                \href{\resultText{7}{\get{result_dur_7}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_7}}</td>
+            \set{key}{\getKey{\get{typelist_\get{i}_id}}{\get{typelist_\get{i}_rid}}}
+            \inc{i}
+            <td class="result \resultClass{\key}\if{\and{\eq{\i}{\typelist_len}}{\1}}{\ last}" title="\get{result_start} - \get{result_end}">
+                \href{\resultText{\key}{\get{result_dur_\key}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_\key}}
+            </td>
+        }
+    </tr>
+}}
 
-            <td class="result \resultClass{3} druntimebuild" title="\get{result_dur_3}">
-                \href{\resultText{3}{\get{result_dur_3}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_3}}</td>
-            <td class="result \resultClass{5} druntimetest"  title="\get{result_dur_5}">
-                \href{\resultText{5}{\get{result_dur_5}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_5}}</td>
-
-            <td class="result \resultClass{4} phobosbuild" title="\get{result_dur_4}">
-                \href{\resultText{4}{\get{result_dur_4}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_4}}</td>
-            <td class="result \resultClass{6} phobostest"  title="\get{result_dur_6}">
-                \href{\resultText{6}{\get{result_dur_6}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_6}}</td>
-        }{ \if{\eq{\get{projecttype}}{2}}{
-            <td class="result \resultClass{12} dmdbuild" title="\get{result_dur_12}">
-                \href{\resultText{12}{\get{result_dur_12}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_12}}</td>
-            <td class="result \resultClass{13} dmdtest"  title="\get{result_dur_13}">
-                \href{\resultText{13}{\get{result_dur_13}}}{show-run.ghtml?projectid=\get{projectid}&amp;runid=\get{result_id}&amp;dataid=\get{result_id_13}}</td>
-        }}
+\set{drawHeader}{\quote{
+    <tr>
+        <th>Time (duration)</th>
+        \set{i}{0}
+        \while{
+            \op{\typelist_len}{>}{\i}
+        }{
+            <th>
+            \if{\eq{\get{typelist_\get{i}_tname}}{checkout}}{
+                checkout
+            }{\if{ \eq{\strindex{\get{typelist_\get{i}_tname}}{merge}}{0} }{
+                merge
+            }{
+                \get{typelist_\get{i}_tname}\if{\get{typelist_\get{i}_rname}}{&nbsp;\get{typelist_\get{i}_rname}}
+            }}
+            </th>
+            \inc{i}
+        }
     </tr>
 }}
 
 # \1 == platform
 \set{draw}{\quote{
-
-    \resetResultSet
-    \set{previd}{}
-
+    \set{minid}{}
     \sqlexec{
-        select id from (
-            select id
-              from test_runs
-             where platform = "\sqlquote{\1}" and
-                   project_id = \get{projectid} and
-                   32 > datediff(now(), start_time)
-             order by start_time desc, id
-        ) as firstruns order by id limit 1
+        select id
+          from test_runs
+         where platform = "\sqlquote{\1}" and
+               project_id = \get{projectid}
+         order by start_time desc, id
+         limit 50
     }
     \while{\sqlrow{minid}}{}
 
     \if{\get{minid}}{
+        # build set of used test types
+        \sqlexec{
+            select distinct td.test_type_id, td.repository_id, tt.name, r.name
+              from test_runs tr, test_data td left join repositories r on td.repository_id = r.id, test_types tt
+             where tr.id = td.test_run_id and
+                   td.test_type_id = tt.id and
+                   tr.id > \get{minid} and
+                   tr.project_id = \get{projectid}
+             order by 1, 2
+        }
+        \set{i}{0}
+        \while{\sqlrow{typelist_\get{i}_id}{typelist_\get{i}_rid}{typelist_\get{i}_tname}{typelist_\get{i}_rname}}{
+            \set{repo_\get{typelist_\get{i}_rid}}{\get{typelist_\get{i}_rname}}
+            \inc{i}
+        }
+        \set{typelist_len}{\i}
+
+        \drawHeader
+
+        \resetResultSet
+        \set{previd}{}
+
         \sqlexec{
                 select tr.id, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time,now()), tr.start_time), tr.platform,
-                       td.id, td.test_type_id, td.start_time, td.end_time, timediff(ifnull(td.end_time,now()), td.start_time), td.rc
+                       td.id, td.test_type_id, td.repository_id, td.start_time, td.end_time, timediff(ifnull(td.end_time,now()), td.start_time), td.rc
                   from test_runs tr left join test_data td on tr.id = td.test_run_id
                  where tr.platform = "\sqlquote{\1}" and tr.id >= \minid and project_id = \get{projectid}
               order by tr.start_time desc, tr.id desc
         }
-        \set{haverow}{\sqlrow{id}{start_time}{end_time}{duration}{platform}{tdid}{tdtid}{tdst}{tdet}{tddur}{tdrc}}
+        \set{haverow}{\sqlrow{id}{start_time}{end_time}{duration}{platform}{tdid}{tdtid}{tdrepoid}{tdst}{tdet}{tddur}{tdrc}}
         \while{\haverow}{
             \set{result_id}{\get{id}}
             \set{result_start}{\get{start_time}}
@@ -149,24 +173,28 @@
             \set{result_duration}{\get{duration}}
             \set{result_platform}{\get{platform}}
 
-            \set{result_rc_\get{tdtid}}{\get{tdrc}}
-            \set{result_st_\get{tdtid}}{\get{tdst}}
-            \set{result_et_\get{tdtid}}{\get{tdet}}
-            \set{result_dur_\get{tdtid}}{\get{tddur}}
-            \set{result_id_\get{tdtid}}{\get{tdid}}
+            \set{key}{\getKey{\get{tdtid}}{\get{tdrepoid}}}
+
+            \set{result_rc_\key}{\get{tdrc}}
+            \set{result_st_\key}{\get{tdst}}
+            \set{result_et_\key}{\get{tdet}}
+            \set{result_dur_\key}{\get{tddur}}
+            \set{result_id_\key}{\get{tdid}}
             \set{keepgoing}{1}
             \set{previd}{\get{id}}
             \while{
                 \get{keepgoing}
             }{
-                \set{haverow}{\sqlrow{id}{start_time}{end_time}{duration}{platform}{tdid}{tdtid}{tdst}{tdet}{tddur}{tdrc}}
+                \set{haverow}{\sqlrow{id}{start_time}{end_time}{duration}{platform}{tdid}{tdtid}{tdrepoid}{tdst}{tdet}{tddur}{tdrc}}
                 \if{\haverow}{
                     \if{\eq{\get{previd}}{\get{id}}}{
-                        \set{result_rc_\get{tdtid}}{\get{tdrc}}
-                        \set{result_st_\get{tdtid}}{\get{tdst}}
-                        \set{result_et_\get{tdtid}}{\get{tdet}}
-                        \set{result_dur_\get{tdtid}}{\get{tddur}}
-                        \set{result_id_\get{tdtid}}{\get{tdid}}
+                        \set{key}{\getKey{\get{tdtid}}{\get{tdrepoid}}}
+
+                        \set{result_rc_\key}{\get{tdrc}}
+                        \set{result_st_\key}{\get{tdst}}
+                        \set{result_et_\key}{\get{tdet}}
+                        \set{result_dur_\key}{\get{tddur}}
+                        \set{result_id_\key}{\get{tdid}}
                     }{
                         \showResultSet
                         \resetResultSet
@@ -183,23 +211,6 @@
 }}
 
 <table class="whiterounded" id="history">
-<tr>
-    <th>Time (duration)</th>
-    <th>Checkout</th>
-    \if{
-      \eq{\get{projecttype}}{1}
-    }{
-        <th>DMD Build</th>
-        <th>DMD Test</th>
-        <th>Runtime Build</th>
-        <th>Runtime Test</th>
-        <th>Phobos Build</th>
-        <th>Phobos Test</th>
-    }{ \if{\eq{\get{projecttype}}{2}}{
-        <th>GDC Build</th>
-        <th>GDC Test</th>
-    }}
-</tr>
 \draw{\get{os}}
 </table>
 

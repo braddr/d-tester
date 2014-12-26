@@ -15,3 +15,6 @@ table#history td.fail {
     background: #F08080;
 }
 
+table#history tr.last td.last {
+    border-bottom-right-radius: 5px;
+}

@@ -19,7 +19,10 @@
 
 \set{numRepos}{0}
 \sqlexec{
-    select id, name from repositories where project_id = \get{projectid}
+    select r.id, r.name
+      from repositories r, project_repositories pr
+     where pr.project_id = \get{projectid} and
+           pr.repository_id = r.id
 }
 \while{\sqlrow{repo_\get{numRepos}_id}{repo_\get{numRepos}_name}}{
     \set{repoid_\get{repo_\get{numRepos}}_id}{\get{numRepos}}
@@ -194,7 +197,7 @@
     \sqlexec{
         select tr.id, tr.start_time, tr.end_time, timediff(ifnull(tr.end_time, now()), tr.start_time), tr.platform
           from test_runs tr
-         where tr.platform = "\sqlquote{\1}" and tr.deleted = false and project_id = \get{projectid}
+         where tr.platform = "\sqlquote{\1}" and tr.deleted = false and tr.project_id = \get{projectid}
          order by tr.start_time desc, tr.id desc
          limit 1
     }

@@ -26,9 +26,10 @@
     # build rdate_epoch -> i map
     \sqlexec{
         select unix_timestamp(subdate(date(close_date), weekday(close_date)))
-         from github_pulls ghp, repositories r
+         from github_pulls ghp, repositories r, project_repositories pr
         where ghp.repo_id = r.id and
-              r.project_id = \get{projectid} and
+              r.id = pr.repository_id and
+              pr.project_id = \get{projectid} and
               ghp.open = false and
               ghp.close_date is not null and
               ghp.close_date > now() - interval 1 year
@@ -45,10 +46,10 @@
     # build repo_i -> count map
     \sqlexec{
         select r.name, unix_timestamp(subdate(date(close_date), weekday(close_date))), count(*)
-          from github_pulls ghp,
-               repositories r
+          from github_pulls ghp, repositories r, project_repositories pr
          where ghp.repo_id = r.id and
-               r.project_id = \get{projectid} and
+               r.id = pr.repository_id and
+               pr.project_id = \get{projectid} and
                ghp.open = false and
                ghp.close_date is not null and
                ghp.close_date > now() - interval 1 year
@@ -66,9 +67,10 @@
     # build rdate_epoch -> i map
     \sqlexec{
         select unix_timestamp(subdate(date(create_date), weekday(create_date)))
-         from github_pulls ghp, repositories r
+         from github_pulls ghp, repositories r, project_repositories pr
         where ghp.repo_id = r.id and
-              r.project_id = \get{projectid} and
+              r.id = pr.repository_id and
+              pr.project_id = \get{projectid} and
               ghp.open = false and
               ghp.create_date is not null and
               ghp.create_date > now() - interval 1 year
@@ -85,10 +87,10 @@
     # build repo_i -> count map
     \sqlexec{
         select r.name, unix_timestamp(subdate(date(create_date), weekday(create_date))), count(*)
-          from github_pulls ghp,
-               repositories r
+          from github_pulls ghp, repositories r, project_repositories pr
          where ghp.repo_id = r.id and
-               r.project_id = \get{projectid} and
+               r.id = pr.repository_id and
+               pr.project_id = \get{projectid} and
                ghp.open = false and
                ghp.create_date is not null and
                ghp.create_date > now() - interval 1 year

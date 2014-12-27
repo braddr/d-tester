@@ -46,14 +46,17 @@
                left join
                (
                    select ghp.repo_id, count(*) as num
-                    from github_pulls  ghp,
-                         repositories  r
-                   where ghp.repo_id = r.id and
-                         r.project_id = \get{projectid} and
-                         ghp.open = true
-                   group by repo_id
-               ) as ghp_data on ghp_data.repo_id = r.id
-         where r.project_id = \get{projectid}
+                     from github_pulls  ghp,
+                          project_repositories pr,
+                          repositories  r
+                    where ghp.repo_id = r.id and
+                          r.id = pr.repository_id and
+                          pr.project_id = \get{projectid} and
+                          ghp.open = true
+                    group by repo_id
+               ) as ghp_data on ghp_data.repo_id = r.id,
+               project_repositories pr
+         where r.id = pr.repository_id and pr.project_id = \get{projectid}
     }
     \while{\sqlrow{rid}{rowner}{rname}{rbname}{rbcount}}{
         <tr>

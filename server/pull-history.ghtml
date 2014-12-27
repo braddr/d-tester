@@ -14,10 +14,11 @@
 
 \sqlexec{
     select ghp.id, ghp.repo_id, ghp.pull_id, ghp.user_id, u.username, ghp.updated_at, ghp.open, ghp.base_git_url, ghp.base_ref, ghp.base_sha, ghp.head_git_url, ghp.head_ref, ghp.head_sha, ghp.head_date, ghp.auto_pull
-      from github_pulls ghp, github_users u, repositories r, projects p
+      from github_pulls ghp, github_users u, repositories r, projects p, project_repositories pr
      where ghp.pull_id = \get{pullid} and
            r.id = \get{repoid} and
-           r.project_id = p.id and
+           r.id = pr.repository_id and
+           pr.project_id = p.id and
            ghp.repo_id = r.id and
            ghp.user_id = u.id and
            p.id = \get{projectid}

@@ -123,15 +123,17 @@
   </tr>
 
 \sqlexec{
-    select ptr.id, r.project_id, p.menu_label, r.owner, r.name, ghp.pull_id, ptr.platform, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
+    select ptr.id, p.id, p.menu_label, r.owner, r.name, ghp.pull_id, ptr.platform, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
       from pull_test_runs ptr,
            github_pulls ghp,
            repositories r,
-           projects p
+           projects p,
+           project_repositories pr
      where ptr.host_id = \get{hostid} and
            ptr.g_p_id = ghp.id and
            ghp.repo_id = r.id and
-           r.project_id = p.id
+           r.id = pr.repository_id and
+           pr.project_id = p.id
      order by ptr.start_time desc
      limit 50
 }

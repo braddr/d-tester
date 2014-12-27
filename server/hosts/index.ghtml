@@ -46,9 +46,11 @@
                       github_pulls ghp,
                       projects p,
                       repositories r,
+                      project_repositories pr,
                       build_hosts bh
                 where ghp.id = ptr.g_p_id and
-                      p.id = r.project_id and
+                      p.id = pr.project_id and
+                      pr.repository_id = r.id and
                       r.id = ghp.repo_id and
                       bh.id = ptr.host_id and
                       ptr.end_time is null and

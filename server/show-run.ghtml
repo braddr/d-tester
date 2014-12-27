@@ -11,7 +11,7 @@
            timediff(ifnull(tr.end_time, now()), tr.start_time),
            bh.id, bh.ipaddr, bh.name
            \if{\isPull}{, tr.sha, ghp.pull_id, r.id, r.owner, r.name}
-      from \if{\isPull}{repositories r, github_pulls ghp, pull_}test_runs tr,
+      from \if{\isPull}{repositories r, project_repositories pr, github_pulls ghp, pull_}test_runs tr,
            build_hosts bh, projects p
      where tr.id = \get{runid} and
            bh.id = tr.host_id and
@@ -19,7 +19,8 @@
            \if{\isPull}{
                tr.g_p_id = ghp.id and
                ghp.repo_id = r.id and
-               r.project_id = p.id
+               r.id = pr.repository_id and
+               pr.project_id = p.id
            }{
                tr.project_id = p.id
            }

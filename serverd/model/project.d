@@ -25,7 +25,7 @@ class Repository
 
 Repository[] loadRepositories(ulong pid)
 {
-    sql_exec(text("select id, owner, name, ref from repositories where project_id = ", pid, " order by id"));
+    sql_exec(text("select r.id, r.owner, r.name, r.ref from repositories r, project_repositories pr where pr.project_id = ", pid, " and pr.repository_id = r.id order by r.id"));
 
     sqlrow[] rows = sql_rows();
 
@@ -91,7 +91,7 @@ Project[ulong] loadProjects()
 
 Project loadProject(string owner, string repo, string branch)
 {
-    sql_exec(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p where p.id in (select r.project_id from repositories r where r.owner = \"", owner, "\" and r.name = \"", repo, "\" and r.ref = \"", branch, "\")"));
+    sql_exec(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p where p.id in (select pr.project_id from repositories r, project_repositories pr where pr.repository_id = r.id and r.owner = \"", owner, "\" and r.name = \"", repo, "\" and r.ref = \"", branch, "\")"));
 
     sqlrow[] rows = sql_rows();
 

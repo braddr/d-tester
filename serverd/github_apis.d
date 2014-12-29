@@ -100,7 +100,8 @@ bool setSHAStatus(string owner, string repo, string sha, string desc, string sta
         `{`
             `"description" : "`, desc, `",`
             `"state" : "`, status, `",`
-            `"target_url" : "`, targeturl, `"`
+            `"target_url" : "`, targeturl, `",`
+            `"context" : "auto-tester"`
         `}`);
 
     writelog("  request body: %s", requestpayload);

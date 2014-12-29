@@ -48,7 +48,7 @@ bool validate_repoid(string runid, string repoid, Appender!string outstr)
     if (!validate_id(repoid, "repoid", outstr))
         return false;
 
-    sql_exec(text("select tr.id, tr.project_id, r.id, r.name from test_runs tr, repositories r where tr.id = ", runid, " and r.id = ", repoid ," and tr.project_id = r.project_id"));
+    sql_exec(text("select tr.id, tr.project_id, r.id, r.name from test_runs tr, repositories r, project_repositories pr where tr.id = ", runid, " and r.id = ", repoid ," and tr.project_id = pr.project_id and pr.repository_id = r.id"));
 
     sqlrow[] rows = sql_rows();
 

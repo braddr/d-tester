@@ -35,15 +35,16 @@ void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
     //                 0      1     2       3           4            5                6            7              8             9      10    11                  12
     string q = text(
                "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, r.ref, p.id, p.allow_auto_merge, gp.auto_pull "
-               "from github_pulls gp, projects p, repositories r, github_users u, build_host_projects bhp "
+               "from github_pulls gp, projects p, repositories r, project_repositories pr, github_users u, build_host_projects bhp "
                "where gp.open = true and "
                "  gp.repo_id = r.id and "
-               "  p.id = r.project_id and "
+               "  p.id = pr.project_id and "
+               "  pr.repository_id = r.id and "
                "  gp.user_id = u.id and "
                "  u.pull_approver is not null and "
                "  p.enabled = true and "
                "  p.test_pulls = true and "
-               "  bhp.project_id = r.project_id and "
+               "  bhp.project_id = p.id and "
                "  bhp.host_id = ", hostid);
 
     sql_exec(q);
@@ -202,8 +203,8 @@ sqlrow selectOnePull(ref sqlrow[string] openPulls)
 
 string recordRunStart(string hostid, string platform, const ref Pull pull)
 {
-    sql_exec(text("insert into pull_test_runs (id, g_p_id, host_id, platform, sha, start_time, deleted) values (null, ",
-                  pull.g_p_id, ", ", hostid, ", \"", platform, "\", \"", pull.sha, "\", now(), false)"));
+    sql_exec(text("insert into pull_test_runs (id, g_p_id, host_id, project_id, platform, sha, start_time, deleted) values (null, ",
+                  pull.g_p_id, ", ", hostid, ", ", pull.project_id, ", \"", platform, "\", \"", pull.sha, "\", now(), false)"));
     sql_exec("select last_insert_id()");
     sqlrow lastidrow = sql_row();
 
@@ -515,7 +516,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     output(clientver, runid, platform, proj, pulls, outstr);
 
-    if (doPull) // TODO: this an be made to work with master runs as well
-        clientapi.finish_pull_run.updateGithubPullStatus(runid, outstr);
+//    if (doPull) // TODO: this an be made to work with master runs as well
+//        clientapi.finish_pull_run.updateGithubPullStatus(runid, outstr);
 }
 

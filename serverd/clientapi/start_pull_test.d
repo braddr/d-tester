@@ -50,7 +50,7 @@ bool validate_repoid(string runid, string repoid, Appender!string outstr)
     if (!validate_id(repoid, "repoid", outstr))
         return false;
 
-    sql_exec(text("select id from repositories where project_id = (select r.project_id from repositories r, github_pulls ghp, pull_test_runs tr where tr.id = ", runid, " and tr.g_p_id = ghp.id and ghp.repo_id = r.id) and id = ", repoid));
+    sql_exec(text("select r.id from repositories r where r.project_id = (select pr.project_id from repositories r, project_repositories pr, github_pulls ghp, pull_test_runs tr where tr.id = ", runid, " and tr.g_p_id = ghp.id and ghp.repo_id = r.id and r.id = pr.repository_id) and r.id = ", repoid));
 
     sqlrow[] rows = sql_rows();
 

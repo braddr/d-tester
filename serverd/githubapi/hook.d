@@ -66,8 +66,8 @@ bool processPush(const ref JSONValue jv)
     branch = branch[11 .. $];
 
     sql_exec(text("select p.id "
-                  "from projects p, repositories r "
-                  "where p.id = r.project_id and "
+                  "from projects p, repositories r, project_repositories pr "
+                  "where p.id = pr.project_id and pr.repository_id = r.id and "
                   "r.owner = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and r.ref = \"", sql_quote(branch), "\""));
     sqlrow[] rows = sql_rows();
 
@@ -84,8 +84,9 @@ bool processPush(const ref JSONValue jv)
     // invalidate obsoleted pull_test_runs
     // TODO: merge these two queries into one query with nesting
     sql_exec(text("select r.id "
-                  "from projects p, repositories r "
-                  "where p.id = r.project_id and "
+                  "from projects p, repositories r, project_repositories pr "
+                  "where p.id = pr.project_id and "
+                  "pr.repository_id = r.id and "
                   "p.id = ", projectid));
     rows = sql_rows();
 

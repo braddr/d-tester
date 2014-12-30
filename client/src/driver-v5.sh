@@ -20,7 +20,7 @@ function callcurl
     sleepdur=1
     rc=1
     while [ $rc -ne 0 ]; do
-        curloutput=`curl --silent --fail "https://auto-tester.puremagic.com/addv2/$1?clientver=5&$2"`
+        curloutput=`timelimit -q -p -t 30 curl --silent --fail "https://auto-tester.puremagic.com/addv2/$1?clientver=5&$2"`
         rc=$?
         if [ $rc -ne 0 ]; then
             echo -e "\tcurl failed, rc=$rc, retrying in $sleepdur seconds..." 1>&2
@@ -51,7 +51,7 @@ function uploadlog
     sleepdur=1
     rc=1
     while [ $rc -ne 0 ]; do
-        curloutput=`curl --silent --fail -T $2/$3 "https://auto-tester.puremagic.com/addv2/upload_$4?clientver=5&testid=$1"`
+        curloutput=`timelimit -q -p -t 30 curl --silent --fail -T $2/$3 "https://auto-tester.puremagic.com/addv2/upload_$4?clientver=5&testid=$1"`
         rc=$?
         if [ $rc -ne 0 ]; then
             echo -e "\tcurl failed, rc=$rc, 1=$1, 2=$2, 3=$3, 4=$4, retrying in $sleepdur seconds..." 1>&2
@@ -109,7 +109,7 @@ function checkoutRepeat
 {
     rc=1
     while [ $rc -ne 0 ]; do
-        timelimit -p -t $TESTER_TIMEOUT src/do_checkout.sh "$1" "$2" "$3" "$4" "$5"
+        timelimit -q -p -t $TESTER_TIMEOUT src/do_checkout.sh "$1" "$2" "$3" "$4" "$5"
         rc=$?
         if [ $rc -ne 0 ]; then
             sleep 60
@@ -210,17 +210,17 @@ function runtests
                 logname=checkout.log
                 ;;
             15)
-                timelimit -p -t $TESTER_TIMEOUT src/do_build_${reponame}.sh "$rundir" "$OS"
+                timelimit -q -p -t $TESTER_TIMEOUT src/do_build_${reponame}.sh "$rundir" "$OS"
                 step_rc=$?
                 logname=${reponame}-build.log
                 ;;
             16)
-                timelimit -p -t $TESTER_TIMEOUT src/do_test_${reponame}.sh "$rundir" "$OS" "$runmode"
+                timelimit -q -p -t $TESTER_TIMEOUT src/do_test_${reponame}.sh "$rundir" "$OS" "$runmode"
                 step_rc=$?
                 logname=${reponame}-unittest.log
                 ;;
             17)
-                timelimit -p -t $TESTER_TIMEOUT src/do_pull.sh "$rundir" "$OS" "$reponame" "${steps[2]}" "${steps[3]}"
+                timelimit -q -p -t $TESTER_TIMEOUT src/do_pull.sh "$rundir" "$OS" "$reponame" "${steps[2]}" "${steps[3]}"
                 step_rc=$?
                 logname=${reponame}-merge.log
                 steps=(${steps[@]:2}) # trim extra fields

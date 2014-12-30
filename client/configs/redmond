@@ -1,3 +1,9 @@
 CPUS=4
 PARALLELISM=3
 platforms=(Linux_32 Linux_64_64 Linux_32_64 Linux_64_32)
+
+export GIT_HTTP_LOW_SPEED_LIMIT=60
+export GIT_HTTP_LOW_SPEED_TIME=60
+#export GIT_CURL_VERBOSE=true
+
+#GIT_CURL_FTP_NO_EPSV

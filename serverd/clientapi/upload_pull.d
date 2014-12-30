@@ -13,12 +13,8 @@ import std.range;
 bool validate_testState(string testid, string clientver, ref string hostid, ref string testtypeid, ref string reponame, ref string runid, Appender!string outstr)
 {
     string sqlstr;
-    if (clientver == "5")
-        sqlstr = text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id, r.name from pull_test_data td, pull_test_runs tr, repositories r where r.id = td.repository_id and tr.id = td.test_run_id and td.id = ", testid);
-    else
-        sqlstr = text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id from pull_test_data td, pull_test_runs tr where tr.id = td.test_run_id and td.id = ", testid);
 
-    if (!sql_exec(sqlstr))
+    if (!sql_exec(text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id, r.name from pull_test_data td, pull_test_runs tr, repositories r where r.id = td.repository_id and tr.id = td.test_run_id and td.id = ", testid)))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
@@ -40,8 +36,7 @@ bool validate_testState(string testid, string clientver, ref string hostid, ref 
         runid = row[2];
         testtypeid = row[3];
         hostid = row[4];
-        if (clientver == "5")
-            reponame = row[5];
+        reponame = row[5];
     }
 
     return true;

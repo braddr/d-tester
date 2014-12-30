@@ -135,17 +135,10 @@ bool validate_testtype(ref string type, string clientver, Appender!string outstr
             formattedWrite(outstr, "type must be 1, 15 .. 17");
             return false;
         }
-    }
-    else
-    {
-        if (!(tt >= 1 && tt <= 14))
-        {
-            formattedWrite(outstr, "type must be 1 .. 14");
-            return false;
-        }
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 bool validate_clientver(ref string clientver, Appender!string outstr)
@@ -155,8 +148,6 @@ bool validate_clientver(ref string clientver, Appender!string outstr)
 
     switch (clientver)
     {
-        case "4":
-            return true;
         case "5":
             return true;
         default:

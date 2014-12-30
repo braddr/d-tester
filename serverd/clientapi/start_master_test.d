@@ -28,10 +28,7 @@ bool validate_testRunable(string clientver, string runid, string type, string re
 
     hostid = rows[0][2];
 
-    if (clientver == "5")
-         sql_exec(text("select id from test_data where test_run_id=", runid, " and test_type_id=", type, " and repository_id=", repoid));
-    else
-         sql_exec(text("select id from test_data where test_run_id=", runid, " and test_type_id=", type));
+    sql_exec(text("select id from test_data where test_run_id=", runid, " and test_type_id=", type, " and repository_id=", repoid));
     sqlrow[] testids = sql_rows();
 
     if (testids.length != 0)
@@ -71,12 +68,8 @@ bool validateInput(ref string raddr, ref string hostid, ref string runid, ref st
         return false;
     if (!validate_clientver(clientver, outstr))
         return false;
-
-    if (clientver == "5")
-    {
-        if (!validate_repoid(runid, repoid, outstr))
-            return false;
-    }
+    if (!validate_repoid(runid, repoid, outstr))
+        return false;
 
     if (!validate_testRunable(clientver, runid, type, repoid, hostid, outstr))
         return false;
@@ -100,10 +93,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     updateHostLastCheckin(hostid, clientver);
 
-    if (clientver == "5")
-        sql_exec(text("insert into test_data (test_run_id, test_type_id, repository_id, start_time) values (", runid, ", ", type, ", ", repoid, ", now())"));
-    else
-        sql_exec(text("insert into test_data (test_run_id, test_type_id, start_time) values (", runid, ", ", type, ", now())"));
+    sql_exec(text("insert into test_data (test_run_id, test_type_id, repository_id, start_time) values (", runid, ", ", type, ", ", repoid, ", now())"));
 
     sql_exec("select last_insert_id()");
     sqlrow liid = sql_row();

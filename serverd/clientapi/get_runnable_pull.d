@@ -266,7 +266,7 @@ bool validateInput(ref string raddr, ref string rname, ref string hostid, ref st
 
 void output(string clientver, string runid, string platform, Project proj, Pull[] pulls, Appender!string outstr)
 {
-    if (clientver != "4" && clientver != "5")
+    if (clientver != "5")
     {
         writelog("  illegal clientver: %s", clientver);
         outstr.put("skip\n");
@@ -282,65 +282,6 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
 
     switch (clientver)
     {
-        case "4":
-            formattedWrite(outstr, "%s\n", runid);
-            formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");
-            formattedWrite(outstr, "%s\n", proj.repositories[0].owner);
-
-            formattedWrite(outstr, "%s\n", platform);
-
-            // list of repositories
-            formattedWrite(outstr, "%s\n", proj.repositories.length);
-            foreach (r; proj.repositories)
-                formattedWrite(outstr, "%s\n%s\n%s\n", r.id, r.name, r.refname);
-
-            switch (proj.project_type)
-            {
-                case 1:
-                    formattedWrite(outstr, "1 0\n"); // checkout dummy
-
-                    //  merge(9|10|11) repoindex(0|1|2) url ref
-                    foreach (p; pulls)
-                    {
-                        int step, repoindex;
-                        switch (p.repo_name)
-                        {
-                            case "dmd":      step =  9; repoindex = 0; break;
-                            case "druntime": step = 10; repoindex = 1; break;
-                            case "phobos":   step = 11; repoindex = 2; break;
-                            default: assert(false, "unknown repository");
-                        }
-                        formattedWrite(outstr, "%s %s %s %s\n", step, repoindex, p.giturl, p.gitref);
-                    }
-
-                    formattedWrite(outstr, "2 0\n"); // build dmd
-                    formattedWrite(outstr, "3 1\n"); // build druntime
-                    formattedWrite(outstr, "4 2\n"); // build phobos
-                    formattedWrite(outstr, "5 1\n"); // test druntime
-                    formattedWrite(outstr, "6 2\n"); // test phobos
-                    formattedWrite(outstr, "7 0\n"); // test dmd
-                    break;
-                case 2:
-                    formattedWrite(outstr, "1 0\n"); // checkout dummy
-
-                    // merge(14) repoindex(0) url ref
-                    foreach (p; pulls)
-                    {
-                        int step, repoindex;
-                        switch (p.repo_name)
-                        {
-                            case "GDC": step = 14; repoindex = 0; break;
-                            default: assert(false, "unknown repository");
-                        }
-                        formattedWrite(outstr, "%s %s %s %s\n", step, repoindex, p.giturl, p.gitref);
-                    }
-                    formattedWrite(outstr, "12 0\n"); // build gdc
-                    formattedWrite(outstr, "13 0\n"); // test gdc
-                    break;
-                default: assert(false);
-            }
-            break;
-
         case "5":
             formattedWrite(outstr, "%s\n", runid);
             formattedWrite(outstr, "%s\n", (pulls.length == 0) ? "master" : "pull");

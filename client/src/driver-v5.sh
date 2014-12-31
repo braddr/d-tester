@@ -163,7 +163,8 @@ function runtests
     fi
     runid="${data[0]}"
 
-    if [ "x$runid" == "x" -o "x$runid" == "xskip" -o "x$runid" == "xbad" -o "x$runid" == "xunauthorized:" -o "x${runid:0:9}" == "x<!DOCTYPE" -o "x${runid:0:17}" == "Unable to dispatch" ]; then
+    if [[ ! ($runid =~ ^-?[0-9]+$) ]]; then
+        echo "Unexpected output from get_runnable_pull: $(data[@])"
         echo -e -n "Skipping run ($OS)...\r"
         run_rc=2
         return
@@ -194,7 +195,10 @@ function runtests
         repoid=${repobranches[${steps[1]}*4]}
         reponame=${repobranches[${steps[1]}*4 + 2]}
         testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}&repoid=$repoid")
-        if [ "x${testid:0:5}" == "xabort" -o "x${testid:0:9}" == "xbad input" ]; then
+        if [[ ! ($testid =~ ^-?[0-9]+$) ]]; then
+            if [ "x${testid:0:5}" != "xabort" ]; then
+                echo "Unexpected output from start_${runmode}_test, aborting: $testid"
+            fi
             run_rc=3
             break
         fi
@@ -238,7 +242,10 @@ function runtests
         curlrc=$(callcurl finish_${runmode}_test "testid=$testid&rc=$step_rc")
         if [ "$runmode" == "pull" -a $step_rc -ne 0 ]; then
             run_rc=1
-        elif [ "x${curlrc:0:5}" == "xabort" -o "x${curlrc:0:9}" == "xbad input" ]; then
+        elif [[ ! ($testid =~ ^-?[0-9]+$) ]]; then
+            if [ "x${curlrc:0:5}" != "xabort" ]; then
+                echo "Unexpected output from finish_${runmode}_test, aborting: $testid"
+            fi
             run_rc=3
         fi
     done

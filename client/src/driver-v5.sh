@@ -13,6 +13,7 @@ shopt -s extglob
 function callcurl
 {
     if [ "$runid" == "test" ]; then
+        echo "test"
         return
     fi
 
@@ -163,8 +164,8 @@ function runtests
     fi
     runid="${data[0]}"
 
-    if [[ ! ($runid =~ ^-?[0-9]+$) ]]; then
-        echo "Unexpected output from get_runnable_pull: $(data[@])"
+    if [[ ! ( $runid =~ ^(-?[0-9]+|test)$ ) ]]; then
+        echo "Unexpected output from get_runnable_pull: ${data[@]}"
         echo -e -n "Skipping run ($OS)...\r"
         run_rc=2
         return
@@ -195,7 +196,7 @@ function runtests
         repoid=${repobranches[${steps[1]}*4]}
         reponame=${repobranches[${steps[1]}*4 + 2]}
         testid=$(callcurl start_${runmode}_test "runid=$runid&type=${steps[0]}&repoid=$repoid")
-        if [[ ! ($testid =~ ^-?[0-9]+$) ]]; then
+        if [[ ! ( $testid =~ ^(-?[0-9]+|test)$ ) ]]; then
             if [ "x${testid:0:5}" != "xabort" ]; then
                 echo "Unexpected output from start_${runmode}_test, aborting: $testid"
             fi
@@ -242,9 +243,9 @@ function runtests
         curlrc=$(callcurl finish_${runmode}_test "testid=$testid&rc=$step_rc")
         if [ "$runmode" == "pull" -a $step_rc -ne 0 ]; then
             run_rc=1
-        elif [[ ! ($testid =~ ^-?[0-9]+$) ]]; then
+        elif [[ ! ( $curlrc =~ ^(-?[0-9]+|test)$ ) ]]; then
             if [ "x${curlrc:0:5}" != "xabort" ]; then
-                echo "Unexpected output from finish_${runmode}_test, aborting: $testid"
+                echo "Unexpected output from finish_${runmode}_test, aborting: $curlrc"
             fi
             run_rc=3
         fi

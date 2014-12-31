@@ -22,8 +22,8 @@ function callcurl
     while [ $rc -ne 0 ]; do
         curloutput=`timelimit -q -p -t 30 curl --silent --fail "https://auto-tester.puremagic.com/addv2/$1?clientver=5&$2"`
         rc=$?
-        if [ $rc -ne 0 ]; then
-            echo -e "\tcurl failed, rc=$rc, retrying in $sleepdur seconds..." 1>&2
+        if [ $rc -ne 0 -o "x${curloutput:0:13}" == "xunauthorized:" ]; then
+            echo -e "\tcurl failed, rc=$rc, 1=$1, 2=$2, curloutput=$curloutput, retrying in $sleepdur seconds..." 1>&2
             sleep $sleepdur
             trycount=$(expr $trycount + 1)
             sleepdur=$(expr $sleepdur \* 2)
@@ -53,8 +53,8 @@ function uploadlog
     while [ $rc -ne 0 ]; do
         curloutput=`timelimit -q -p -t 30 curl --silent --fail -T $2/$3 "https://auto-tester.puremagic.com/addv2/upload_$4?clientver=5&testid=$1"`
         rc=$?
-        if [ $rc -ne 0 ]; then
-            echo -e "\tcurl failed, rc=$rc, 1=$1, 2=$2, 3=$3, 4=$4, retrying in $sleepdur seconds..." 1>&2
+        if [ $rc -ne 0 -o "x${curloutput:0:13}" == "xunauthorized:" ]; then
+            echo -e "\tcurl failed, rc=$rc, 1=$1, 2=$2, 3=$3, 4=$4, curloutput=$curloutput, retrying in $sleepdur seconds..." 1>&2
             sleep $sleepdur
             trycount=$(expr $trycount + 1)
             sleepdur=$(expr $sleepdur \* 2)

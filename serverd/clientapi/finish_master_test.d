@@ -68,5 +68,6 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     updateHostLastCheckin(hostid, clientver);
     sql_exec(text("update test_data set end_time=now(), rc=", rc, " where id=", testid));
+    outstr.put("ok");
 }
 

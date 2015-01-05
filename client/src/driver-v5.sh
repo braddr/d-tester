@@ -243,7 +243,7 @@ function runtests
         curlrc=$(callcurl finish_${runmode}_test "testid=$testid&rc=$step_rc")
         if [ "$runmode" == "pull" -a $step_rc -ne 0 ]; then
             run_rc=1
-        elif [[ ! ( $curlrc =~ ^(-?[0-9]+|test)$ ) ]]; then
+        elif [ "x$curlrc" != "xok" -a "x$curlrc" != "xtest" ]; then
             if [ "x${curlrc:0:5}" != "xabort" ]; then
                 echo "Unexpected output from finish_${runmode}_test, aborting: $curlrc"
             fi

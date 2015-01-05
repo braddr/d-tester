@@ -7,16 +7,12 @@
 #    2) os
 #    3) project
 
-PARALLELISM=1
-
-if [ -f configs/`hostname` ]; then
-    . configs/`hostname`
-fi
+. src/setup_env.sh "$2"
 
 echo -e "\tapplying fixups to checked out source"
 
 case "$3" in
-    1|yebblies|D-Programming-Language)
+    1)
         # need a conf files so that dmd can find the imports and libs from within the test
         case "$2" in
             Darwin_32|Darwin_64_32)
@@ -58,7 +54,7 @@ case "$3" in
                 ;;
         esac
         ;;
-    2|D-Programming-GDC)
+    2)
         ;;
 esac
 

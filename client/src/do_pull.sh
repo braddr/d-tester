@@ -11,11 +11,7 @@
 #   4) git url
 #   5) git ref
 
-PARALLELISM=1
-
-if [ -f configs/`hostname` ]; then
-    . configs/`hostname`
-fi
+. src/setup_env.sh "$2"
 
 top=$PWD
 

@@ -11,19 +11,15 @@
 #   4) repository
 #   5) branch
 
-PARALLELISM=1
-
-if [ -f configs/`hostname` ]; then
-    . configs/`hostname`
-fi
-
-# NOTE: must be absolute, code below depends on it
-top=$PWD
-
 if [ $# != 5 ]; then
     echo -e "\t3 args required: testdir, os, owner, repository, branch"
     exit 1
 fi
+
+. src/setup_env.sh "$2"
+
+# NOTE: must be absolute, code below depends on it
+top=$PWD
 
 echo -e "\tchecking out $3/$4/$5"
 
@@ -34,17 +30,6 @@ fi
 
 if [ ! -d $top/source ]; then
     mkdir $top/source
-fi
-
-# cleanup non-bare versions if they exist
-if [ -d $top/source/dmd ]; then
-    rm -rf $top/source/dmd
-fi
-if [ -d $top/source/druntime ]; then
-    rm -rf $top/source/druntime
-fi
-if [ -d $top/source/phobos ]; then
-    rm -rf $top/source/phobos
 fi
 
 # 1 == logfile

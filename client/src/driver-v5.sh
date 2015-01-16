@@ -165,7 +165,9 @@ function runtests
     runid="${data[0]}"
 
     if [[ ! ( $runid =~ ^(-?[0-9]+|test)$ ) ]]; then
-        echo "Unexpected output from get_runnable_pull: ${data[@]}"
+        if [ $runid != "skip" ]; then
+            echo "Unexpected output from get_runnable_pull, runid: $runid, data: ${data[@]}"
+        fi
         echo -e -n "Skipping run ($OS)...\r"
         run_rc=2
         return

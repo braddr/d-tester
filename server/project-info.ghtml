@@ -84,6 +84,21 @@
         }
     </table>
 
+    <table class="whiterounded" id="project_capabilities">
+        <tr><th>Type</th><th>Capability</th></tr>
+
+        \sqlexec{
+            select pc.id, ct.name, c.name
+              from project_capabilities pc, capability_types ct, capabilities c
+             where pc.project_id = \get{projectid} and
+                   pc.capability_id = c.id and
+                   c.capability_type_id = ct.id
+        }
+        \while{\sqlrow{pcid}{ctname}{cname}}{
+            <tr><td>\get{ctname}</td><td>\get{cname}</td></tr>
+        }
+    </table>
+
 }{
     Hrm.. unknown project id: \get{projectid}
 }

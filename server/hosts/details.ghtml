@@ -75,6 +75,20 @@
     }
 }}
 
+<table class="whiterounded" id="hostcapabilities">
+    <tr><th>Type</th><th>Name</th></tr>
+    \sqlexec{
+        select bhc.id, ct.name, c.name
+          from build_host_capabilities bhc, capability_types ct, capabilities c
+         where bhc.host_id = \get{hostid} and
+               bhc.capability_id = c.id and
+               c.capability_type_id = ct.id
+    }
+    \while{\sqlrow{bhcid}{ctname}{cname}}{
+        <tr><td>\get{ctname}</td><td>\get{cname}</td></tr>
+    }
+</table>
+
 <table class="whiterounded" id="branchruns">
   <tr>
     <th>Run ID</th>

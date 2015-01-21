@@ -57,7 +57,7 @@ class Pull
 string getPullColumns()
 {
     // field 1 is unused now (was repo_id)
-    //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15      16
+    //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15       16
     return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, repo_id, auto_pull";
 }
 
@@ -304,6 +304,17 @@ void newPull(Repository repo, Pull pull)
 Pull loadPull(ulong repo_id, ulong pull_id)
 {
     sql_exec(text("select ", getPullColumns(), " from github_pulls where repo_id = ", repo_id, " and pull_id = ", pull_id));
+    sqlrow[] rows = sql_rows();
+
+    if (rows.length != 1)
+        return null;
+    else
+        return makePullFromRow(rows[0]);
+}
+
+Pull loadPullById(ulong id)
+{
+    sql_exec(text("select ", getPullColumns(), " from github_pulls where id = ", id));
     sqlrow[] rows = sql_rows();
 
     if (rows.length != 1)

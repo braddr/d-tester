@@ -35,6 +35,11 @@ for platform in ${platforms[@]}; do
         rm -f $top/$builddir/*$repo*.log
 
         src/do_checkout.sh "$builddir" "$platform" "$owner" "$repo" "$branch"
+    done
+
+    src/do_fixup.sh "$builddir" "$platform" "1"
+
+    for repo in "dmd" "druntime" "phobos"; do
         if [ "$?" -ne 0 ]; then
             abort
         fi

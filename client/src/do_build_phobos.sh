@@ -18,9 +18,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-$makecmd DMD=../dmd/src/dmd MODEL=$OUTPUT_MODEL $EXTRA_ARGS -f $makefile install >> ../phobos-build.log 2>&1
-if [ $? -ne 0 ]; then
-    echo -e "\tfailed to install $repo"
-    exit 1
+if [ "$2" != "Win_32" -a "$2" != "Win_64" ]; then
+    $makecmd DMD=../dmd/src/dmd MODEL=$OUTPUT_MODEL $EXTRA_ARGS -f $makefile install >> ../phobos-build.log 2>&1
+    if [ $? -ne 0 ]; then
+	echo -e "\tfailed to install $repo"
+	exit 1
+    fi
 fi
-

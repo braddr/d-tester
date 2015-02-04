@@ -16,6 +16,7 @@ makefile=posix.mak
 COMPILER_MODEL=32
 OUTPUT_MODEL=32
 EXTRA_ARGS="-j$PARALLELISM"
+EXE=""
 
 case "$1" in
     Darwin_32)
@@ -55,10 +56,12 @@ case "$1" in
     Win_32)
         makefile=win32.mak
         EXTRA_ARGS=""
+        EXE=.exe
         ;;
     Win_64)
         makefile=win32.mak
         EXTRA_ARGS=""
+        EXE=.exe
         OUTPUT_MODEL=64
         ;;
     *)

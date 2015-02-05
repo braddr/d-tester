@@ -59,7 +59,7 @@ case "$1" in
         EXE=.exe
         ;;
     Win_64)
-        makefile=win32.mak
+        makefile=win64.mak
         EXTRA_ARGS=""
         EXE=.exe
         OUTPUT_MODEL=64

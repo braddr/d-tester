@@ -28,6 +28,10 @@ if [ "$2" == "Win_32" -o "$2" == "Win_64" ]; then
     echo "HOST_DC=$HOST_DC" >> ../../dmd-build.log 2>&1
 fi
 
+if [ "$makefile" == "win64.mak" ]; then
+    makefile=win32.mak
+fi
+
 $makecmd MODEL=$COMPILER_MODEL HOST_DC=$HOST_DC $EXTRA_ARGS -f $makefile dmd >> ../../dmd-build.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tfailed to build dmd"

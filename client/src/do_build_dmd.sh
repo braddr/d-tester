@@ -32,14 +32,16 @@ if [ "$makefile" == "win64.mak" ]; then
     makefile=win32.mak
 fi
 
-$makecmd MODEL=$COMPILER_MODEL HOST_DC=$HOST_DC $EXTRA_ARGS -f $makefile dmd >> ../../dmd-build.log 2>&1
+export HOST_DC
+
+$makecmd MODEL=$COMPILER_MODEL $EXTRA_ARGS -f $makefile dmd >> ../../dmd-build.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tfailed to build dmd"
     exit 1
 fi
 
 if [ "$2" != "Win_32" -a "$2" != "Win_64" ]; then
-    $makecmd MODEL=$COMPILER_MODEL HOST_DC=$HOST_DC $EXTRA_ARGS -f $makefile install >> ../../dmd-build.log 2>&1
+    $makecmd MODEL=$COMPILER_MODEL $EXTRA_ARGS -f $makefile install >> ../../dmd-build.log 2>&1
     if [ $? -ne 0 ]; then
 	echo -e "\tfailed to install $repo"
 	exit 1

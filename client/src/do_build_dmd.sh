@@ -23,7 +23,7 @@ cd $1/dmd/src
 HOST_DC=`ls -1 $top/release-build/install/*/$BINDIR/dmd$EXE`
 echo "HOST_DC=$HOST_DC" >> ../../dmd-build.log 2>&1
 
-if [ "$2" == "Win_32" -o "$2" == "Win_64" ]; then
+if [[ ! -z "$HOST_DC" && ( "$2" == "Win_32" || "$2" == "Win_64" ) ]]; then
     HOST_DC=`cygpath -w $HOST_DC`
     echo "HOST_DC=$HOST_DC" >> ../../dmd-build.log 2>&1
 fi

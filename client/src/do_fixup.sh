@@ -13,7 +13,7 @@ echo -e "\tapplying fixups to checked out source"
 
 # fixups for DMD related build types
 
-if [ "x$3" == "x1" -a "x${2:0:4}" == "Win_" ]; then
+if [ "x$3" == "x1" -a "x${2:0:4}" == "xWin_" ]; then
     # move minit.obj to be newer than minit.asm
     touch $1/druntime/src/rt/minit.obj
 

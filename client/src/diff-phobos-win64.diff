@@ -13,7 +13,7 @@ index 9746daf..a35184b 100644
  ## Flags for VC compiler
  
  #CFLAGS=/Zi /nologo /I"$(VCDIR)\INCLUDE" /I"$(SDKDIR)\Include"
-@@ -47,9 +43,9 @@ UDFLAGS=-g -m$(MODEL) -O -w -d
+@@ -52,9 +48,9 @@ UDFLAGS=-conf= -g -m$(MODEL) -O -w -dip25 -I$(DRUNTIME)\import
  
  ## C compiler, linker, librarian
  

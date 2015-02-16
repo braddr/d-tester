@@ -1,8 +1,8 @@
 diff --git a/test/d_do_test.d b/test/d_do_test.d
-index 2a3b525..80bacb0 100755
+index 30488a1..6dd3a73 100755
 --- a/test/d_do_test.d
 +++ b/test/d_do_test.d
-@@ -388,7 +388,7 @@ int main(string[] args)
+@@ -443,7 +443,7 @@ int main(string[] args)
          switch (envData.os)
          {
              case "win32": envData.ccompiler = "dmc"; break;
@@ -11,3 +11,4 @@ index 2a3b525..80bacb0 100755
              default:      envData.ccompiler = "g++"; break;
          }
      }
+

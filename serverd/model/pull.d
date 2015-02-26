@@ -52,6 +52,16 @@ class Pull
         close_date   = _close_date;
         auto_pull    = _auto_pull;
     }
+
+    override string toString()
+    {
+        return text(
+                "Pull { "
+                    "id = ", id,
+                    ", repo_id = ", repo_id,
+                    ", pull_id = ", pull_id,
+                " }");
+    }
 }
 
 string getPullColumns()

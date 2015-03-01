@@ -67,10 +67,11 @@
 # \2 == href text
 # \3 == css class suffix
 # \4 == visibility conditional
+# \5 == title
 \set{drawSubMenu}{\quote{
     \if{\4}{
         <div class="page_submenu">
-            \drawOneMenu{\1}{\2}{\3}
+            \drawOneMenu{\1}{\2}{\3}{}{\5}
         </div>
     }
 }}
@@ -102,18 +103,19 @@
             \not{\eq{\get{beta_only}}{1}}
             \eq{\get{SERVERNAME}}{d-beta.puremagic.com}
         }{
-            \drawOneMenu{?projectid=\get{pid}}{\get{label}\if{\not{\eq{\get{pull_counts}}{0}}}{\ &diams;}}{\isMenuSelected{\1}{\get{pid}}}{\if{\eq{\get{max_rc}}{0}}{}{failed_master_build}}{\if{\eq{\get{max_rc}}{0}}{}{failed master build - }\get{pull_counts}\ open pulls}
+            \set{div_title}{\get{pull_counts}\ open pulls}
+            \drawOneMenu{?projectid=\get{pid}}{\get{label}\if{\not{\eq{\get{pull_counts}}{0}}}{\ &diams;}}{\isMenuSelected{\1}{\get{pid}}}{\if{\eq{\get{max_rc}}{0}}{}{failed_master_build}}{\if{\eq{\get{max_rc}}{0}}{}{failed master build - }\get{div_title}}
 
             \if{
                 \eq{\get{projectid}}{\get{pid}}
             }{
-                \drawSubMenu{platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}}{\get{\get{os}}\ History}{\get{show_history_submenu}}{\get{show_history_submenu}}
+                \drawSubMenu{platform-history.ghtml?projectid=\get{projectid}&amp;os=\get{os}}{\get{\get{os}}\ History}{\get{show_history_submenu}}{\get{show_history_submenu}}{\get{div_title}}
 
-                \drawSubMenu{pulls.ghtml?projectid=\get{pid}}{Pull Requests}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|pulls}}{\eq{\get{test_pulls}}{1}}
+                \drawSubMenu{pulls.ghtml?projectid=\get{pid}}{Pull Requests}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|pulls}}{\eq{\get{test_pulls}}{1}}{\get{div_title}}
 
-                \drawSubMenu{project-info.ghtml?projectid=\get{pid}}{Project Info}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|projinfo}}{true}
+                \drawSubMenu{project-info.ghtml?projectid=\get{pid}}{Project Info}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|projinfo}}{true}{\get{div_title}}
 
-                \drawSubMenu{chart.ghtml?projectid=\get{pid}}{Project Graphs}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|chart}}{true}
+                \drawSubMenu{chart.ghtml?projectid=\get{pid}}{Project Graphs}{\isMenuSelected{\1|\get{page_type}}{\get{pid}|chart}}{true}{\get{div_title}}
 
             }
         }

@@ -8,6 +8,7 @@ import utils;
 import validate;
 
 import model.project;
+import model.pull;
 
 import std.algorithm;
 import std.conv;
@@ -16,89 +17,41 @@ import std.format;
 import std.random;
 import std.range;
 
-struct Pull
+// ptr1 == already built or not for specific platforms
+// ptr2 == already failed
+sqlrow[] getPullToBuild(string hostid)
 {
-    string g_p_id;
-    string project_id;
-    ulong  repo_project_index; // index of this repo in the project.repositories array
-    ulong  repo_id;
-    string repo_name;
-    string giturl;
-    string gitref;
-    string sha;
-    bool merge;
-}
-
-void loadAllOpenRequests(ref sqlrow[string] openPulls, string hostid)
-{
-    // get set of pull requests that need to have runs
-    //                 0      1     2       3           4            5                6            7              8             9      10    11                  12
-    string q = text(
-               "select gp.id, r.id, r.name, gp.pull_id, gp.head_sha, gp.head_git_url, gp.head_ref, gp.updated_at, gp.head_date, r.ref, p.id, p.allow_auto_merge, gp.auto_pull "
-               "from github_pulls gp, projects p, repositories r, project_repositories pr, github_users u, build_host_projects bhp "
-               "where gp.open = true and "
-               "  gp.repo_id = r.id and "
-               "  p.id = pr.project_id and "
-               "  pr.repository_id = r.id and "
-               "  gp.user_id = u.id and "
-               "  u.pull_approver is not null and "
-               "  p.enabled = true and "
-               "  p.test_pulls = true and "
-               "  bhp.project_id = p.id and "
-               "  bhp.host_id = ", hostid);
-
-    sql_exec(q);
+    sql_exec(text(
+        //      0          1     2         3           4          5        6        7       8
+        "select ghp_id,    p_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing
+           from (
+                  select ghp.head_date, ghp.id as ghp_id, p.id as p_id, ghp.repo_id, ghp.pull_id, c.id as cap_id, c.name as cap_name, ifnull(ptr2.max_rc = 0,true) as is_passing, if(p.allow_auto_merge, ifnull(ghp.auto_pull, 0),0) as auto_merge
+                    from (github_pulls ghp, github_users ghu, project_repositories pr, projects p, project_capabilities pc, capabilities c)
+                         left join pull_test_runs ptr1 use index (g_p_id) on (ptr1.deleted = false and ptr1.g_p_id = ghp.id and ptr1.project_id = p.id and c.name = ptr1.platform)
+                         left join (
+                             select g_p_id, project_id, max(rc) as max_rc
+                               from pull_test_runs
+                              where deleted = false
+                              group by g_p_id, project_id
+                         ) ptr2 on (ptr2.g_p_id = ghp.id and ptr2.project_id = p.id)
+                         left join pull_suppressions ps on (ps.g_p_id = ghp.id and ps.platform = c.name)
+                   where ghu.pull_approver is not null and
+                         ghu.id = ghp.user_id and
+                         ghp.open = true and
+                         ghp.repo_id = pr.repository_id and
+                         pr.project_id = p.id and
+                         pc.project_id = p.id and
+                         pc.capability_id = c.id and
+                         c.capability_type_id = 1 and
+                         ptr1.platform is null and
+                         ps.id is null
+               ) todo, build_host_capabilities bhc
+          where todo.cap_id = bhc.capability_id and
+                bhc.host_id = ", hostid,
+        " order by auto_merge desc, is_passing desc, head_date desc
+          limit 1;"));
     sqlrow[] rows = sql_rows();
-
-    foreach(ref row; rows) { openPulls[row[0]] = row; }
-}
-
-void filterAlreadyCompleteRequests(string platform, ref sqlrow[string] openPulls)
-{
-    // get set of past tests for this platform and the above set of pull requests
-    sql_exec(text("select ptr.id, ptr.g_p_id, ptr.sha "
-                  "from pull_test_runs ptr, github_pulls ghp "
-                  "where ptr.platform='", platform, "' and "
-                  "ptr.g_p_id = ghp.id and "
-                  "ghp.open = true and "
-                  "ptr.deleted = false"));
-    sqlrow[] rows = sql_rows();
-
-    // for each past test, remove entries from openPulls where there exists a run that matches the pull id and it's head ref
-    foreach (row; rows)
-    {
-        //writelog("previous run: g_p_id = %s", row[1]);
-
-        sqlrow* pull = row[1] in openPulls;
-        if (pull == null)
-            continue; // happens when there's multiple runs for the same pull.  After the head matching run is processed, the rest will not find a match.
-
-        //writelog("  repo_id: %s, repo_name: %s, pull_id: %s, head_sha: %s, last_sha: %s", (*pull)]1, (*pull)[2], (*pull)[3], (*pull)[4], row[2]);
-        if ((*pull)[4] == row[2])
-            openPulls.remove(row[1]);
-    }
-}
-
-void filterSuppressedBuilds(string platform, ref sqlrow[string] openPulls)
-{
-    // get all suppressions for the given platform
-    sql_exec(text("select s.id, s.g_p_id "
-                  "from pull_suppressions s "
-                  "where s.platform='", platform, "'"));
-    sqlrow[] rows = sql_rows();
-
-    // remove entries from openPulls
-    foreach (row; rows)
-    {
-        //writelog("g_p_id = %s", row[1]);
-
-        sqlrow* pull = row[1] in openPulls;
-        if (pull == null)
-            continue; // old suppression
-
-        writelog("  suppressed build for pull id: %s/%s (%s)", (*pull)[2], (*pull)[3], row[1]);
-        openPulls.remove(row[1]);
-    }
+    return rows;
 }
 
 alias int[2] stat;
@@ -130,81 +83,10 @@ stat[string] loadCurrentRunStatistics()
     return stats;
 }
 
-sqlrow selectOnePull_byNewest(ref sqlrow[string] openPulls)
-{
-    // create map of update -> id -- subject to time collisions resulting in loosing runs
-    sqlrow[string] sorted;
-    foreach(key, row; openPulls) { sorted[row[8]] = row; }
-
-    // sort and get the most recent
-    string key = (sorted.keys.sort.reverse)[0];
-    sqlrow pull = sorted[key];
-
-    return pull;
-}
-
-sqlrow selectOnePull(ref sqlrow[string] openPulls)
-{
-    stat[string] stats = loadCurrentRunStatistics();
-
-    //writelog("stats begin:");
-    //foreach(key, s; stats)
-    //    writelog("%s: %s", key, s);
-    //writelog("stats end:");
-
-    // filter past runs into buckets
-    sqlrow[string] automerge;
-    sqlrow[string] noRuns;
-    sqlrow[string] allPass;
-    sqlrow[string] somePass;
-    sqlrow[string] allFail;
-    foreach(key, row; openPulls)
-    {
-        if (row[11] == "1" && row[12] != "")
-            automerge[key] = row;
-        else if (auto s = key in stats)
-        {
-            if ((*s)[1] == 0) // no failures
-                allPass[key] = row;
-            else if ((*s)[0] == 0) // no passes
-                allFail[key] = row;
-            else // some of both
-                somePass[key] = row;
-        }
-        else
-            noRuns[key] = row;
-    }
-
-    version (none)
-    {
-        if (noRuns.length > 0)
-            return selectOnePull_byNewest(noRuns);
-        else if (allPass.length > 0)
-            return selectOnePull_byNewest(allPass);
-        else if (somePass.length > 0)
-            return selectOnePull_byNewest(somePass);
-        else
-            return selectOnePull_byNewest(allFail);
-    }
-    else
-    {
-        if (automerge.length > 0)
-            return selectOnePull_byNewest(automerge);
-        else if (allPass.length > 0)
-            return selectOnePull_byNewest(allPass);
-        else if (noRuns.length > 0)
-            return selectOnePull_byNewest(noRuns);
-        else if (somePass.length > 0)
-            return selectOnePull_byNewest(somePass);
-        else
-            return selectOnePull_byNewest(allFail);
-    }
-}
-
-string recordRunStart(string hostid, string platform, const ref Pull pull)
+string recordRunStart(string hostid, string platform, ulong ghp_id, ulong project_id, string pull_sha)
 {
     sql_exec(text("insert into pull_test_runs (id, g_p_id, host_id, project_id, platform, sha, start_time, deleted) values (null, ",
-                  pull.g_p_id, ", ", hostid, ", ", pull.project_id, ", \"", platform, "\", \"", pull.sha, "\", now(), false)"));
+                  ghp_id, ", ", hostid, ", ", project_id, ", \"", platform, "\", \"", pull_sha, "\", now(), false)"));
     sql_exec("select last_insert_id()");
     sqlrow lastidrow = sql_row();
 
@@ -298,7 +180,7 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
 
             // merge
             foreach (p; pulls)
-                formattedWrite(outstr, "17 %s %s %s\n", p.repo_project_index, p.giturl, p.gitref);
+                formattedWrite(outstr, "17 %s %s %s\n", getRepoIndex(proj, p.repo_id), p.head_git_url, p.head_ref);
 
             // build
             foreach (i; 0 .. proj.repositories.length)
@@ -313,20 +195,21 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
     }
 }
 
-Pull[] selectPullsToBuild(string hostid, string platform)
+Pull[] selectPullsToBuild(string hostid, ref string project_id, ref string platform)
 {
-    sqlrow[string] openPulls;
-    loadAllOpenRequests(openPulls, hostid);
+    sqlrow[] rows = getPullToBuild(hostid); // ghp_id, project_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing
+    if (rows.length == 0)
+        return [];
 
-    filterAlreadyCompleteRequests(platform, openPulls);
-    filterSuppressedBuilds(platform, openPulls);
+    sqlrow row = rows[0];
+    Pull p = loadPullById(to!ulong(row[0]));
+    p.auto_pull = to!ulong(row[3]);
 
-    if (openPulls.length == 0)
-        return null;
+    project_id = row[1];
+    platform   = row[2];
 
-    sqlrow pull = selectOnePull(openPulls);
-    Pull[] pulls = [Pull(pull[0], pull[10], 0, to!ulong(pull[1]), pull[2], pull[5], pull[6], pull[4], (pull[11] == "1" && pull[12] != ""))];
-    return pulls;
+    // TODO: add support for related pulls
+    return [p];
 }
 
 bool shouldDoBuild(bool force, string platform, ulong projectid)
@@ -355,28 +238,24 @@ bool shouldDoBuild(bool force, string platform, ulong projectid)
     return dobuild;
 }
 
-Project[] selectMasterToBuild(bool force, string hostid, string platform)
+Project selectMasterToBuild(bool force, string hostid, string platform)
 {
     Project[] projects = loadProjectsByHostId(to!ulong(hostid));
 
     projects = projects.filter!(a => shouldDoBuild(force, platform, a.id)).array;
-    return projects;
+    return projects.length > 0 ? projects[uniform(0, projects.length)] : null;
 }
 
-void mapPullsToProj(Project proj, Pull[] pulls)
+size_t getRepoIndex(Project proj, ulong repo_id)
 {
-PullLoop:
-    foreach(ref p; pulls)
+    foreach(i, r; proj.repositories)
     {
-        foreach(i, r; proj.repositories)
+        if (r.id == repo_id)
         {
-            if (r.id == p.repo_id)
-            {
-                p.repo_project_index = i;
-                continue PullLoop;
-            }
+            return i;
         }
     }
+    assert(false, "um.. repo not found?");
 }
 
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
@@ -412,14 +291,16 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     tryToCleanup(hostid);
     tryToCleanupMaster(hostid);
 
-    Pull[] pulls = selectPullsToBuild(hostid, platform);
-    Project[] projects = selectMasterToBuild(force.length != 0, hostid, platform);
+    string pull_project_id; // temporary until decided to do a pull
+    string pull_platform;   // temporary until decided to do a pull
+    Pull[] pulls = selectPullsToBuild(hostid, pull_project_id, pull_platform);
+    Project proj = selectMasterToBuild(force.length != 0, hostid, platform);
 
     bool doPull = false;
     bool doMaster = false;
-    if (pulls.length > 0 && pulls[0].merge)
+    if (pulls.length > 0 && pulls[0].auto_pull != 0)
         doPull = true;
-    else if (projects.length > 0)
+    else if (proj)
         doMaster = true;
     else if (pulls.length > 0)
         doPull = true;
@@ -431,18 +312,17 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
 
     string runid;
-    Project proj;
 
     if (doPull)
     {
-        proj = loadProjectById(to!ulong(pulls[0].project_id));
-        mapPullsToProj(proj, pulls);
-        runid = recordRunStart(hostid, platform, pulls[0]);
+        platform = pull_platform;
+
+        proj = loadProjectById(to!ulong(pull_project_id));
+        runid = recordRunStart(hostid, platform, pulls[0].id, proj.id, pulls[0].head_sha);
     }
     else
     {
         pulls = null;
-        proj = projects[uniform(0, projects.length)];
         runid = recordMasterStart(platform, hostid, proj.id);
     }
 
@@ -453,7 +333,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     }
     catch(Exception e) { writelog("  caught exception: %s", e); }
 
-    writelog("  building: %s", pulls);
+    writelog("  building: %s, platform %s", pulls[], platform);
 
     output(clientver, runid, platform, proj, pulls, outstr);
 

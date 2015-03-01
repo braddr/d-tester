@@ -203,9 +203,8 @@ CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, re
 
     curl_easy_reset(curl);
 
-    curl_easy_setopt(curl, co, 1L);
-    if (co != CurlOption.httpget)
-        curl_easy_setopt(curl, CurlOption.forbid_reuse, 1L);
+    curl_easy_setopt(curl, co, 1L); // method
+    curl_easy_setopt(curl, CurlOption.forbid_reuse, 1L);
 
     curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
 
@@ -215,6 +214,8 @@ CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, re
         curl_easy_setopt(curl, CurlOption.username, toStringz(user));
         curl_easy_setopt(curl, CurlOption.password, toStringz(passwd));
     }
+    else
+        curl_easy_setopt(curl, CurlOption.httpauth, CurlAuth.none);
 
     curl_slist* curl_request_headers;
     foreach (h; requestheaders)
@@ -236,7 +237,7 @@ CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, re
     curl_easy_setopt(curl, CurlOption.writeheader, &responseheaders);
 
     curl_easy_setopt(curl, CurlOption.stderr, fp.getFP());
-    curl_easy_setopt(curl, CurlOption.verbose, 0);
+    curl_easy_setopt(curl, CurlOption.verbose, 1);
 
     curl_easy_setopt(curl, CurlOption.url, toStringz(url));
     CURLcode res = curl_easy_perform(curl);

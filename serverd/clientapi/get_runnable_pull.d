@@ -83,7 +83,7 @@ stat[string] loadCurrentRunStatistics()
     return stats;
 }
 
-string recordRunStart(string hostid, string platform, ulong ghp_id, ulong project_id, string pull_sha)
+string recordRunStart(string hostid, string platform, ulong project_id, ulong ghp_id, string pull_sha)
 {
     sql_exec(text("insert into pull_test_runs (id, g_p_id, host_id, project_id, platform, sha, start_time, deleted) values (null, ",
                   ghp_id, ", ", hostid, ", ", project_id, ", \"", platform, "\", \"", pull_sha, "\", now(), false)"));
@@ -93,7 +93,7 @@ string recordRunStart(string hostid, string platform, ulong ghp_id, ulong projec
     return lastidrow[0];
 }
 
-string recordMasterStart(string platform, string hostid, ulong projectid)
+string recordMasterStart(string hostid, string platform, ulong projectid)
 {
     sql_exec(text("insert into test_runs (start_time, project_id, host_id, platform, deleted) "
                   "values (now(), ", projectid, ", \"", hostid, "\", \"", platform, "\", false)"));
@@ -318,12 +318,12 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         platform = pull_platform;
 
         proj = loadProjectById(to!ulong(pull_project_id));
-        runid = recordRunStart(hostid, platform, pulls[0].id, proj.id, pulls[0].head_sha);
+        runid = recordRunStart(hostid, platform, proj.id, pulls[0].id, pulls[0].head_sha);
     }
     else
     {
         pulls = null;
-        runid = recordMasterStart(platform, hostid, proj.id);
+        runid = recordMasterStart(hostid, platform, proj.id);
     }
 
     try

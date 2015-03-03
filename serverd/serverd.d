@@ -200,7 +200,7 @@ int main(string[] args)
 
         writelog("start fcgi loop");
 
-        size_t numHits = 100;
+        size_t numHits = 500;
         while (!shutdown && FCGX_Accept(&fcgi_in, &fcgi_out, &fcgi_err, &fcgi_envp) >= 0)
         {
             processRequest();

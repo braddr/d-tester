@@ -118,21 +118,19 @@ function checkoutRepeat
     done
 }
 
-# $1 == OS
-# $2 == null or "test" or "force"
+# $1 == null or "test" or "force"
 #   null: allow the service to determine if the test should run
 #   test: do a local only test run
 #   force: tell the service to execute a run even if there haven't been changes
 #     -- force has no meaning for runmode == pull right now
 function runtests
 {
-    OS=$1
-
     if [ "$2" == "force" ]; then
         extraargs="&force=1"
     fi
 
     if [ "$2" == "test-DMD" ]; then
+        OS=$(detectos)
         data=("test" "master" "1" "$OS")
         data=("${data[@]}" "3")
         data=("${data[@]}" "1" "D-Programming-Language" "dmd" "master")
@@ -149,6 +147,7 @@ function runtests
         data=("${data[@]}" 16 1)
         data=("${data[@]}" 16 2)
     elif [ "$2" == "test-GDC" ]; then
+        OS=$(detectos)
         data=("test" "master" "2" "$OS")
         data=("${data[@]}" "1")
         data=("${data[@]}" "13" "D-Programming-GDC" "GDC" "master")
@@ -160,7 +159,7 @@ function runtests
         data=("${data[@]}" 15 0)
         data=("${data[@]}" 16 0)
     else
-        data=($(callcurl get_runnable_pull "os=$OS&hostname=`hostname`$extraargs"))
+        data=($(callcurl get_runnable_pull "hostname=`hostname`$extraargs"))
     fi
     runid="${data[0]}"
 
@@ -168,7 +167,7 @@ function runtests
         if [ $runid != "skip" ]; then
             echo "Unexpected output from get_runnable_pull, runid: $runid, data: ${data[@]}"
         fi
-        echo -e -n "Skipping run ($OS)...\r"
+        echo -e -n "Skipping run...\r"
         run_rc=2
         return
     fi
@@ -271,7 +270,6 @@ function runtests
 }
 
 TESTER_TIMEOUT=3600
-platforms=($(detectos))
 
 function pretest
 {
@@ -283,12 +281,10 @@ if [ -f configs/`hostname` ]; then
 fi
 
 rc=2
-for OS in ${platforms[*]}; do
-    runtests $OS $1
-    if [ $run_rc -ne 2 ]; then
-        rc=0
-    fi
-done
+runtests $1
+if [ $run_rc -ne 2 ]; then
+    rc=0
+fi
 
 exit $rc
 

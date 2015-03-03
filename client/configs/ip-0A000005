@@ -1,5 +1,0 @@
-CPUS=2
-PARALLELISM=3
-platforms=(Win_32)
-
-export PATH=/home/Administrator/sandbox/d/d-tester/dmc/dm/bin:$PATH

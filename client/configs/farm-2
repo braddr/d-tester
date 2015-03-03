@@ -1,6 +1,0 @@
-CPUS=8
-PARALLELISM=10
-TESTER_TIMEOUT=1200
-platforms=(FreeBSD_64)
-
-export LIBRARY_PATH=/usr/local/lib

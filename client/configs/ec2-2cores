@@ -1,3 +1,0 @@
-CPUS=2
-PARALLELISM=3
-platforms=(Linux_32 Linux_64_64 Linux_32_64 Linux_64_32)

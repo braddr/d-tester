@@ -1,5 +1,4 @@
 config.json
-client/tester.log*
 server-include/d.puremagic.com
 server-include/d-beta.puremagic.com
 server-include/auto-tester.puremagic.com

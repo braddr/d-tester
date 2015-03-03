@@ -89,18 +89,6 @@ bool validate_knownhost(string raddr, ref string rname, ref string hostid, Appen
     return true;
 }
 
-bool validate_platform(ref string platform, Appender!string outstr)
-{
-    if (!validateNonEmpty(platform, "os", outstr)) return false;
-
-    platform = sql_quote(platform);
-
-    // TODO: validate that the platform exists
-    // TODO: validate host supports the platform
-
-    return true;
-}
-
 bool validate_id(ref string id, string idname, Appender!string outstr)
 {
     if (!validateNonEmpty(id, idname, outstr)) return false;

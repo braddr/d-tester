@@ -132,11 +132,9 @@ void tryToCleanupMaster(string hostid)
     }
 }
 
-bool validateInput(ref string raddr, ref string rname, ref string hostid, ref string platform, ref string clientver, Appender!string outstr)
+bool validateInput(ref string raddr, ref string rname, ref string hostid, ref string clientver, Appender!string outstr)
 {
     if (!validate_raddr(raddr, outstr))
-        return false;
-    if (!validate_platform(platform, outstr))
         return false;
     if (!validate_knownhost(raddr, rname, hostid, outstr))
         return false;
@@ -212,38 +210,35 @@ Pull[] selectPullsToBuild(string hostid, ref string project_id, ref string platf
     return [p];
 }
 
-bool shouldDoBuild(bool force, string platform, ulong projectid)
+Project selectMasterToBuild(string hostid, ref string platform)
 {
-    bool dobuild = force;
+    sql_exec(text(
+        //      0     1        2        3             4       5
+        "select p_id, p_label, p_ptype, p_test_pulls, cap_id, cap_name
+           from (
+                  select p.id as p_id, p.menu_label as p_label, p.project_type as p_ptype, p.test_pulls as p_test_pulls, c.id as cap_id, c.name as cap_name
+                    from (projects p, project_capabilities pc, capabilities c)
+                         left join test_runs tr1 on (tr1.deleted = false and tr1.project_id = p.id and c.name = tr1.platform)
+                   where p.enabled = true and
+                         pc.project_id = p.id and
+                         pc.capability_id = c.id and
+                         c.capability_type_id = 1 and
+                         tr1.platform is null
+               ) todo, build_host_capabilities bhc, build_hosts bh, build_host_projects bhp
+          where todo.cap_id = bhc.capability_id and
+                bh.enabled = true and
+                bh.id = bhc.host_id and
+                bhp.host_id = bh.id and
+                bhp.project_id = p_id and
+                bhc.host_id = ", hostid,
+        " limit 1;"));
+    sqlrow[] rows = sql_rows();
 
-    if (dobuild)
-    {
-        writelog("  forced build, deprecating old build(s)");
-        sql_exec(text("update test_runs set deleted=1 where platform = \"", platform, "\" and deleted=0"));
-    }
+    if (rows.length == 0)
+        return null;
 
-    if (!dobuild)
-    {
-        sql_exec(text("select id "
-                      "from test_runs "
-                      "where platform = \"", platform, "\" and "
-                      "  project_id = ", projectid, " and "
-                      "  deleted = 0"));
-        sqlrow[] rows = sql_rows();
-
-        if (rows.length == 0)
-            dobuild = true;
-    }
-
-    return dobuild;
-}
-
-Project selectMasterToBuild(bool force, string hostid, string platform)
-{
-    Project[] projects = loadProjectsByHostId(to!ulong(hostid));
-
-    projects = projects.filter!(a => shouldDoBuild(force, platform, a.id)).array;
-    return projects.length > 0 ? projects[uniform(0, projects.length)] : null;
+    platform = rows[0][5];
+    return new Project(rows[0]);
 }
 
 size_t getRepoIndex(Project proj, ulong repo_id)
@@ -265,11 +260,9 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string raddr = lookup(hash, "REMOTE_ADDR");
     string rname = lookup(userhash, "hostname");
     string hostid;
-    string platform = lookup(userhash, "os");
-    string force = lookup(userhash, "force");
     string clientver = lookup(userhash, "clientver");
 
-    if (!validateInput(raddr, rname, hostid, platform, clientver, outstr))
+    if (!validateInput(raddr, rname, hostid, clientver, outstr))
         return;
 
     string skip = "skip\n";
@@ -294,13 +287,15 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     string pull_project_id; // temporary until decided to do a pull
     string pull_platform;   // temporary until decided to do a pull
     Pull[] pulls = selectPullsToBuild(hostid, pull_project_id, pull_platform);
-    Project proj = selectMasterToBuild(force.length != 0, hostid, platform);
+
+    string master_platform; // temporary until decided to do a master
+    Project master_proj = selectMasterToBuild(hostid, master_platform);
 
     bool doPull = false;
     bool doMaster = false;
     if (pulls.length > 0 && pulls[0].auto_pull != 0)
         doPull = true;
-    else if (proj)
+    else if (master_proj)
         doMaster = true;
     else if (pulls.length > 0)
         doPull = true;
@@ -313,17 +308,23 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     string runid;
 
+    string platform;
+    Project proj;
+
     if (doPull)
     {
         platform = pull_platform;
-
         proj = loadProjectById(to!ulong(pull_project_id));
         runid = recordRunStart(hostid, platform, proj.id, pulls[0].id, pulls[0].head_sha);
+        writelog("  building: project %s, platform %s, %s", proj.id, platform, pulls[0]);
     }
     else
     {
+        platform = master_platform;
+        proj = master_proj;
         pulls = null;
         runid = recordMasterStart(hostid, platform, proj.id);
+        writelog("  building: project %s, platform %s, master", proj.id, platform);
     }
 
     try
@@ -332,8 +333,6 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
         mkdir(path);
     }
     catch(Exception e) { writelog("  caught exception: %s", e); }
-
-    writelog("  building: %s, platform %s", pulls[], platform);
 
     output(clientver, runid, platform, proj, pulls, outstr);
 

@@ -34,7 +34,7 @@ fi
 
 export HOST_DC
 
-$makecmd MODEL=$COMPILER_MODEL $EXTRA_ARGS -f $makefile dmd >> ../../dmd-build.log 2>&1
+$makecmd MODEL=$COMPILER_MODEL $EXTRA_ARGS -f $makefile auto-tester-build >> ../../dmd-build.log 2>&1
 if [ $? -ne 0 ]; then
     echo -e "\tfailed to build dmd"
     exit 1

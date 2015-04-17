@@ -143,9 +143,9 @@ function runtests
         data=("${data[@]}" 15 0)
         data=("${data[@]}" 15 1)
         data=("${data[@]}" 15 2)
-        data=("${data[@]}" 16 0)
         data=("${data[@]}" 16 1)
         data=("${data[@]}" 16 2)
+        data=("${data[@]}" 16 0)
     elif [ "$2" == "test-GDC" ]; then
         OS=$(detectos)
         data=("test" "master" "2" "$OS")

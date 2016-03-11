@@ -16,3 +16,16 @@ git clone https://github.com/braddr/d-tester
 
 tar xf /home/ec2-user/zips/dmd.${DMD_VER}.linux.tar.xz
 echo "export PATH=/home/ec2-user/sandbox/dmd2/linux/bin32:\$PATH" >> /home/ec2-user/.bash_profile
+
+cat << FOO > /home/ec2-user/.my.cnf
+[mysql]
+user=root
+password=password
+
+[mysqladmin]
+user=root
+password=password
+FOO
+
+mysqladmin create at-dev
+mysql at-dev < /home/ec2-user/sandbox/d-tester/server/schema.sql

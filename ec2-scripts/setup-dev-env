@@ -3,6 +3,11 @@
 set -x
 
 yum -y install mysql56-server mysql56-devel
+sed -i "5iperformance_schema = 0" /etc/my.cnf
+chkconfig --levels 235 mysqld on
+service mysqld start
+echo -e "\ny\npassword\npassword\ny\ny\ny\ny\n" | mysql_secure_installation
+
 yum -y install httpd mod_fcgid fcgi-devel
 yum -y install vim git make gcc gcc-c++ gdb
 

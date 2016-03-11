@@ -4,7 +4,7 @@ OUTPUT_DIR=obj
 
 DFLAGS=-m64 -gc
 
-LIBS=-L-L/usr/lib64/mysql -L-lmysqlclient -L-lcurl -L-lcrypto
+LIBS=-L-L/usr/lib64/mysql56 -L-lmysqlclient -L-lcurl -L-lcrypto
 
 ALL_APPS=serverd-fastcgi serverd update-pulls fixup
 ALL_APPS_OUTPUT=$(addprefix $(OUTPUT_DIR)/,$(ALL_APPS))

@@ -1,0 +1,5 @@
+#!/bin/bash
+aws s3 cp s3://s3.puremagic.com/auto-tester/setup-dev-env /var/tmp/setup-dev-env
+chmod u+x /var/tmp/setup-dev-env
+/var/tmp/setup-dev-env
+

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -x
+
+yum -y install mysql56-server mysql56-devel
+yum -y install httpd mod_fcgid fcgi-devel
+yum -y install vim git make gcc gcc-c++ gdb
+
+ec2_instance_id=`cat /var/lib/cloud/data/instance-id`
+aws --region us-west-2 ec2 create-tags --resources "$ec2_instance_id" --tags Key=Name,Value=at-dev
+
+aws s3 cp s3://s3.puremagic.com/auto-tester/setup-dev-env-ec2-user /var/tmp/setup-dev-env-ec2-user
+chown ec2-user:ec2-user /var/tmp/setup-dev-env-ec2-user
+chmod u+x /var/tmp/setup-dev-env-ec2-user
+runuser -u ec2-user /var/tmp/setup-dev-env-ec2-user
+

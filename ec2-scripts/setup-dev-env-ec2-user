@@ -1,0 +1,18 @@
+#!/bin/bash
+
+DMD_VER=2.070.2
+
+mkdir /home/ec2-user/zips
+curl -sSL http://downloads.dlang.org/releases/2.x/${DMD_VER}/dmd.${DMD_VER}.linux.tar.xz --output /home/ec2-user/zips/dmd.${DMD_VER}.linux.tar.xz
+
+mkdir /home/ec2-user/sandbox
+cd /home/ec2-user/sandbox
+
+git clone https://github.com/braddr/dotfiles
+(cd dotfiles; make)
+
+git clone https://github.com/braddr/at-client
+git clone https://github.com/braddr/d-tester
+
+tar xf /home/ec2-user/zips/dmd.${DMD_VER}.linux.tar.xz
+echo "export PATH=/home/ec2-user/sandbox/dmd2/linux/bin32:\$PATH" >> /home/ec2-user/.bash_profile

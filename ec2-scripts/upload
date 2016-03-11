@@ -1,0 +1,4 @@
+#!/bin/bash
+
+aws --endpoint https://s3.amazonaws.com/ s3 cp setup-dev-env s3://s3.puremagic.com/auto-tester/setup-dev-env
+aws --endpoint https://s3.amazonaws.com/ s3 cp setup-dev-env-ec2-user s3://s3.puremagic.com/auto-tester/setup-dev-env-ec2-user

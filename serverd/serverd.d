@@ -156,7 +156,7 @@ void processRequest()
     sql_cleanup_after_request();
 }
 
-extern(C) void handle_sigterm(int sig) @system nothrow
+extern(C) void handle_sigterm(int sig) @nogc @system nothrow
 {
     //writelog("caught sigterm");
     shutdown = true;
@@ -170,7 +170,7 @@ int main(string[] args)
 
     signal(SIGTERM, &handle_sigterm);
 
-    string filename = std.process.getenv("SERVERD_CONFIG");
+    string filename = environment["SERVERD_CONFIG"];
     if (filename == "")
     {
         writelog("using default config path");

@@ -32,7 +32,7 @@ void writelog(S...)(S s)
         auto fp = File(LOGNAME, "a");
 
         auto t = Clock.currTime();
-        t.fracSec = FracSec.from!"hnsecs"(0);
+        t.fracSecs = msecs(0);
         fp.writef("%05d - %s - ", mypid, t.toISOExtString());
 
         fp.writefln(s);
@@ -206,7 +206,7 @@ CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, re
     curl_easy_setopt(curl, co, 1L); // method
     curl_easy_setopt(curl, CurlOption.forbid_reuse, 1L);
 
-    curl_easy_setopt(curl, CurlOption.useragent, toStringz(USERAGENT));
+    curl_easy_setopt(curl, CurlOption.useragent, USERAGENT);
 
     if (user && passwd)
     {

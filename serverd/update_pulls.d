@@ -162,7 +162,7 @@ int main(string[] args)
 
     writelog("start app");
 
-    load_config(getenv("SERVERD_CONFIG"));
+    load_config(environment["SERVERD_CONFIG"]);
 
     if (!sql_init())
     {

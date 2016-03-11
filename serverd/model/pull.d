@@ -95,7 +95,7 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
 
     const JSONValue base = obj.object["base"];
 
-    if (base.type != JSON_TYPE.OBJECT || base.object.length() == 0)
+    if (base.type != JSON_TYPE.OBJECT || base.object.length == 0)
     {
         writelog("%s/%s/%s: base is null, skipping", repo.owner, repo.name, pullid);
         return null;
@@ -103,7 +103,7 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
 
     const JSONValue b_repo = base.object["repo"];
 
-    if (b_repo.type != JSON_TYPE.OBJECT || b_repo.object.length() == 0)
+    if (b_repo.type != JSON_TYPE.OBJECT || b_repo.object.length == 0)
     {
         writelog("%s/%s/%s: base.repo is null, skipping", repo.owner, repo.name, pullid);
         return null;
@@ -120,7 +120,7 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
     string h_ref;
     string h_sha;
     const JSONValue head = obj.object["head"];
-    if (head.type != JSON_TYPE.OBJECT || head.object.length() == 0)
+    if (head.type != JSON_TYPE.OBJECT || head.object.length == 0)
     {
         writelog("WARNING: %s/%s/%s: head is null", repo.owner, repo.name, pullid);
         h_isusable = false;
@@ -128,7 +128,7 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
     else
     {
         const JSONValue h_repo = head.object["repo"];
-        if (h_repo.type != JSON_TYPE.OBJECT || h_repo.object.length() == 0)
+        if (h_repo.type != JSON_TYPE.OBJECT || h_repo.object.length == 0)
         {
             writelog("WARNING: %s/%s/%s: head.repo is null", repo.owner, repo.name, pullid);
             h_isusable = false;

@@ -21,17 +21,6 @@ create table if not exists authorized_addresses
     key(ipaddr)
 );
 
--- note: only need addresses that are NOT tester clients
-insert into authorized_addresses values (null, "173.45.241.208",  true, "slice-1.puremagic.com");
-insert into authorized_addresses values (null, "108.171.174.178", true, "github");
-insert into authorized_addresses values (null, "173.203.140.",    true, "github");
-insert into authorized_addresses values (null, "173.45.241.",     true, "github");
-insert into authorized_addresses values (null, "207.97.227.",     true, "github");
-insert into authorized_addresses values (null, "50.57.128.",      true, "github");
-insert into authorized_addresses values (null, "192.168.10.",     true, "home network");
-insert into authorized_addresses values (null, "207.171.191.60",  true, "amazon sea firewall");
-insert into authorized_addresses values (null, "54.240.196.185",  true, "amazon sea firewall");
-
 create table if not exists github_pulls
 (
     id                int          not null auto_increment,
@@ -81,6 +70,27 @@ create table if not exists github_posts
     key(post_time)
 );
 
+create table if not exists project_capabilities
+(
+    id                int          not null auto_increment,
+    project_id        int          not null,
+    capability_id     int          not null,
+
+    primary key(id),
+    key(project_id)
+);
+
+create table if not exists project_repositories
+(
+    id                int          not null auto_increment,
+    project_id        int          not null,
+    repository_id     int          not null,
+
+    primary key(id),
+    key(project_id),
+    key(repository_id)
+);
+
 create table if not exists projects
 (
     id                int          not null auto_increment,
@@ -90,38 +100,20 @@ create table if not exists projects
     test_pulls        bool         not null,
     beta_only         bool         not null,
     enabled           bool         not null,
-    allow_auto_pull   bool         not null,
+    allow_auto_merge  bool         not null,
 
-    primary key(id),
-    key(name)
+    primary key(id)
 );
-
-truncate table projects;
-
-insert into projects values (1, "D2 master",   "http://dlang.org",       1, 1, 0, 1, 1);
-insert into projects values (2, "GDC",         "http://gdcproject.org/", 2, 1, 0, 1, 0);
-insert into projects values (3, "LDC",         "",                       3, 1, 1, 0, 0);
-insert into projects values (4, "D2 staging",  "http://dlang.org",       1, 1, 0, 0, 1);
-insert into projects values (5, "D2 2.061",    "http://dlang.org",       1, 1, 0, 0, 1);
-
 
 create table if not exists repositories
 (
     id                int          not null auto_increment,
-    project_id        int          not null,
     owner             varchar(128) not null,
     name              varchar(128) not null,
     ref               varchar(128) not null,
 
-    primary key(id),
-    key(project_id)
+    primary key(id)
 );
-
-truncate table repositories;
-
-insert into repositories values (1, 1, "D-Programming-Language", "dmd",      "master");
-insert into repositories values (2, 1, "D-Programming-Language", "druntime", "master");
-insert into repositories values (3, 1, "D-Programming-Language", "phobos",   "master");
 
 create table if not exists platforms
 (
@@ -135,23 +127,6 @@ create table if not exists platforms
     primary key(id)
 );
 
-truncate table platforms;
-
-insert into platforms values (1,  "FreeBSD_32",   32, 32, "x86", "FreeBSD");
-insert into platforms values (2,  "FreeBSD_64",   64, 64, "x86", "FreeBSD");
-insert into platforms values (3,  "Linux_32",     32, 32, "x86", "Linux");
-insert into platforms values (4,  "Linux_64_64",  64, 64, "x86", "Linux");
-insert into platforms values (5,  "Linux_32_64",  32, 64, "x86", "Linux");
-insert into platforms values (6,  "Linux_64_32",  64, 32, "x86", "Linux");
-insert into platforms values (7,  "Darwin_32",    32, 32, "x86", "Darwin");
-insert into platforms values (8,  "Darwin_64_64", 64, 64, "x86", "Darwin");
-insert into platforms values (9,  "Darwin_32_64", 32, 64, "x86", "Darwin");
-insert into platforms values (10, "Darwin_64_32", 64, 32, "x86", "Darwin");
-insert into platforms values (11, "Win_32",       32, 32, "x86", "Win");
-insert into platforms values (12, "Win_64_64",    64, 64, "x86", "Win");
-insert into platforms values (13, "Win_32_64",    32, 64, "x86", "Win");
-insert into platforms values (14, "Win_64_32",    64, 32, "x86", "Win");
-
 create table if not exists build_hosts
 (
     id                int          not null auto_increment,
@@ -163,7 +138,6 @@ create table if not exists build_hosts
     clientver         int,
 
     primary key(id),
-    key(ipaddr),
     key(name,enabled),
     key(ipaddr,name)
 );
@@ -171,17 +145,28 @@ create table if not exists build_hosts
 create table if not exists build_host_capabilities
 (
     id                int          not null auto_increment,
-    build_host_id     int          not null,
+    host_id           int          not null,
     capability_id     int          not null,
 
-    primary key(id)
+    primary key(id),
+    key(host_id)
+);
+
+create table if not exists capability_types
+(
+    id                int          not null auto_increment,
+    name              varchar(30)  not null,
+
+    primary key (id),
+    key(name)
 );
 
 -- find a better table name
 create table if not exists capabilities
 (
-    id                int          not null auto_increment,
-    name              varchar(128) not null,
+    id                 int          not null auto_increment,
+    capability_type_id int          not null,
+    name               varchar(128) not null,
 
     primary key(id)
 );
@@ -207,17 +192,10 @@ create table if not exists test_types
 truncate table test_types;
 
 insert into test_types values ( 1, "checkout");
-insert into test_types values ( 2, "build dmd");
-insert into test_types values ( 3, "build druntime");
-insert into test_types values ( 4, "build phobos");
-insert into test_types values ( 5, "test dmd");
-insert into test_types values ( 6, "test druntime");
-insert into test_types values ( 7, "test phobos");
-insert into test_types values ( 8, "html phobos");
-insert into test_types values ( 9, "merge dmd");
-insert into test_types values (10, "merge druntime");
-insert into test_types values (11, "merge phobos");
-
+insert into test_types values ( 8, "html");
+insert into test_types values (15, "build");
+insert into test_types values (16, "test");
+insert into test_types values (17, "merge");
 
 create table if not exists test_runs
 (
@@ -232,9 +210,10 @@ create table if not exists test_runs
 
     primary key(id),
     key(start_time),
-    key(platform, start_time)
+    key(platform, start_time),
+    key(deleted),
+    key(host_id, start_time)
 );
-
 
 create table if not exists test_data
 (
@@ -242,25 +221,21 @@ create table if not exists test_data
     test_run_id       int       not null,
     test_type_id      int       not null,
     -- is repository_id used anywhere?  all rows have null
-    repository_id     int,
+    repository_id     int       not null,
     start_time        datetime  not null,
     end_time          datetime,
-    rc                tinyint   not null,
+    rc                tinyint,
 
     primary key(id),
-    key(start_time),
-    key(platform, start_time),
-    key(deleted),
-    key(host_id, startime)
+    key(test_run_id)
 );
-
 
 create table if not exists pull_test_runs
 (
     id                int          not null auto_increment,
     g_p_id            int          not null,
-
     host_id           int          not null,
+    project_id        int          not null,
     platform          varchar(32)  not null,
     sha               varchar(256) not null,
     start_time        datetime     not null,
@@ -280,9 +255,10 @@ create table if not exists pull_test_data
     id                int          not null auto_increment,
     test_run_id       int          not null,
     test_type_id      int          not null,
+    repository_id     int          not null,
     start_time        datetime     not null,
     end_time          datetime,
-    rc                tinyint      not null,
+    rc                tinyint,
 
     primary key(id),
     key(test_run_id, test_type_id)

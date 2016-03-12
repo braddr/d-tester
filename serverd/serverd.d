@@ -162,6 +162,23 @@ extern(C) void handle_sigterm(int sig) @nogc @system nothrow
     shutdown = true;
 }
 
+bool serverd_mysql_init()
+{
+    version (FASTCGI)
+        string servername = "localhost";
+    else
+        string servername = "slice-1.puremagic.com";
+    writelog("connecting to mysql server: ", servername);
+
+    if (!sql_init(c.db_host, 3306, c.db_user, c.db_passwd, c.db_db))
+    {
+        writelog("failed to initialize sql connection, exiting");
+        return false;
+    }
+
+    return true;
+}
+
 int main(string[] args)
 {
     LOGNAME = "/var/log/serverd.log";
@@ -179,11 +196,7 @@ int main(string[] args)
 
     load_config(filename);
 
-    if (!sql_init())
-    {
-        writelog("failed to initialize sql connection, exiting");
-        return 1;
-    }
+    if (!serverd_mysql_init()) return 1;
 
     curl = curl_easy_init();
     if (!curl)

@@ -66,14 +66,8 @@ private void exiterr()
     writelog("error:\t%s\n", m[0 .. strlen(m)]);
 }
 
-bool sql_init()
+bool sql_init(string host, int port, string user, string passwd, string db)
 {
-    version (FASTCGI)
-        string servername = "localhost";
-    else
-        string servername = "slice-1.puremagic.com";
-
-    writelog("connecting to mysql server: ", servername);
     mysql = mysql_init(null);
 
     ubyte opt = 1;
@@ -83,7 +77,7 @@ bool sql_init()
         return false;
     }
 
-    MYSQL* m = mysql_real_connect(mysql, toStringz(c.db_host), toStringz(c.db_user), toStringz(c.db_passwd), toStringz(c.db_db), 3306, null, CLIENT_REMEMBER_OPTIONS);
+    MYSQL* m = mysql_real_connect(mysql, toStringz(host), toStringz(user), toStringz(passwd), toStringz(db), port, null, CLIENT_REMEMBER_OPTIONS);
     if (!m)
     {
         exiterr();

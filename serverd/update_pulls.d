@@ -164,7 +164,7 @@ int main(string[] args)
 
     load_config(environment["SERVERD_CONFIG"]);
 
-    if (!sql_init())
+    if (!sql_init(c.db_host, 3306, c.db_user, c.db_passwd, c.db_db))
     {
         writelog("failed to initialize sql connection, exiting");
         return 1;

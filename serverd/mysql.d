@@ -12,7 +12,7 @@ import core.stdc.time;
 
 import std.string;
 
-struct MYSQL { ubyte[1272] junk; } // sizeof on 64 bit linux from the c header
+struct MYSQL;
 struct MYSQL_RES;
 alias char** MYSQL_ROW;
 
@@ -54,7 +54,7 @@ extern(C)
     extern uint mysql_num_fields(MYSQL_RES *res);
 }
 
-MYSQL mysql;
+MYSQL * mysql;
 
 string sql_cmd = "";
 MYSQL_RES *res = null;
@@ -62,7 +62,7 @@ MYSQL_RES *res = null;
 private void exiterr()
 {
     writelog("cmd:\t%s", sql_cmd);
-    const(char)* m = mysql_error(&mysql);
+    const(char)* m = mysql_error(mysql);
     writelog("error:\t%s\n", m[0 .. strlen(m)]);
 }
 
@@ -74,16 +74,16 @@ bool sql_init()
         string servername = "slice-1.puremagic.com";
 
     writelog("connecting to mysql server: ", servername);
-    mysql_init(&mysql);
+    mysql = mysql_init(null);
 
     ubyte opt = 1;
-    if (mysql_options(&mysql, mysql_option.MYSQL_OPT_RECONNECT, &opt) != 0)
+    if (mysql_options(mysql, mysql_option.MYSQL_OPT_RECONNECT, &opt) != 0)
     {
         exiterr();
         return false;
     }
 
-    MYSQL* m = mysql_real_connect(&mysql, toStringz(c.db_host), toStringz(c.db_user), toStringz(c.db_passwd), toStringz(c.db_db), 3306, null, CLIENT_REMEMBER_OPTIONS);
+    MYSQL* m = mysql_real_connect(mysql, toStringz(c.db_host), toStringz(c.db_user), toStringz(c.db_passwd), toStringz(c.db_db), 3306, null, CLIENT_REMEMBER_OPTIONS);
     if (!m)
     {
         exiterr();
@@ -108,7 +108,8 @@ char *sql_cleanup_after_request()
 
 void sql_shutdown()
 {
-    mysql_close(&mysql);
+    mysql_close(mysql);
+    mysql = null;
     mysql_server_end();
 }
 
@@ -124,14 +125,14 @@ bool sql_exec(string sqlstr)
 
     sql_cmd = sqlstr;
 
-    if (mysql_query (&mysql, toStringz(sql_cmd)))
+    if (mysql_query (mysql, toStringz(sql_cmd)))
     {
         exiterr();
         return false;
     }
 
-    res = mysql_store_result(&mysql);
-    if (!res && mysql_field_count(&mysql))
+    res = mysql_store_result(mysql);
+    if (!res && mysql_field_count(mysql))
     {
         exiterr();
         return false;

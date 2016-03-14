@@ -2,7 +2,8 @@ module clientapi.finish_pull_run;
 
 import config;
 import github_apis;
-import mysql;
+import log;
+import mysql_client;
 import serverd;
 import utils;
 import validate;
@@ -14,27 +15,27 @@ import std.range;
 
 bool validate_runState(string runid, ref string hostid, Appender!string outstr)
 {
-    if (!sql_exec(text("select id, host_id, end_time from pull_test_runs where id = ", runid)))
+    Results r = mysql.query(text("select id, host_id, end_time from pull_test_runs where id = ", runid));
+    if (!r)
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
         formattedWrite(outstr, "bad input: should be exactly one row, runid: %s\n", runid);
         return false;
     }
 
-    if (rows[0][2] != "")
+    if (row[2] != "")
     {
         formattedWrite(outstr, "bad input: run already complete, runid: %s\n", runid);
         return false;
     }
 
-    hostid = rows[0][1];
+    hostid = row[1];
 
     return true;
 }
@@ -56,34 +57,30 @@ bool validateInput(ref string raddr, ref string runid, ref string hostid, ref st
 
 bool getRelatedData(string runid, ref string reponame, ref string repoid, ref string sha, ref string pullid, ref string ghp_id, ref string projectid, ref string owner, ref string merge_authorizing_id, Appender!string outstr)
 {
-    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, p.id, r.owner, p.allow_auto_merge, ghp.auto_pull from github_pulls ghp, repositories r, pull_test_runs ptr, projects p, project_repositories pr where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.repo_id = r.id and p.id = pr.project_id and pr.repository_id = r.id")))
+    Results r = mysql.query(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, p.id, r.owner, p.allow_auto_merge, ghp.auto_pull from github_pulls ghp, repositories r, pull_test_runs ptr, projects p, project_repositories pr where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.repo_id = r.id and p.id = pr.project_id and pr.repository_id = r.id"));
+    if (!r)
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow[] rows = sql_rows();
-    if (rows == [])
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
-        formattedWrite(outstr, "failed to find the associated pull, check error log\n");
-        return false;
-    }
-    if (rows.length > 1)
-    {
-        formattedWrite(outstr, "found more than one associated pull? runid=%s\n", runid);
+        formattedWrite(outstr, "expected exactly one row, runid=%s\n", runid);
         return false;
     }
 
-    reponame = rows[0][0];
-    sha = rows[0][1];
-    repoid = rows[0][2];
-    pullid = rows[0][3];
-    ghp_id = rows[0][4];
-    projectid = rows[0][5];
-    owner = rows[0][6];
+    reponame = row[0];
+    sha = row[1];
+    repoid = row[2];
+    pullid = row[3];
+    ghp_id = row[4];
+    projectid = row[5];
+    owner = row[6];
 
     // if project allows merging, return the pull merge state, otherwise null
-    merge_authorizing_id = (rows[0][7] == "1") ? rows[0][8] : "";
+    merge_authorizing_id = (row[7] == "1") ? row[8] : "";
 
     return true;
 }
@@ -103,16 +100,15 @@ bool updateGithubPullStatus(string runid, Appender!string outstr)
 
 bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pullid, string projectid, string repoid, string owner, string reponame, Appender!string outstr)
 {
-    if (!sql_exec(text("select rc from pull_test_runs where g_p_id = ", ghp_id, " and deleted = 0")))
+    Results r = mysql.query(text("select rc from pull_test_runs where g_p_id = ", ghp_id, " and deleted = 0"));
+    if (!r)
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow[] rows = sql_rows();
-
     int numpass, numfail, numinprogress, numpending;
-    foreach(row; rows)
+    foreach(row; r)
     {
         if (row[0] == "1")
             ++numfail;
@@ -121,6 +117,7 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
         else
             ++numinprogress;
     }
+    // TODO: remove hardcoded 10, should be number of supported platforms
     numpending = 10 - numpass - numfail - numinprogress;
     if (numpending < 0) numpending = 0;
 
@@ -149,11 +146,10 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
 
 bool updateStore(string runid, Appender!string outstr)
 {
-    sql_exec(text("select rc from pull_test_data where test_run_id=", runid));
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select rc from pull_test_data where test_run_id=", runid));
 
     int maxrc = 0;
-    foreach(row; rows)
+    foreach(row; r)
     {
         int rc = to!int(row[0]);
         if (rc > maxrc)
@@ -162,46 +158,43 @@ bool updateStore(string runid, Appender!string outstr)
         }
     }
 
-    sql_exec(text("update pull_test_runs set end_time=now(), rc=", maxrc, " where id=", runid));
+    mysql.query(text("update pull_test_runs set end_time=now(), rc=", maxrc, " where id=", runid));
 
     return true;
 }
 
 bool mergeGithubPull(string owner, string reponame, string pullid, string ghp_id, string merge_authorizing_id, Appender!string outstr)
 {
-    sql_exec(text("select count(*) from pull_test_runs where g_p_id = ", ghp_id, " and deleted = false and rc = 0"));
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select count(*) from pull_test_runs where g_p_id = ", ghp_id, " and deleted = false and rc = 0"));
 
     // if there aren't 10 completed tests (one for each platform), do nothing
     // TODO: num platforms really ought to come from the db
-    if (to!int(rows[0][0]) != 10)
+    if (to!int(r.front[0]) != 10)
         return true;
 
-    sql_exec(text("select access_token, username from github_users where id = ", merge_authorizing_id));
-    rows = sql_rows();
-    string access_token = rows[0][0];
-    string username = rows[0][1];
+    r = mysql.query(text("select access_token, username from github_users where id = ", merge_authorizing_id));
+    string access_token = r.front[0];
+    string username = r.front[1];
 
     if (!github.userIsCollaborator(username, owner, reponame, access_token))
     {
         writelog("  WARNING: user no longer is authorized to merge pull, skipping");
         formattedWrite(outstr, "%s is not authorized to perform merges", username);
-        sql_exec(text("update github_pulls set auto_pull = null where id = ", ghp_id));
+        mysql.query(text("update github_pulls set auto_pull = null where id = ", ghp_id));
         return false;
     }
 
     JSONValue jv;
     if (!github.getPull(owner, reponame, pullid, jv)) return true;
 
-    sql_exec(text("select head_sha from github_pulls where id = ", ghp_id));
-    rows = sql_rows();
-    if (rows[0][0] != jv.object["head"].object["sha"].str)
+    r = mysql.query(text("select head_sha from github_pulls where id = ", ghp_id));
+    if (r.front[0] != jv.object["head"].object["sha"].str)
     {
         writelog("  github has a newer sha than we do, skipping merge");
         return true;
     }
 
-    string commit_message; // = text("auto-merge authorized by ", rows[0][1]);
+    string commit_message; // TODO: = text("auto-merge authorized by ", rows[0][1]);
     github.performPullMerge(owner, reponame, pullid, access_token, commit_message);
     return true;
 }

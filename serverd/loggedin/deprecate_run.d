@@ -3,7 +3,8 @@ module loggedin.deprecate_run;
 import std.array;
 import std.conv;
 
-import mysql;
+import log;
+import mysql_client;
 import utils;
 import validate;
 
@@ -46,9 +47,9 @@ Lerror:
     if (!validateInput(projectid, runid, runtype, dataid, valout))
         goto Lerror;
 
-    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set deleted = true where id = ", runid));
-    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set end_time = now() where end_time is null and id = ", runid));
-    sql_exec(text("update ", (runtype == "pull" ? "pull_" : ""), "test_data set end_time = now() where end_time is null and test_run_id = ", runid));
+    mysql.query(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set deleted = true where id = ", runid));
+    mysql.query(text("update ", (runtype == "pull" ? "pull_" : ""), "test_runs set end_time = now() where end_time is null and id = ", runid));
+    mysql.query(text("update ", (runtype == "pull" ? "pull_" : ""), "test_data set end_time = now() where end_time is null and test_run_id = ", runid));
 
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/",
                "show-run.ghtml?",

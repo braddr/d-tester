@@ -1,6 +1,7 @@
 module model.pull;
 
-import mysql;
+import log;
+import mysql_client;
 import utils;
 
 import model.project;
@@ -205,14 +206,14 @@ bool updatePull(Repository repo, Pull current, Pull updated)
     {
         printHeader();
         clearOldResults = true;
-        sql_exec(text("update github_pulls set open = ", updated.open, " where id = ", current.id));
+        mysql.query(text("update github_pulls set open = ", updated.open, " where id = ", current.id));
 
         if (updated.open)
-            sql_exec(text("update github_pulls set close_date = null where id = ", current.id));
+            mysql.query(text("update github_pulls set close_date = null where id = ", current.id));
         else if (current.auto_pull != updated.auto_pull)
         {
             writelog("    auto_pull: %s -> %s", current.auto_pull, updated.auto_pull);
-            sql_exec(text("update github_pulls set auto_pull = ", (updated.auto_pull == 0 ? "null" : to!string(updated.auto_pull)), " where id = ", current.id));
+            mysql.query(text("update github_pulls set auto_pull = ", (updated.auto_pull == 0 ? "null" : to!string(updated.auto_pull)), " where id = ", current.id));
         }
     }
 
@@ -220,7 +221,7 @@ bool updatePull(Repository repo, Pull current, Pull updated)
     {
         printHeader();
         writelog("    updated_at: %s -> %s", current.updated_at.toISOExtString(), updated.updated_at.toISOExtString());
-        sql_exec(text("update github_pulls set updated_at = '", updated.updated_at.toISOExtString(), "' where id = ", current.id));
+        mysql.query(text("update github_pulls set updated_at = '", updated.updated_at.toISOExtString(), "' where id = ", current.id));
     }
 
     if (updated.head_usable && current.head_date != updated.head_date)
@@ -228,7 +229,7 @@ bool updatePull(Repository repo, Pull current, Pull updated)
         printHeader();
         clearOldResults = true;
         writelog("    head_date: %s -> %s", current.head_date.toISOExtString(), updated.head_date.toISOExtString());
-        sql_exec(text("update github_pulls set head_date = '", updated.head_date.toISOExtString(), "' where id = ", current.id));
+        mysql.query(text("update github_pulls set head_date = '", updated.head_date.toISOExtString(), "' where id = ", current.id));
     }
 
     if (current.base_git_url != updated.base_git_url)
@@ -237,7 +238,7 @@ bool updatePull(Repository repo, Pull current, Pull updated)
         clearOldResults = true;
         clearAutoPull = true;
         writelog("    base_git_url: %s -> %s", current.base_git_url, updated.base_git_url);
-        sql_exec(text("update github_pulls set base_git_url = '", updated.base_git_url, "' where id = ", current.id));
+        mysql.query(text("update github_pulls set base_git_url = '", updated.base_git_url, "' where id = ", current.id));
     }
 
     if (current.base_sha != updated.base_sha)
@@ -246,7 +247,7 @@ bool updatePull(Repository repo, Pull current, Pull updated)
         clearOldResults = true;
         clearAutoPull = true;
         writelog("    base_sha: %s -> %s", current.base_sha, updated.base_sha);
-        sql_exec(text("update github_pulls set base_sha = '", updated.base_sha, "' where id = ", current.id));
+        mysql.query(text("update github_pulls set base_sha = '", updated.base_sha, "' where id = ", current.id));
     }
 
     if (updated.head_usable && current.head_git_url != updated.head_git_url)
@@ -255,7 +256,7 @@ bool updatePull(Repository repo, Pull current, Pull updated)
         clearOldResults = true;
         clearAutoPull = true;
         writelog("    head_git_url: %s -> %s", current.head_git_url, updated.head_git_url);
-        sql_exec(text("update github_pulls set head_git_url = '", updated.head_git_url, "' where id = ", current.id));
+        mysql.query(text("update github_pulls set head_git_url = '", updated.head_git_url, "' where id = ", current.id));
     }
 
     if (updated.head_usable && current.head_sha != updated.head_sha)
@@ -264,29 +265,29 @@ bool updatePull(Repository repo, Pull current, Pull updated)
         clearOldResults = true;
         clearAutoPull = true;
         writelog("    head_sha: %s -> %s", current.head_sha, updated.head_sha);
-        sql_exec(text("update github_pulls set head_sha = '", updated.head_sha, "' where id = ", current.id));
+        mysql.query(text("update github_pulls set head_sha = '", updated.head_sha, "' where id = ", current.id));
     }
 
     if (current.create_date != updated.create_date)
     {
         printHeader();
         writelog("    create_date: %s -> %s", current.create_date.toISOExtString(), updated.create_date.toISOExtString());
-        sql_exec(text("update github_pulls set create_date = '", updated.create_date.toISOExtString(), "' where id = ", current.id));
+        mysql.query(text("update github_pulls set create_date = '", updated.create_date.toISOExtString(), "' where id = ", current.id));
     }
 
     if (current.close_date != updated.close_date)
     {
         printHeader();
         writelog("    close_date: %s -> %s", current.close_date.toISOExtString(), updated.close_date.toISOExtString());
-        sql_exec(text("update github_pulls set close_date = '", updated.close_date.toISOExtString(), "' where id = ", current.id));
+        mysql.query(text("update github_pulls set close_date = '", updated.close_date.toISOExtString(), "' where id = ", current.id));
     }
 
     if (clearOldResults)
     {
         writelog("    deprecating old test results");
-        sql_exec(text("update pull_test_runs set rc = 2, end_time = now() where rc is null and deleted = 0 and g_p_id = ", current.id));
-        sql_exec(text("update pull_test_runs set deleted = 1 where deleted = 0 and g_p_id = ", current.id));
-        sql_exec(text("delete from pull_suppressions where g_p_id = ", current.id));
+        mysql.query(text("update pull_test_runs set rc = 2, end_time = now() where rc is null and deleted = 0 and g_p_id = ", current.id));
+        mysql.query(text("update pull_test_runs set deleted = 1 where deleted = 0 and g_p_id = ", current.id));
+        mysql.query(text("delete from pull_suppressions where g_p_id = ", current.id));
     }
 
     return clearAutoPull;
@@ -308,28 +309,26 @@ void newPull(Repository repo, Pull pull)
                    "'", pull.head_git_url, "', '", pull.head_ref, "', '", pull.head_sha, "', "
                    "'", pull.head_date.toISOExtString(), "', null)");
 
-    sql_exec(sqlcmd);
+    mysql.query(sqlcmd);
 }
 
 Pull loadPull(ulong repo_id, ulong pull_id)
 {
-    sql_exec(text("select ", getPullColumns(), " from github_pulls where repo_id = ", repo_id, " and pull_id = ", pull_id));
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    Results r = mysql.query(text("select ", getPullColumns(), " from github_pulls where repo_id = ", repo_id, " and pull_id = ", pull_id));
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
         return null;
     else
-        return makePullFromRow(rows[0]);
+        return makePullFromRow(row);
 }
 
 Pull loadPullById(ulong id)
 {
-    sql_exec(text("select ", getPullColumns(), " from github_pulls where id = ", id));
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    Results r = mysql.query(text("select ", getPullColumns(), " from github_pulls where id = ", id));
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
         return null;
     else
-        return makePullFromRow(rows[0]);
+        return makePullFromRow(row);
 }
 

@@ -1,7 +1,7 @@
 module clientapi.finish_pull_test;
 
-import mysql;
-import serverd;
+import log;
+import mysql_client;
 import utils;
 import validate;
 
@@ -13,28 +13,28 @@ import std.range;
 
 bool validate_testState(string testid, ref string hostid, ref string runid, Appender!string outstr)
 {
-    if (!sql_exec(text("select ptd.id, ptr.host_id, ptr.end_time, ptd.end_time, ptd.test_run_id from pull_test_runs ptr, pull_test_data ptd where ptd.id = ", testid, " and ptd.test_run_id = ptr.id")))
+    Results r = mysql.query(text("select ptd.id, ptr.host_id, ptr.end_time, ptd.end_time, ptd.test_run_id from pull_test_runs ptr, pull_test_data ptd where ptd.id = ", testid, " and ptd.test_run_id = ptr.id"));
+    if (!r)
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
         formattedWrite(outstr, "bad input: should be exactly one row, testid: %s\n", testid);
         return false;
     }
 
-    if (rows[0][2] != "" || rows[0][3] != "")
+    if (row[2] != "" || row[3] != "")
     {
         formattedWrite(outstr, "bad input: test or run already complete, testid: %s\n", testid);
         return false;
     }
 
-    hostid = rows[0][1];
-    runid = rows[0][4];
+    hostid = row[1];
+    runid = row[4];
 
     return true;
 }
@@ -75,7 +75,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     // temporarily made rc be just 0 and 1
     if (rc != "0") rc = "1";
 
-    sql_exec(text("update pull_test_data set end_time=now(), rc=", rc, " where id=", testid));
+    mysql.query(text("update pull_test_data set end_time=now(), rc=", rc, " where id=", testid));
 
     if (isPullRunAborted(runid))
     {

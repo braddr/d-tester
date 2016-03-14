@@ -3,15 +3,17 @@ module loggedin.toggle_auto_merge;
 static import clientapi.finish_pull_run;
 import std.conv;
 import std.json;
+import std.format;
 import std.range;
 
 import github_apis;
-import mysql;
+import log;
+import mysql_client;
 import serverd;
 import utils;
 import validate;
 
-bool validateInput(ref string projectid, ref string repoid, ref string pullid, ref string ghp_id, Appender!string outstr)
+bool validateInput(ref string projectid, ref string repoid, ref string pullid, ref string ghp_id, ref string rowner, ref string rname, Appender!string outstr)
 {
     if (!validate_id(projectid, "projectid", outstr))
         return false;
@@ -22,28 +24,48 @@ bool validateInput(ref string projectid, ref string repoid, ref string pullid, r
     if (!validate_id(ghp_id, "ghp_id", outstr))
         return false;
 
+    if (!lookupRepoInfo(projectid, repoid, rowner, rname, outstr))
+        return false;
+
+    return true;
+}
+
+bool lookupRepoInfo(string projectid, string repoid, ref string rowner, ref string rname, Appender!string outstr)
+{
+    Results r = mysql.query(text("select r.owner, r.name from projects p, repositories r, project_repositories pr where p.id = pr.project_id and r.id = pr.repository_id and p.id = ", projectid, " and r.id = ", repoid));
+
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
+    {
+        formattedWrite(outstr, "bad input: should be exactly one row for projectid: %s, repoid: %s\n", projectid, repoid);
+        return false;
+    }
+
+    rowner = row[0];
+    rname = row[1];
+
     return true;
 }
 
 bool updateStore(string ghp_id, string loginid, ref bool newstate)
 {
-    sql_exec(text("select auto_pull, open from github_pulls where id = ", ghp_id));
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select auto_pull, open from github_pulls where id = ", ghp_id));
+    sqlrow row = r.front;
 
     // do nothing if the pull is already closed
     // NOTE: not transactionally sound
-    if (rows[0][1] == "0")
+    if (row[1] == "0")
         return true;
 
-    if (rows[0][0] == "")
+    if (row[0] == "")
     {
         newstate = true;
-        sql_exec(text("update github_pulls set auto_pull = \"", loginid, "\" where id=", ghp_id));
+        mysql.query(text("update github_pulls set auto_pull = \"", loginid, "\" where id=", ghp_id));
     }
     else
     {
         newstate = false;
-        sql_exec(text("update github_pulls set auto_pull = null where id=", ghp_id));
+        mysql.query(text("update github_pulls set auto_pull = null where id=", ghp_id));
     }
 
     return true;
@@ -51,19 +73,19 @@ bool updateStore(string ghp_id, string loginid, ref bool newstate)
 
 bool checkMergeNow(string projectid, string repoid, string pullid, string ghp_id, Appender!string outstr)
 {
-    sql_exec(text("select r.owner, r.name, p.allow_auto_merge, ghp.auto_pull from projects p, repositories r, github_pulls ghp where p.id = ", projectid, " and r.id = ", repoid, " and ghp.id = ", ghp_id));
-    sqlrow[] rows = sql_rows();
-    if (rows.length < 1)
+    Results r = mysql.query(text("select r.owner, r.name, p.allow_auto_merge, ghp.auto_pull from projects p, repositories r, github_pulls ghp where p.id = ", projectid, " and r.id = ", repoid, " and ghp.id = ", ghp_id));
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
         outstr.put("checkMergeNow: should have gotten exactly one row back from db");
         return false;
     }
 
     // get out unless both project and pull are request auto-merging
-    if (rows[0][2] != "1" || rows[0][3] == "")
+    if (row[2] != "1" || row[3] == "")
         return true;
 
-    if (!clientapi.finish_pull_run.mergeGithubPull(rows[0][0], rows[0][1], pullid, ghp_id, rows[0][3], outstr))
+    if (!clientapi.finish_pull_run.mergeGithubPull(row[0], row[1], pullid, ghp_id, row[3], outstr))
         return false;
 
     return true;
@@ -90,17 +112,15 @@ Lerror:
     string pullid = lookup(userhash, "pullid");
     string ghp_id = lookup(userhash, "ghp_id");
     string from = lookup(userhash, "from");
+    string rowner;
+    string rname;
 
-    if (!validateInput(projectid, repoid, pullid, ghp_id, valout))
+    if (!validateInput(projectid, repoid, pullid, ghp_id, rowner, rname,valout))
         goto Lerror;
-
-    sql_exec(text("select r.owner, r.name from projects p, repositories r where p.id = ", projectid, " and r.id = ", repoid));
-    sqlrow[] rows = sql_rows();
-    // TODO: validate a single row and that the projectid and repoid are validly related
 
     string extra_param;
     // TODO: this should be cached data to avoid github load
-    if (!github.userIsCollaborator(username, rows[0][0], rows[0][1], access_token))
+    if (!github.userIsCollaborator(username, rowner, rname, access_token))
         extra_param = "&notcollab=1";
     else
     {
@@ -110,7 +130,7 @@ Lerror:
         string commenttext = text("Auto-merge toggled ", newstate ? "on" : "off");
 
         JSONValue jv;
-        if (!github.addPullComment(access_token, rows[0][0], rows[0][1], pullid, commenttext, jv))
+        if (!github.addPullComment(access_token, rowner, rname, pullid, commenttext, jv))
             writelog("  failed to submit a comment to github, continuing anwyay");
 
         // TODO: change so that a github related error in merging is presented as normal in the ui, not an internal error

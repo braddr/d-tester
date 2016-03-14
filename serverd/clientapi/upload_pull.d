@@ -1,7 +1,6 @@
 module clientapi.upload_pull;
 
-import mysql;
-import serverd;
+import mysql_client;
 import utils;
 import validate;
 
@@ -12,32 +11,30 @@ import std.range;
 
 bool validate_testState(string testid, string clientver, ref string hostid, ref string testtypeid, ref string reponame, ref string runid, Appender!string outstr)
 {
-    string sqlstr;
-
-    if (!sql_exec(text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id, r.name from pull_test_data td, pull_test_runs tr, repositories r where r.id = td.repository_id and tr.id = td.test_run_id and td.id = ", testid)))
+    Results r = mysql.query(text("select td.id, td.rc, td.test_run_id, td.test_type_id, tr.host_id, r.name from pull_test_data td, pull_test_runs tr, repositories r where r.id = td.repository_id and tr.id = td.test_run_id and td.id = ", testid));
+    if (!r)
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow row = sql_row();
-    if (row == [])
+    if (r.empty)
     {
         formattedWrite(outstr, "error: no such testid: %s\n", testid);
         return false;
     }
-    else
+
+    sqlrow row = r.front;
+    if (row[1] != "")
     {
-        if (row[1] != "")
-        {
-            formattedWrite(outstr, "error: test already finished, may not upload log any more, testid: %s\n", testid);
-            return false;
-        }
-        runid = row[2];
-        testtypeid = row[3];
-        hostid = row[4];
-        reponame = row[5];
+        formattedWrite(outstr, "error: test already finished, may not upload log any more, testid: %s\n", testid);
+        return false;
     }
+
+    runid = row[2];
+    testtypeid = row[3];
+    hostid = row[4];
+    reponame = row[5];
 
     return true;
 }

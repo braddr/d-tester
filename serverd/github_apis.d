@@ -1,5 +1,6 @@
 module github_apis;
 
+import log;
 import utils;
 
 import etc.c.curl;
@@ -115,6 +116,7 @@ bool setSHAStatus(string owner, string repo, string sha, string desc, string sta
     return true;
 }
 
+// TODO: add sha to catch the race condition of post-build commit changes
 bool performPullMerge(string owner, string repo, string pullid, string access_token, string commit_message)
 {
     string url = text("https://api.github.com/repos/", owner, "/", repo, "/pulls/", pullid, "/merge?access_token=", access_token);

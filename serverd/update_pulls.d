@@ -2,7 +2,8 @@ module p_update_pulls;
 
 import config;
 import github_apis;
-import mysql;
+import log;
+import mysql_client;
 import utils;
 
 import model.project;
@@ -21,6 +22,7 @@ import std.stdio;
 
 CURL* curl;
 Github github;
+Mysql mysql;
 alias string[] sqlrow;
 
 Pull loadPullFromGitHub(Repository repo, Pull current_pull, ulong pullid)
@@ -52,7 +54,7 @@ void updatePullAndGithub(Repository repo, Pull current_pull, Pull github_pull)
         writelog("    clearing auto-pull state");
         JSONValue jv;
         github.addPullComment(repo.owner, repo.name, to!string(current_pull.pull_id), "Pull updated, auto_merge toggled off", jv);
-        sql_exec(text("update github_pulls set auto_pull = null where id = ", current_pull.id));
+        mysql.query(text("update github_pulls set auto_pull = null where id = ", current_pull.id));
     }
 }
 
@@ -113,10 +115,9 @@ projloop:
         {
             writelog("processing pulls for %s/%s/%s", rv.owner, rv.name, rv.refname);
 
-            sql_exec(text("select ", getPullColumns()," from github_pulls where repo_id = ", rv.id, " and open = true"));
-            sqlrow[] rows = sql_rows();
+            Results r = mysql.query(text("select ", getPullColumns()," from github_pulls where repo_id = ", rv.id, " and open = true"));
             Pull[ulong] knownpulls;
-            foreach(row; rows)
+            foreach(row; r)
             {
                 Pull p = makePullFromRow(row);
                 knownpulls[to!ulong(row[2])] = p;
@@ -164,10 +165,21 @@ int main(string[] args)
 
     load_config(environment["SERVERD_CONFIG"]);
 
-    if (!sql_init(c.db_host, 3306, c.db_user, c.db_passwd, c.db_db))
+    mysql = mysql_client.connect(c.db_host, 3306, c.db_user, c.db_passwd, c.db_db);
+    if (!mysql)
     {
         writelog("failed to initialize sql connection, exiting");
         return 1;
+    }
+
+    if (c.log_sql_queries)
+    {
+        void log_query(string query)
+        {
+            writelog("  query: %s", query);
+        }
+
+        mysql.callback = &log_query;
     }
 
     curl = curl_easy_init();
@@ -186,7 +198,7 @@ int main(string[] args)
 
     writelog("shutting down");
 
-    sql_shutdown();
+    delete mysql;
 
     return 0;
 }

@@ -1,18 +1,17 @@
 module model.user;
 
-import mysql;
+import log;
+import mysql_client;
 import utils;
 
 import std.conv;
 
 bool[string] loadUsers()
 {
-    sql_exec(text("select id, pull_approver from github_users"));
-
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select id, pull_approver from github_users"));
 
     bool[string] users;
-    foreach(row; rows) { bool trusted = row[1] != ""; users[row[0]] = trusted; }
+    foreach(row; r) { bool trusted = row[1] != ""; users[row[0]] = trusted; }
 
     return users;
 }
@@ -29,7 +28,7 @@ bool checkUser(ulong uid, string uname)
     if (!found)
     {
         writelog("  creating user %s(%s)", uname, uidstr);
-        sql_exec(text("insert into github_users (id, username) values (", uidstr, ", '", sql_quote(uname), "')"));
+        mysql.query(text("insert into github_users (id, username) values (", uidstr, ", '", sql_quote(uname), "')"));
 
         users[uidstr] = false;
         return false;

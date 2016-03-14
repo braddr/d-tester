@@ -1,6 +1,7 @@
 module setup;
 
 import config;
+import log;
 import serverd;
 import utils;
 import www;

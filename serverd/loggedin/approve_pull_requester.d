@@ -4,7 +4,7 @@ import std.array;
 import std.conv;
 import std.format;
 
-import mysql;
+import mysql_client;
 import utils;
 import validate;
 
@@ -20,9 +20,9 @@ bool validateInput(ref string projectid, ref string pull_userid, Appender!string
 
 bool validateCanApprove(string userid, Appender!string outstr)
 {
-    sql_exec(text("select pull_approver from github_users where id = ", userid));
-    sqlrow[] rows = sql_rows();
-    if (rows.length != 1 || rows[0][0] == "")
+    Results r = mysql.query(text("select pull_approver from github_users where id = ", userid));
+    sqlrow row = getExactlyOneRow(r);
+    if (!row || row[0] == "")
     {
         formattedWrite(outstr, "error, user not approved to approve new pullers");
         return false;
@@ -55,7 +55,7 @@ Lerror:
     if (!validateCanApprove(userid, valout))
         goto Lerror;
 
-    sql_exec(text("update github_users set pull_approver = ", userid, " where id = ", pull_userid));
+    mysql.query(text("update github_users set pull_approver = ", userid, " where id = ", pull_userid));
 
     outstr.put(text("Location: ", getURLProtocol(hash) , "://", lookup(hash, "SERVER_NAME"), "/pulls.ghtml?projectid=", projectid));
     outstr.put("\n\n");

@@ -1,21 +1,22 @@
 module clientapi.sql;
 
-import mysql;
+import log;
+import mysql_client;
 import utils;
 
 import std.conv;
 
 bool isPullRunAborted(string runid)
 {
-    sql_exec(text("select deleted from pull_test_runs where id = ", runid));
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select deleted from pull_test_runs where id = ", runid));
 
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
-        writelog("  isPullRunAborted: rows.length = %s", rows.length);
+        writelog("  isPullRunAborted: should be exactly one row, run id = ", runid);
         return true;
     }
 
-    return rows[0][0] == "1";
+    return row[0] == "1";
 }
 

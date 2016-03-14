@@ -1,7 +1,6 @@
 module clientapi.finish_run;
 
-import mysql;
-import serverd;
+import mysql_client;
 import utils;
 import validate;
 
@@ -11,27 +10,27 @@ import std.range;
 
 bool validate_runState(string runid, ref string hostid, Appender!string outstr)
 {
-    if (!sql_exec(text("select id, hostid, end_time from test_runs where id=", runid)))
+    Results r = mysql.query(text("select id, hostid, end_time from test_runs where id=", runid));
+    if (!r)
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
         formattedWrite(outstr, "bad input: should be exactly one row, runid: %s\n", runid);
         return false;
     }
 
-    if (rows[0][2] != "")
+    if (row[2] != "")
     {
         formattedWrite(outstr, "bad input: run already complete, runid: %s\n", runid);
         return false;
     }
 
-    hostid = rows[0][1];
+    hostid = row[1];
 
     return true;
 }
@@ -53,7 +52,8 @@ bool validateInput(ref string raddr, ref string hostid, ref string runid, ref st
 
 bool storeResults(string runid, Appender!string outstr)
 {
-    if (!sql_exec(text("update test_runs set end_time=now() where id=", runid)))
+    Results r = mysql.query(text("update test_runs set end_time=now() where id=", runid));
+    if (!r)
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;

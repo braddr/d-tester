@@ -2,7 +2,8 @@ module serverd;
 
 import config;
 import github_apis;
-import mysql;
+import log;
+import mysql_client;
 import utils;
 import setup;
 import www;
@@ -153,7 +154,7 @@ void processRequest()
 
     FPUTS(outdata.data);
 
-    sql_cleanup_after_request();
+    mysql.close_result_sets();
 }
 
 extern(C) void handle_sigterm(int sig) @nogc @system nothrow
@@ -162,21 +163,28 @@ extern(C) void handle_sigterm(int sig) @nogc @system nothrow
     shutdown = true;
 }
 
-bool serverd_mysql_init()
+Mysql serverd_mysql_init()
 {
-    version (FASTCGI)
-        string servername = "localhost";
-    else
-        string servername = "slice-1.puremagic.com";
-    writelog("connecting to mysql server: ", servername);
+    writelog("connecting to mysql server: ", c.db_host);
 
-    if (!sql_init(c.db_host, 3306, c.db_user, c.db_passwd, c.db_db))
+    Mysql mysql = mysql_client.connect(c.db_host, 3306, c.db_user, c.db_passwd, c.db_db);
+    if (!mysql)
     {
         writelog("failed to initialize sql connection, exiting");
-        return false;
+        return null;
     }
 
-    return true;
+    if (c.log_sql_queries)
+    {
+        void log_query(string query)
+        {
+            writelog("  query: %s", query);
+        }
+
+        mysql.callback = &log_query;
+    }
+
+    return mysql;
 }
 
 int main(string[] args)
@@ -196,7 +204,8 @@ int main(string[] args)
 
     load_config(filename);
 
-    if (!serverd_mysql_init()) return 1;
+    mysql = serverd_mysql_init();
+    if (!mysql) return 1;
 
     curl = curl_easy_init();
     if (!curl)
@@ -236,7 +245,7 @@ int main(string[] args)
 
     writelog("shutting down");
 
-    sql_shutdown();
+    delete mysql;
 
     return 0;
 }

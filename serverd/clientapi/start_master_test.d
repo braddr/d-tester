@@ -1,7 +1,6 @@
 module clientapi.start_master_test;
 
-import mysql;
-import serverd;
+import mysql_client;
 import utils;
 import validate;
 
@@ -11,27 +10,26 @@ import std.range;
 
 bool validate_testRunable(string clientver, string runid, string type, string repoid, ref string hostid, Appender!string outstr)
 {
-    sql_exec(text("select id, end_time, host_id from test_runs where id=", runid));
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select id, end_time, host_id from test_runs where id=", runid));
 
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
         formattedWrite(outstr, "bad input: should be exactly one row, runid: %s\n", runid);
         return false;
     }
 
-    if (rows[0][1] != "")
+    if (row[1] != "")
     {
         formattedWrite(outstr, "bad input: run already complete: %s\n", runid);
         return false;
     }
 
-    hostid = rows[0][2];
+    hostid = row[2];
 
-    sql_exec(text("select id from test_data where test_run_id=", runid, " and test_type_id=", type, " and repository_id=", repoid));
-    sqlrow[] testids = sql_rows();
+    r = mysql.query(text("select id from test_data where test_run_id=", runid, " and test_type_id=", type, " and repository_id=", repoid));
 
-    if (testids.length != 0)
+    if (!r.empty)
     {
         formattedWrite(outstr, "bad input: test already exists, type: %s\n", type);
         return false;
@@ -45,13 +43,12 @@ bool validate_repoid(string runid, string repoid, Appender!string outstr)
     if (!validate_id(repoid, "repoid", outstr))
         return false;
 
-    sql_exec(text("select tr.id, tr.project_id, r.id, r.name from test_runs tr, repositories r, project_repositories pr where tr.id = ", runid, " and r.id = ", repoid ," and tr.project_id = pr.project_id and pr.repository_id = r.id"));
+    Results r = mysql.query(text("select tr.id, tr.project_id, r.id, r.name from test_runs tr, repositories r, project_repositories pr where tr.id = ", runid, " and r.id = ", repoid ," and tr.project_id = pr.project_id and pr.repository_id = r.id"));
 
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
-        formattedWrite(outstr, "invalid repoid: %s\n", repoid);
+        formattedWrite(outstr, "invalid repoid: %s, runid: %s\n", repoid, runid);
         return false;
     }
 
@@ -93,10 +90,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     updateHostLastCheckin(hostid, clientver);
 
-    sql_exec(text("insert into test_data (test_run_id, test_type_id, repository_id, start_time) values (", runid, ", ", type, ", ", repoid, ", now())"));
+    mysql.query(text("insert into test_data (test_run_id, test_type_id, repository_id, start_time) values (", runid, ", ", type, ", ", repoid, ", now())"));
 
-    sql_exec("select last_insert_id()");
-    sqlrow liid = sql_row();
+    Results r = mysql.query("select last_insert_id()");
+    sqlrow liid = r.front;
     formattedWrite(outstr, "%s\n", liid[0]);
 }
 

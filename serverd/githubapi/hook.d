@@ -1,6 +1,7 @@
 module githubapi.hook;
 
-import mysql;
+import log;
+import mysql_client;
 import utils;
 
 import model.project;
@@ -65,34 +66,32 @@ bool processPush(const ref JSONValue jv)
     }
     branch = branch[11 .. $];
 
-    sql_exec(text("select p.id "
+    Results r = mysql.query(text("select p.id "
                   "from projects p, repositories r, project_repositories pr "
                   "where p.id = pr.project_id and pr.repository_id = r.id and "
                   "r.owner = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and r.ref = \"", sql_quote(branch), "\""));
-    sqlrow[] rows = sql_rows();
 
-    if (rows.length == 0)
+    if (r.empty)
     {
         writelog ("  no project found for '%s/%s/%s'", owner.str, reponame.str, branch);
         return false;
     }
-    string projectid = rows[0][0];
+    string projectid = r.front[0];
 
     // invalidate obsoleted test_runs
-    sql_exec(text("update test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and project_id = ", projectid));
+    mysql.query(text("update test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and project_id = ", projectid));
 
     // invalidate obsoleted pull_test_runs
     // TODO: merge these two queries into one query with nesting
-    sql_exec(text("select r.id "
+    r = mysql.query(text("select r.id "
                   "from projects p, repositories r, project_repositories pr "
                   "where p.id = pr.project_id and "
                   "pr.repository_id = r.id and "
                   "p.id = ", projectid));
-    rows = sql_rows();
 
     string query = "update pull_test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and g_p_id in (select id from github_pulls where repo_id in (";
     bool first = true;
-    foreach(row; rows)
+    foreach(row; r)
     {
         if (first)
             first = false;
@@ -102,7 +101,7 @@ bool processPush(const ref JSONValue jv)
     }
     query ~= "))";
 
-    sql_exec(query);
+    mysql.query(query);
 
     return true;
 }
@@ -165,10 +164,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     // TODO: add auth check
 
-    sql_exec(text("insert into github_posts (id, post_time, body) values (null, now(), \"", sql_quote(bodytext), "\")"));
-    sql_exec("select last_insert_id()");
-    sqlrow liid = sql_row();
-    //formattedWrite(outstr, "%s\n", liid[0]);
+    mysql.query(text("insert into github_posts (id, post_time, body) values (null, now(), \"", sql_quote(bodytext), "\")"));
+    Results r = mysql.query("select last_insert_id()");
+    string liid = r.front[0];
+    //formattedWrite(outstr, "%s\n", liid);
 
     if (!eventname)
     {
@@ -184,10 +183,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     {
         case "push":         rc = processPush(jv); break;
         case "pull_request": rc = processPull(jv); break;
-        default:             writelog("  unrecognized event, id: %s", liid[0]); break;
+        default:             writelog("  unrecognized event, id: %s", liid); break;
     }
 
     if (!rc)
-        writelog("  processing of event id %s failed", liid[0]);
+        writelog("  processing of event id %s failed", liid);
 }
 

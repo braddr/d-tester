@@ -1,6 +1,7 @@
 module model.project;
 
-import mysql;
+import log;
+import mysql_client;
 import utils;
 
 import std.conv;
@@ -23,15 +24,13 @@ class Repository
 
 Repository[] loadRepositoriesForProject(ulong pid)
 {
-    sql_exec(text("select r.id, r.owner, r.name, r.ref from repositories r, project_repositories pr where pr.project_id = ", pid, " and pr.repository_id = r.id order by r.id"));
-
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select r.id, r.owner, r.name, r.ref from repositories r, project_repositories pr where pr.project_id = ", pid, " and pr.repository_id = r.id order by r.id"));
 
     Repository[] repositories;
-    foreach (row; rows)
+    foreach (row; r)
     {
-        auto r = new Repository(to!ulong(row[0]), row[1], row[2], row[3]);
-        repositories ~= r;
+        auto repo = new Repository(to!ulong(row[0]), row[1], row[2], row[3]);
+        repositories ~= repo;
     }
 
     return repositories;
@@ -73,9 +72,10 @@ class Project
 
 Project[ulong] loadProjects()
 {
-    sql_exec(text("select id, menu_label, project_type, test_pulls from projects where enabled = true"));
+    import std.array : array;
 
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select id, menu_label, project_type, test_pulls from projects where enabled = true"));
+    sqlrow[] rows = r.array; // required since mysql doesn't support multiple in-flight queries
 
     Project[ulong] projects;
     foreach (row; rows)
@@ -89,39 +89,37 @@ Project[ulong] loadProjects()
 
 Project loadProject(string owner, string repo, string branch)
 {
-    sql_exec(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p where p.id in (select pr.project_id from repositories r, project_repositories pr where pr.repository_id = r.id and r.owner = \"", owner, "\" and r.name = \"", repo, "\" and r.ref = \"", branch, "\")"));
+    Results r = mysql.query(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p where p.id in (select pr.project_id from repositories r, project_repositories pr where pr.repository_id = r.id and r.owner = \"", owner, "\" and r.name = \"", repo, "\" and r.ref = \"", branch, "\")"));
 
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
         writelog("  found more than one project matching %s/%s%s, skipping", owner, repo, branch);
         return null;
     }
 
-    auto p = new Project(rows[0]);
+    auto p = new Project(row);
     return p;
 }
 
 Project loadProjectById(ulong projectid)
 {
-    sql_exec(text("select id, menu_label, project_type, test_pulls from projects where enabled = true and id = ", projectid));
+    Results r = mysql.query(text("select id, menu_label, project_type, test_pulls from projects where enabled = true and id = ", projectid));
 
-    sqlrow[] rows = sql_rows();
-    assert(rows.length == 1);
+    sqlrow row = getExactlyOneRow(r);
+    assert(row);
 
-    auto p = new Project(rows[0]);
+    auto p = new Project(row);
 
     return p;
 }
 
 Project[] loadProjectsByHostId(ulong hostid)
 {
-    sql_exec(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p, build_hosts bh, build_host_projects bhp where p.id = bhp.project_id and bhp.host_id = bh.id and p.enabled = true and bh.id = ", hostid));
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select p.id, p.menu_label, p.project_type, p.test_pulls from projects p, build_hosts bh, build_host_projects bhp where p.id = bhp.project_id and bhp.host_id = bh.id and p.enabled = true and bh.id = ", hostid));
 
     Project[] projects;
-    foreach (row; rows)
+    foreach (row; r)
     {
         auto p = new Project(row);
         projects ~= p;

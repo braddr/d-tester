@@ -1,14 +1,13 @@
 module validate;
 
-import std.conv;
-import std.format;
-import std.range;
+import std.format : formattedWrite;
+import std.range : Appender;
 
-import mysql;
-import utils;
+import mysql_client : sql_quote;
 
 bool validateNonEmpty(string str, string label, Appender!string outstr)
 {
+    import std.range : empty;
     if (str.empty)
     {
         formattedWrite(outstr, "bad input: missing %s\n", label);
@@ -20,6 +19,7 @@ bool validateNonEmpty(string str, string label, Appender!string outstr)
 
 bool validateNumber(string strid)
 {
+    import std.conv : to;
     try
     {
         auto id = to!size_t(strid);
@@ -33,6 +33,8 @@ bool validateNumber(string strid)
 
 bool validateAuthenticated(const ref string[string] userhash, ref string access_token, ref string userid, ref string username, Appender!string outstr)
 {
+    import utils : getAccessTokenFromCookie, lookup;
+
     string cookie = lookup(userhash, "testerlogin");
     string csrf = lookup(userhash, "csrf");
 
@@ -52,6 +54,9 @@ bool validateAuthenticated(const ref string[string] userhash, ref string access_
 
 bool validate_raddr(ref string raddr, Appender!string outstr)
 {
+    import utils : auth_check;
+    import std.range : appender;
+
     auto tmpout = appender!string();
     if (!auth_check(raddr, tmpout))
     {
@@ -66,25 +71,23 @@ bool validate_raddr(ref string raddr, Appender!string outstr)
 
 bool validate_knownhost(string raddr, ref string rname, ref string hostid, Appender!string outstr)
 {
+    import mysql_client;
+    import std.conv : text;
+
     if (!validateNonEmpty(raddr, "hostname", outstr)) return false;
 
     rname = sql_quote(rname);
 
-    if (!sql_exec(text("select id from build_hosts where enabled=1 and name='", rname, "' and ipaddr='", raddr, "'")))
-    {
-        outstr.put("error executing sql, check error log\n");
-        return false;
-    }
+    Results r = mysql.query(text("select id from build_hosts where enabled=1 and name='", rname, "' and ipaddr='", raddr, "'"));
 
-    sqlrow[] rows = sql_rows();
-
-    if (rows.length != 1)
+    sqlrow row = getExactlyOneRow(r);
+    if (!row)
     {
         outstr.put("bad input: hostname and ipaddr not recognized\n");
         return false;
     }
 
-    hostid = rows[0][0];
+    hostid = row[0];
 
     return true;
 }
@@ -105,6 +108,8 @@ bool validate_id(ref string id, string idname, Appender!string outstr)
 
 bool validate_testtype(ref string type, string clientver, Appender!string outstr)
 {
+    import std.conv : to;
+
     if (!validateNonEmpty(type, "type", outstr)) return false;
     if (!validateNumber(type))
     {

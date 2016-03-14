@@ -2,7 +2,8 @@ module githubapi.process_login;
 
 import config;
 import github_apis;
-import mysql;
+import log;
+import mysql_client;
 import serverd;
 import utils;
 import validate;
@@ -82,7 +83,7 @@ bool createSession(string access_token, string username, long userid, ref string
     cookie = cast(string)Base64URL.encode(rawdata[0 .. (128/8)]);
     string csrf = cast(string)Base64URL.encode(rawdata[(128/8) .. $]);
 
-    sql_exec(text("insert into github_users (id, username, access_token, cookie, csrf) values (", userid, ", \"", username, "\", \"", access_token, "\", \"", cookie, "\", \"", csrf, "\") on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\""));
+    mysql.query(text("insert into github_users (id, username, access_token, cookie, csrf) values (", userid, ", \"", username, "\", \"", access_token, "\", \"", cookie, "\", \"", csrf, "\") on duplicate key update access_token = \"", access_token, "\", cookie = \"", cookie, "\", csrf = \"", csrf, "\""));
 
     return true;
 }

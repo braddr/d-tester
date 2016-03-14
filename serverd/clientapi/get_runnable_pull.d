@@ -1,9 +1,9 @@
 module clientapi.get_runnable_pull;
 
 import config;
-import mysql;
+import log;
+import mysql_client;
 static import clientapi.finish_pull_run;
-import serverd;
 import utils;
 import validate;
 
@@ -19,9 +19,9 @@ import std.range;
 
 // ptr1 == already built or not for specific platforms
 // ptr2 == already failed
-sqlrow[] getPullToBuild(string hostid)
+Results getPullToBuild(string hostid)
 {
-    sql_exec(text(
+    Results r = mysql.query(text(
         //      0          1     2         3           4          5        6        7       8
         "select ghp_id,    p_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing
            from (
@@ -50,19 +50,17 @@ sqlrow[] getPullToBuild(string hostid)
                 bhc.host_id = ", hostid,
         " order by auto_merge desc, is_passing desc, head_date desc
           limit 1;"));
-    sqlrow[] rows = sql_rows();
-    return rows;
+    return r;
 }
 
 alias int[2] stat;
 stat[string] loadCurrentRunStatistics()
 {
-    sql_exec("select g_p_id, ifnull(rc,0), count(*) from pull_test_runs where deleted = 0 group by g_p_id, ifnull(rc,0)");
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query("select g_p_id, ifnull(rc,0), count(*) from pull_test_runs where deleted = 0 group by g_p_id, ifnull(rc,0)");
 
     // create map of id -> [#rc0, #rc1]
     stat[string] stats;
-    foreach(row; rows)
+    foreach(row; r)
     {
         if (row[1] != "0" && row[1] != "1") continue;
 
@@ -85,50 +83,50 @@ stat[string] loadCurrentRunStatistics()
 
 string recordRunStart(string hostid, string platform, ulong project_id, ulong ghp_id, string pull_sha)
 {
-    sql_exec(text("insert into pull_test_runs (id, g_p_id, host_id, project_id, platform, sha, start_time, deleted) values (null, ",
+    mysql.query(text("insert into pull_test_runs (id, g_p_id, host_id, project_id, platform, sha, start_time, deleted) values (null, ",
                   ghp_id, ", ", hostid, ", ", project_id, ", \"", platform, "\", \"", pull_sha, "\", now(), false)"));
-    sql_exec("select last_insert_id()");
-    sqlrow lastidrow = sql_row();
+    Results r = mysql.query("select last_insert_id()");
+    sqlrow lastidrow = r.front;
 
     return lastidrow[0];
 }
 
 string recordMasterStart(string hostid, string platform, ulong projectid)
 {
-    sql_exec(text("insert into test_runs (start_time, project_id, host_id, platform, deleted) "
+    mysql.query(text("insert into test_runs (start_time, project_id, host_id, platform, deleted) "
                   "values (now(), ", projectid, ", \"", hostid, "\", \"", platform, "\", false)"));
-    sql_exec("select last_insert_id()");
-    sqlrow row = sql_row();
+    Results r = mysql.query("select last_insert_id()");
+    sqlrow row = r.front;
 
     return row[0];
 }
 
 void tryToCleanup(string hostid)
 {
-    sql_exec(text("select ptr.id, r.name, ghp.pull_id "
+    Results r = mysql.query(text("select ptr.id, r.name, ghp.pull_id "
                   "from pull_test_runs ptr, repositories r, github_pulls ghp "
                   "where ptr.g_p_id = ghp.id and "
                   "  ghp.repo_id = r.id and "
                   "  ptr.deleted = 0 and "
                   "  ptr.host_id = ", hostid, " and "
                   "  ptr.end_time is null"));
-    sqlrow[] rows = sql_rows();
+    sqlrow[] rows = r.array();
     foreach (row; rows)
     {
         writelog("  cleaning up in progress run: %s, %s/%s", row[0], row[1], row[2]);
-        sql_exec(text("update pull_test_runs set rc = 2 where rc is null and id = ", row[0]));
-        sql_exec(text("update pull_test_runs set deleted = 1 where id = ", row[0]));
+        mysql.query(text("update pull_test_runs set rc = 2 where rc is null and id = ", row[0]));
+        mysql.query(text("update pull_test_runs set deleted = 1 where id = ", row[0]));
     }
 }
 
 void tryToCleanupMaster(string hostid)
 {
-    sql_exec(text("select id from test_runs where deleted = 0 and host_id = \"", hostid, "\" and end_time is null"));
-    sqlrow[] rows = sql_rows();
+    Results r = mysql.query(text("select id from test_runs where deleted = 0 and host_id = \"", hostid, "\" and end_time is null"));
+    sqlrow[] rows = r.array();
     foreach (row; rows)
     {
         writelog("  cleaning up in progress master run: %s", row[0]);
-        sql_exec(text("update test_runs set deleted = 1 where id = ", row[0]));
+        mysql.query(text("update test_runs set deleted = 1 where id = ", row[0]));
     }
 }
 
@@ -195,11 +193,11 @@ void output(string clientver, string runid, string platform, Project proj, Pull[
 
 Pull[] selectPullsToBuild(string hostid, ref string project_id, ref string platform)
 {
-    sqlrow[] rows = getPullToBuild(hostid); // ghp_id, project_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing
-    if (rows.length == 0)
+    Results r = getPullToBuild(hostid); // ghp_id, project_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing
+    if (r && r.empty)
         return [];
 
-    sqlrow row = rows[0];
+    sqlrow row = r.front;
     Pull p = loadPullById(to!ulong(row[0]));
     p.auto_pull = to!ulong(row[3]);
 
@@ -212,7 +210,7 @@ Pull[] selectPullsToBuild(string hostid, ref string project_id, ref string platf
 
 Project selectMasterToBuild(string hostid, ref string platform)
 {
-    sql_exec(text(
+    Results r = mysql.query(text(
         //      0     1        2        3             4       5
         "select p_id, p_label, p_ptype, p_test_pulls, cap_id, cap_name
            from (
@@ -232,13 +230,13 @@ Project selectMasterToBuild(string hostid, ref string platform)
                 bhp.project_id = p_id and
                 bhc.host_id = ", hostid,
         " limit 1;"));
-    sqlrow[] rows = sql_rows();
 
-    if (rows.length == 0)
+    if (r.empty)
         return null;
 
-    platform = rows[0][5];
-    return new Project(rows[0]);
+    sqlrow row = r.front;
+    platform = row[5];
+    return new Project(row);
 }
 
 size_t getRepoIndex(Project proj, ulong repo_id)

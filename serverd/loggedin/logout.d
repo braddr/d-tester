@@ -1,6 +1,6 @@
 module loggedin.logout;
 
-import mysql;
+import mysql_client;
 import utils;
 import validate;
 
@@ -53,7 +53,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
             goto Lsend;
     }
 
-    sql_exec(text("update github_users set access_token = null, cookie = null, csrf = null where cookie = \"", cookie, "\" and csrf = \"", csrf, "\""));
+    mysql.query(text("update github_users set access_token = null, cookie = null, csrf = null where cookie = \"", cookie, "\" and csrf = \"", csrf, "\""));
 
     ret = text("Set-Cookie: testerlogin=; domain=", sn, "; path=/; Expires=Sat, 01 Jan 2000 00:00:00 GMT; HttpOnly; ", (getURLProtocol(hash) == "https" ? "Secure" : ""), "\n");
 

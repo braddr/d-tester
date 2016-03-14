@@ -220,7 +220,6 @@ create table if not exists test_data
     id                int       not null auto_increment,
     test_run_id       int       not null,
     test_type_id      int       not null,
-    -- is repository_id used anywhere?  all rows have null
     repository_id     int       not null,
     start_time        datetime  not null,
     end_time          datetime,

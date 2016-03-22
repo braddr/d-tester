@@ -212,7 +212,7 @@ bool updatePull(Repository repo, Pull current, Pull updated)
         else if (current.auto_pull != updated.auto_pull)
         {
             writelog("    auto_pull: %s -> %s", current.auto_pull, updated.auto_pull);
-            sql_exec(text("update github_pulls set auto_pull = ", updated.auto_pull, " where id = ", current.id));
+            sql_exec(text("update github_pulls set auto_pull = ", (updated.auto_pull == 0 ? "null" : to!string(updated.auto_pull)), " where id = ", current.id));
         }
     }
 

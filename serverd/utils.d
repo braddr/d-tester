@@ -1,27 +1,20 @@
 module utils;
 
-import core.thread;
-import core.vararg;
-
-import std.algorithm;
-import std.array;
-import std.conv;
-import std.datetime;
-import std.format;
-import std.process;
-import std.range;
-import std.stdio;
-import std.string;
-
+import std.array : Appender;
+import std.format : formattedWrite;
 import etc.c.curl;
-
-import mysql;
 
 static const char* USERAGENT = "Auto-Tester. https://auto-tester.puremagic.com/  contact: braddr@puremagic.com";
 static string LOGNAME = "/tmp/serverd.log";
 
 void writelog(S...)(S s)
 {
+    import core.sys.posix.stdio : printf;
+    import core.thread : getpid;
+    import core.time : msecs;
+    import std.datetime : Clock;
+    import std.stdio : File;
+
     static int mypid = -1;
     
     if (mypid == -1)
@@ -57,6 +50,8 @@ string getURLProtocol(const ref string[string] hash)
 
 bool auth_check(string raddr, Appender!string outstr)
 {
+    import std.array : empty;
+
     if (raddr.empty)
     {
         formattedWrite(outstr, "no remote addr: %s\n", raddr);
@@ -73,6 +68,9 @@ bool auth_check(string raddr, Appender!string outstr)
 
 bool check_addr(string addr)
 {
+    import mysql;
+    import std.conv : text;
+
     static bool check_set(sqlrow[] rows, string addr)
     {
         foreach(row; rows)
@@ -104,6 +102,9 @@ bool check_addr(string addr)
 
 bool getAccessTokenFromCookie(string cookie, string csrf, ref string access_token, ref string userid, ref string username)
 {
+    import mysql;
+    import std.conv : text;
+
     sql_exec(text("select id, username, access_token, csrf from github_users where cookie=\"", cookie, "\" and csrf=\"", csrf, "\""));
     sqlrow[] rows = sql_rows();
     if (rows.length != 1)
@@ -121,6 +122,9 @@ bool getAccessTokenFromCookie(string cookie, string csrf, ref string access_toke
 
 void updateHostLastCheckin(string hostid, string clientver)
 {
+    import mysql;
+    import std.conv : text;
+
     sql_exec(text("update build_hosts set last_heard_from = now(), clientver = ", clientver, " where id = ", hostid));
 }
 
@@ -135,6 +139,8 @@ extern(C) size_t handleBodyData(char *ptr, size_t size, size_t nmemb, void *user
 
 extern(C) size_t handleHeaderData(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
+    import std.string : chomp;
+
     auto payload = cast(string[]*)userdata;
 
     *payload ~= chomp(cast(string)(ptr[0 .. size*nmemb].idup));
@@ -144,6 +150,8 @@ extern(C) size_t handleHeaderData(char *ptr, size_t size, size_t nmemb, void *us
 
 extern(C) size_t handleRequestBodyData(void *ptr, size_t size, size_t nmemb, void *userdata)
 {
+    import std.algorithm : min;
+
     auto payload = cast(string*)userdata;
 
     size_t bytesAllowed = size * nmemb;
@@ -176,6 +184,8 @@ bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responsehe
 
 bool runCurlMethodRetry(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
+    import core.thread;
+
     int tries;
     while (tries < 3)
     {
@@ -196,6 +206,9 @@ bool runCurlMethodRetry(CURL* curl, CurlOption co, ref string responsepayload, r
 
 CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
+    import std.stdio : File;
+    import std.string : toStringz;
+
     auto fp = File(LOGNAME, "a");
 
     responsepayload = "";

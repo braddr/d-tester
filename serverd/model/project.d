@@ -8,22 +8,20 @@ import std.conv;
 class Repository
 {
     ulong id;
-    ulong project_id;
     string owner;
     string name;
     string refname;
 
-    this(ulong _id, ulong _pid, string _owner, string _name, string _refname)
+    this(ulong _id, string _owner, string _name, string _refname)
     {
         id         = _id;
-        project_id = _pid;
         owner      = _owner;
         name       = _name;
         refname    = _refname;
     }
 }
 
-Repository[] loadRepositories(ulong pid)
+Repository[] loadRepositoriesForProject(ulong pid)
 {
     sql_exec(text("select r.id, r.owner, r.name, r.ref from repositories r, project_repositories pr where pr.project_id = ", pid, " and pr.repository_id = r.id order by r.id"));
 
@@ -32,7 +30,7 @@ Repository[] loadRepositories(ulong pid)
     Repository[] repositories;
     foreach (row; rows)
     {
-        auto r = new Repository(to!ulong(row[0]), pid, row[1], row[2], row[3]);
+        auto r = new Repository(to!ulong(row[0]), row[1], row[2], row[3]);
         repositories ~= r;
     }
 
@@ -58,7 +56,7 @@ class Project
         menu_label = _label;
         project_type = _type;
         test_pulls = _test_pulls;
-        repositories = loadRepositories(id);
+        repositories = loadRepositoriesForProject(id);
     }
 
     Repository getRepositoryByName(string reponame)

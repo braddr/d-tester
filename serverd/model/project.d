@@ -36,6 +36,22 @@ Repository[] loadRepositoriesForProject(ulong pid)
     return repositories;
 }
 
+Repository getOrCreateRepository(ulong project_id, string owner, string name, string refname)
+{
+    Results r = mysql.query(text("select id from repositories where owner = \"", owner, "\" and name = \"", name, "\" and ref = \"", refname, "\""));
+
+    ulong id;
+
+    if (r.empty)
+    {
+        mysql.query(text("insert into repositories (id, owner, name, ref) values (null, \"", owner, "\", \"", name, "\", \"", refname, "\")"));
+        r = mysql.query("select last_insert_id()");
+    }
+
+    id = r.front[0].to!ulong;
+    return new Repository(id, owner, name, refname);
+}
+
 class Project
 {
     ulong  id;

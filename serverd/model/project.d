@@ -74,16 +74,17 @@ class Project
         repositories = loadRepositoriesForProject(id);
     }
 
-    Repository getRepositoryByName(string reponame)
-    {
-        foreach (r; repositories)
-        {
-            if (r.name == reponame)
-                return r;
-        }
+}
 
-        return null;
+Repository getRepositoryByName(Project p, string reponame)
+{
+    foreach (r; p.repositories)
+    {
+        if (r.name == reponame)
+            return r;
     }
+
+    return null;
 }
 
 Project[ulong] loadProjects()

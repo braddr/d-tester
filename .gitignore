@@ -1,4 +1,3 @@
-config.json
-server-include/d.puremagic.com
-server-include/d-beta.puremagic.com
-server-include/auto-tester.puremagic.com
+/server-include/*.puremagic.com
+/server/include
+/serverd/obj

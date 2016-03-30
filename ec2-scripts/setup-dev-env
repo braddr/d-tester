@@ -4,11 +4,15 @@ set -x
 
 yum -y install mysql56-server mysql56-devel
 sed -i "5iperformance_schema = 0" /etc/my.cnf
-chkconfig --levels 235 mysqld on
+chkconfig mysqld on
 service mysqld start
 echo -e "\ny\npassword\npassword\ny\ny\ny\ny\n" | mysql_secure_installation
 
+# Needs to be before user setup to make sure the basic config directories exist so
+# that the webserver config can be linked into the right directory after being
+# pulled from github.
 yum -y install httpd mod_fcgid fcgi-devel
+
 yum -y install vim git make gcc gcc-c++ gdb
 
 ec2_instance_id=`cat /var/lib/cloud/data/instance-id`
@@ -19,3 +23,8 @@ chown ec2-user:ec2-user /var/tmp/setup-dev-env-ec2-user
 chmod u+x /var/tmp/setup-dev-env-ec2-user
 runuser -u ec2-user /var/tmp/setup-dev-env-ec2-user
 
+# Needs to be after user setup since user setup pulls down webserver config from github
+mkdir /home/ec2-user/unknown
+chown ec2-user:ec2-user /home/ec2-user/unknown
+chkconfig httpd on
+service httpd on

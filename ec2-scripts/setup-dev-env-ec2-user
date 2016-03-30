@@ -11,8 +11,13 @@ cd /home/ec2-user/sandbox
 git clone https://github.com/braddr/dotfiles
 (cd dotfiles; make)
 
+git clone https://github.com/braddr/guml-d
+(cd guml-d/src; make)
+
 git clone https://github.com/braddr/at-client
 git clone https://github.com/braddr/d-tester
+(cd d-tester/server; ln -s ../server-include include)
+(cd d-tester/server-include; ln -s ../ec2-scripts/beta-auto-tester.puremagic.com beta-auto-tester.puremagic.com)
 
 tar xf /home/ec2-user/zips/dmd.${DMD_VER}.linux.tar.xz
 echo "export PATH=/home/ec2-user/sandbox/dmd2/linux/bin32:\$PATH" >> /home/ec2-user/.bash_profile

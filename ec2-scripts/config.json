@@ -1,0 +1,20 @@
+{
+    "db" : {
+        "host"   : "localhost",
+        "db"     : "db",
+        "user"   : "user",
+        "passwd" : "password"
+    },
+
+    "github" : {
+        "user"   : "user",
+        "passwd" : "password",
+
+        "client_id" : "clientid",
+        "client_secret" : "client_secret"
+    },
+
+    "builds_enabled" : false,
+    "log_env" : false,
+    "log_sql_queries" : false
+}

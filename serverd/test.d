@@ -12,10 +12,11 @@ int main(string[] args)
         return 1;
     }
 
-    Mysql m = connect("localhost", 3306, "root", "password", "at-dev");
-    if (!m) return 1;
+    mysql = connect("localhost", 3306, "root", "password", "at-dev");
+    if (!mysql) return 1;
+    scope(exit) { delete mysql; mysql = null; }
 
-    Results r = m.query(args[1]);
+    Results r = mysql.query(args[1]);
 
     if (!r)
     {

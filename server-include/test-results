@@ -101,7 +101,7 @@
     \while{\sqlrow{pid}{label}{test_pulls}{beta_only}{pull_counts}{max_rc}}{
         \if{
             \not{\eq{\get{beta_only}}{1}}
-            \eq{\get{SERVERNAME}}{d-beta.puremagic.com}
+            \eq{\get{SERVERNAME}}{beta-auto-tester.puremagic.com}
         }{
             \set{div_title}{\get{pull_counts}\ open pulls}
             \drawOneMenu{?projectid=\get{pid}}{\get{label}\if{\not{\eq{\get{pull_counts}}{0}}}{\ &diams;}}{\isMenuSelected{\1}{\get{pid}}}{\if{\eq{\get{max_rc}}{0}}{}{failed_master_build}}{\if{\eq{\get{max_rc}}{0}}{}{failed master build - }\get{div_title}}
@@ -142,7 +142,7 @@
     \if{\get{loggedin}}{
         <span id="loginstate" class="loggedin">\get{github_username}\ - <a href="/addv2/logout?csrf=\get{csrf}&amp;state=\get{session_status_page}">Logout</a></span>
     }{
-        \if{\eq{\get{SERVERNAME}}{d-beta.puremagic.com}}{\set{clientid}{a45bbbdf40a34981ea34}\set{HTTP_PROTOCOL}{http}}{\set{clientid}{efb9cf46977efe7abd51}\set{HTTP_PROTOCOL}{https}}
+        \if{\eq{\get{SERVERNAME}}{beta-auto-tester.puremagic.com}}{\set{clientid}{a45bbbdf40a34981ea34}\set{HTTP_PROTOCOL}{http}}{\set{clientid}{efb9cf46977efe7abd51}\set{HTTP_PROTOCOL}{https}}
         <span id="loginstate" class="loggedout"><a href="https://github.com/login/oauth/authorize?scope=public_repo&amp;response_type=code&amp;client_id=\get{clientid}&amp;state=\get{session_status_page}">Login</A></span>
     }
 }}

@@ -20,7 +20,7 @@ built-in support for userscripts and IE also has a similar plugin,
 
 <p>
 
-1) To integrate the trunk builds into <a href="https://github.com/organizations/D-Programming-Language">https://github.com/D-Programming-Language</a>: <a href="github-tester-summary.user.js">install script</a><br>
+1) To integrate the trunk builds into <a href="https://github.com/dlang">https://github.com/dlang</a>: <a href="github-tester-summary.user.js">install script</a><br>
 
 After installation, there will be a new block along the right side of the page.  It looks like this:<br>
 <img border=0 src="masterresults.png">

@@ -2,13 +2,16 @@
 // @name                Auto-tester single pull result on github
 // @namespace           https://auto-tester.puremagic.com/
 // @description         show specific pull auto tester results in github
+// @include             https://github.com/dlang/dmd/pull/*
+// @include             https://github.com/dlang/druntime/pull/*
+// @include             https://github.com/dlang/phobos/pull/*
 // @include             https://github.com/D-Programming-Language/dmd/pull/*
 // @include             https://github.com/D-Programming-Language/druntime/pull/*
 // @include             https://github.com/D-Programming-Language/phobos/pull/*
 // @include             https://github.com/organizations/D-Programming-Language/dmd/pull/*
 // @include             https://github.com/organizations/D-Programming-Language/druntime/pull/*
 // @include             https://github.com/organizations/D-Programming-Language/phobos/pull/*
-// @version             1.4
+// @version             1.5
 // @grant               GM_xmlhttpRequest
 // @downloadURL         https://auto-tester.puremagic.com/github-pull.user.js
 // ==/UserScript==

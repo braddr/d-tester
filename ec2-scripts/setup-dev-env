@@ -26,5 +26,9 @@ runuser -u ec2-user /var/tmp/setup-dev-env-ec2-user
 # Needs to be after user setup since user setup pulls down webserver config from github
 mkdir /home/ec2-user/unknown
 chown ec2-user:ec2-user /home/ec2-user/unknown
+
+ln -s /home/ec2-user/sandbox/d-server/ec2-scripts/z1-auto-tester.conf /etc/httpd/conf.d/z1-auto-tester.conf
+chmod o+x /home/ec2-user
+
 chkconfig httpd on
-service httpd on
+service httpd start

@@ -102,7 +102,8 @@ create table if not exists projects
     enabled           bool         not null,
     allow_auto_merge  bool         not null,
 
-    primary key(id)
+    primary key(id),
+    unique key(menu_label)
 );
 
 create table if not exists repositories

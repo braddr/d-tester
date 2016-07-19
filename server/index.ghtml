@@ -264,13 +264,13 @@
 
 <tr>
 \buildHeader{FreeBSD 32}{FreeBSD_32}{FreeBSD with a 32 bit dmd binary and 32 bit output}
-\buildHeader{FreeBSD 64}{FreeBSD_64}{FreeBSD with a 64 bit dmd binary and 64 bit output}
+\buildHeader{FreeBSD 64}{FreeBSD_64_64}{FreeBSD with a 64 bit dmd binary and 64 bit output}
 #\buildHeader{FreeBSD 32/64}{FreeBSD_32_64}{FreeBSD with a 32 bit dmd binary and 64 bit output}
 #\buildHeader{FreeBSD 64/32}{FreeBSD_64_32}{FreeBSD with a 64 bit dmd binary and 32 bit output}
 </tr>
 <tr>
 <td>\draw{FreeBSD_32}</td>
-<td>\draw{FreeBSD_64}</td>
+<td>\draw{FreeBSD_64_64}</td>
 #<td>\draw{FreeBSD_32_64}</td>
 #<td>\draw{FreeBSD_64_32}</td>
 </tr>
@@ -303,11 +303,11 @@
 
 <tr>
 \buildHeader{Windows 32}{Win_32}{Windows with a 32 bit dmd binary and 32 bit output}
-\buildHeader{Windows 64}{Win_64}{Windows with a 32 bit dmd binary and 64 bit output}
+\buildHeader{Windows 64}{Win_32_64}{Windows with a 32 bit dmd binary and 64 bit output}
 </tr>
 <tr>
 <td>\draw{Win_32}</td>
-<td>\draw{Win_64}</td>
+<td>\draw{Win_32_64}</td>
 </tr>
 
 </table>

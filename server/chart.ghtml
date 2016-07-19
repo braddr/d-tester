@@ -38,8 +38,8 @@
     }
     \set{i}{0}
     \while{\sqlrow{epoch}}{
-        \set{date_\get{i}}{\get{epoch}}
-        \set{rdate_\get{epoch}}{\i}
+        \set{c1_date_\get{i}}{\get{epoch}}
+        \set{c1_rdate_\get{epoch}}{\i}
         \inc{i}
     }
 
@@ -57,8 +57,8 @@
          order by 1, 2
     }
     \while{\sqlrow{name}{epoch}{count}}{
-        \set{ii}{\get{rdate_\get{epoch}}}
-        \set{\get{name}_\get{ii}}{\get{count}}
+        \set{ii}{\get{c1_rdate_\get{epoch}}}
+        \set{c1_\get{name}_\get{ii}}{\get{count}}
     }
 }}
 
@@ -79,8 +79,8 @@
     }
     \set{i}{0}
     \while{\sqlrow{epoch}}{
-        \set{date_\get{i}}{\get{epoch}}
-        \set{rdate_\get{epoch}}{\i}
+        \set{c2_date_\get{i}}{\get{epoch}}
+        \set{c2_rdate_\get{epoch}}{\i}
         \inc{i}
     }
 
@@ -98,8 +98,8 @@
          order by 1, 2
     }
     \while{\sqlrow{name}{epoch}{count}}{
-        \set{ii}{\get{rdate_\get{epoch}}}
-        \set{\get{name}_\get{ii}}{\get{count}}
+        \set{ii}{\get{c2_rdate_\get{epoch}}}
+        \set{c2_\get{name}_\get{ii}}{\get{count}}
     }
 }}
 
@@ -118,8 +118,8 @@
     }
     \set{i}{0}
     \while{\sqlrow{epoch}}{
-        \set{date_\get{i}}{\get{epoch}}
-        \set{rdate_\get{epoch}}{\i}
+        \set{c3_date_\get{i}}{\get{epoch}}
+        \set{c3_rdate_\get{epoch}}{\i}
         \inc{i}
     }
 
@@ -135,8 +135,8 @@
          order by 1, 2
     }
     \while{\sqlrow{name}{epoch}{count}}{
-        \set{ii}{\get{rdate_\get{epoch}}}
-        \set{\get{name}_\get{ii}}{\get{count}}
+        \set{ii}{\get{c3_rdate_\get{epoch}}}
+        \set{c3_\get{name}_\get{ii}}{\get{count}}
     }
 }}
 
@@ -156,8 +156,8 @@
     }
     \set{i}{0}
     \while{\sqlrow{epoch}}{
-        \set{date_\get{i}}{\get{epoch}}
-        \set{rdate_\get{epoch}}{\i}
+        \set{c4_date_\get{i}}{\get{epoch}}
+        \set{c4_rdate_\get{epoch}}{\i}
         \inc{i}
     }
 
@@ -174,13 +174,44 @@
          order by 1, 2
     }
     \while{\sqlrow{name}{epoch}{count}}{
-        \set{ii}{\get{rdate_\get{epoch}}}
-        \set{\get{name}_\get{ii}}{\get{count}}
+        \set{ii}{\get{c4_rdate_\get{epoch}}}
+        \set{c4_\get{name}_\get{ii}}{\get{count}}
     }
 }}
 
-# \1 == column (dmd, druntime, phobos)
-# \2 == pass to ifnull (!blank = use previous value, otherwise use 0)
+\set{cFiveLoadDataTable}{\quote{
+    # build i -> epoch map
+    # build rdate_epoch -> i map
+    \sqlexec{
+        select distinct unix_timestamp(((extract(year_month from create_date)+0)*100)+1) as epoch
+          from github_pulls ghp, repositories r, project_repositories pr
+         where ghp.repo_id = r.id and r.id = pr.repository_id and pr.project_id = \get{projectid} and ghp.open = true
+         order by 1
+    }
+    \set{i}{0}
+    \while{\sqlrow{epoch}}{
+        \set{c5_date_\get{i}}{\get{epoch}}
+        \set{c5_rdate_\get{epoch}}{\i}
+        \inc{i}
+    }
+
+    # build repo_i -> count map
+    \sqlexec{
+        select r.name, unix_timestamp(((extract(year_month from create_date)+0)*100)+1) as epoch, count(*)
+          from github_pulls ghp, repositories r, project_repositories pr
+         where ghp.repo_id = r.id and r.id = pr.repository_id and pr.project_id = \get{projectid} and ghp.open = true
+         group by r.id, 2
+         order by 1, 2
+    }
+    \while{\sqlrow{name}{epoch}{count}}{
+        \set{ii}{\get{c5_rdate_\get{epoch}}}
+        \set{c5_\get{name}_\get{ii}}{\get{count}}
+    }
+}}
+
+# \1 == chart prefix
+# \2 == column (dmd, druntime, phobos)
+# \3 == pass to ifnull (!blank = use previous value, otherwise use 0)
 # x == date
 # y == column
 \set{generateTimeSeries}{\quote{
@@ -188,7 +219,7 @@
     \set{ii}{0}
     \while{\op{\get{i}}{>}{\get{ii}}}{
         \if{\not{\eq{\get{ii}}{0}}}{,}
-        \{ x: \get{date_\get{ii}}, y: \ifnull{\get{\1_\get{ii}}}{\2} \} #
+        \{ x: \get{\1_date_\get{ii}}, y: \ifnull{\get{\1_\2_\get{ii}}}{\3} \} #
         \inc{ii}
     }
 }}
@@ -196,31 +227,35 @@
 # \1 == prefix (must be unique across all charts)
 # \2 == title
 # \3 == pass to ifnull (!blank == use previous value, otherwise use 0)
-# \4..\N == series names
+# \4 == max
+# \5 == chart type
+# \6..\N == series names
 \set{generate_chart}{\quote{
 
 <div class="chart_container" id="\1_container">
     <div class="chart_title" id="\1_title">\2</div>
-\if{\op{\get{i}}{>}{1}}{
+#\if{\op{\get{i}}{>}{1}}{
     <div class="chart_yaxis" id="\1_yaxis"></div>
     <div class="chart_chart" id="\1_chart"></div>
     <div class="chart_controls" id="controls">
         <div class="chart_legend" id="\1_legend"></div>
-\if{\op{\paramcount}{>}{4}}{
+\if{\op{\paramcount}{>}{6}}{
         <form class="chart_form toggler" id="\1_form">
-            <input type="radio" name="offset" id="\1_lines" value="lines" checked>
+            <input type="radio" name="offset" id="\1_bar" value="bar" checked>
+            <label class="bar" for="\1_bar">bar</label><br>
+            <input type="radio" name="offset" id="\1_lines" value="lines">
             <label class="lines" for="\1_lines">lines</label><br>
             <input type="radio" name="offset" id="\1_stack" value="zero">
             <label class="stack" for="\1_stack">stack</label>
         </form>
 }
     </div>
-}{
-    <div class="chart_empty" id="\1_empty">Sorry, only \get{i}\ data point\if{\eq{\get{i}}{1}}{}{s}, need at least 2</div>
-}
+#}{
+#    <div class="chart_empty" id="\1_empty">Sorry, only \get{i}\ data point\if{\eq{\get{i}}{1}}{}{s}, need at least 2</div>
+#}
 </div>
 
-\if{\op{\get{i}}{>}{1}}{
+#\if{\op{\get{i}}{>}{1}}{
 <script type="text/javascript">
 
 var \1_palette = new Rickshaw.Color.Palette();
@@ -228,16 +263,16 @@ var \1_graph = new Rickshaw.Graph(\{
         element: document.querySelector("\#\1_chart"),
         width: 700,
         height: 250,
-        max: 75,
-        renderer: 'line',
+        max: \4,
+        renderer: '\5',
         series: [
-    \set{snum}{4}
+    \set{snum}{6}
     \set{sfirst}{true}
     \while{\op{\paramcount}{>=}{\get{snum}}}{
         \if{\get{sfirst}}{\set{sfirst}{}}{,} #
         \{
                 name: "\param{\get{snum}}",
-                data: [ \generateTimeSeries{\param{\get{snum}}}{\3} ],
+                data: [ \generateTimeSeries{\1}{\param{\get{snum}}}{\3} ],
                 color: \1_palette.color()
         \}
         \inc{snum}
@@ -246,7 +281,13 @@ var \1_graph = new Rickshaw.Graph(\{
         ]
 \});
 var \1_month = (new Rickshaw.Fixtures.Time()).unit('month');
+\if{
+    \op{\op{\get{\1_date_\op{\get{i}}{-}{1}}}{-}{\get{\1_date_0}}}{<}{31536000}  # 395 days
+}{
 \1_month.formatter = function(d) \{ return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()] + "<br>" + d.getUTCFullYear() \}
+}{
+\1_month.formatter = function(d) \{ return ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][d.getUTCMonth()] + "<br>" + (d.getUTCFullYear() % 100) \}
+}
 var x_axis = new Rickshaw.Graph.Axis.Time( \{
         graph: \1_graph,
         timeUnit: \1_month,
@@ -261,7 +302,7 @@ var \1_legend = new Rickshaw.Graph.Legend( \{
         graph: \1_graph
 \} );
 
-\if{\op{\paramcount}{>}{4}}{
+\if{\op{\paramcount}{>}{6}}{
     var \1_offsetForm = document.getElementById('\1_form');
 
     \1_offsetForm.addEventListener('change', function(e) \{
@@ -269,6 +310,9 @@ var \1_legend = new Rickshaw.Graph.Legend( \{
 
             if (offsetMode == 'lines') \{
                     \1_graph.setRenderer('line');
+                    \1_graph.offset = 'zero';
+            \} else if (offsetMode == 'bar') \{
+                    \1_graph.setRenderer('bar');
                     \1_graph.offset = 'zero';
             \} else \{
                     \1_graph.setRenderer('stack');
@@ -287,7 +331,7 @@ var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
 \1_graph.render();
 
     </script>
-}
+#}
 
 }}
 
@@ -297,20 +341,25 @@ var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.1.0/rickshaw.min.css"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.0.1/d3.v3.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.1.0/rickshaw.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+    #<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    #<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
 }{}
 
+\cFiveLoadDataTable
+\generate_chart{c5}{Number of open pulls grouped by month of creation}{}{40}{bar}{dmd}{druntime}{phobos}
+
 \cOneLoadDataTable
-\generate_chart{c1}{\get{p.menu_label}\ - Weekly Pull Closures by Repository for the last 12 months}{}{dmd}{druntime}{phobos}
+\generate_chart{c1}{\get{p.menu_label}\ - Weekly Pull Closures by Repository for the last 12 months}{}{100}{bar}{dmd}{druntime}{phobos}
 
 \cTwoLoadDataTable
-\generate_chart{c2}{\get{p.menu_label}\ - Weekly Pull Creates by Repository for the last 12 months}{}{dmd}{druntime}{phobos}
+\generate_chart{c2}{\get{p.menu_label}\ - Weekly Pull Creates by Repository for the last 12 months}{}{100}{bar}{dmd}{druntime}{phobos}
 
 \cThreeLoadDataTable
-\generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+\generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{40}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
 
 \cFourLoadDataTable
-\generate_chart{c4}{Weekly Issues resolved by severity for the last 12 months}{}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+\generate_chart{c4}{Weekly Issues resolved by severity for the last 12 months}{}{40}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
 
 \pageFooter

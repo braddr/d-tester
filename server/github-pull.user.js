@@ -55,19 +55,18 @@ function doLoad()
 
 function addBox()
 {
-    var newhtml = "<div class=\"top-bar\"><h3><a id=\"apt_hdr\" href=\"https://auto-tester.puremagic.com/\">Test Results</a></h3></div>\n";
+    var newhtml = "<div class=\"discussion-sidebar-item\"><h3><a id=\"apt_hdr\" href=\"https://auto-tester.puremagic.com/\">Test Results</a></h3>\n";
 
     newhtml += "<div id=\"apt_listing\">\n";
     newhtml += "</div>\n";
-    newhtml += "<div class=\"bottom-bar\"></div>\n";
 
     var newdiv = document.createElement("div");
-    newdiv.setAttribute("class", "repos");
+    newdiv.setAttribute("class", "discussion-sidebar-item");
     newdiv.setAttribute("id", "auto_tester_results");
     newdiv.innerHTML = newhtml;
 
     var loc = document.getElementById("discussion_bucket");
-    loc = loc.children[0]; // descend to div class=discussion-sidebar
+    loc = loc.children[0].children[0]; // descend to div class=discussion-sidebar
     loc.appendChild(newdiv);
 }
 

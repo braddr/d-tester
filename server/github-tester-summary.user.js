@@ -3,8 +3,8 @@
 // @namespace           https://auto-tester.puremagic.com/
 // @description         add auto tester results to github
 // @include             https://github.com/
-// @include             https://github.com/D-Programming-Language
 // @include             https://github.com/dlang
+// @include             https://github.com/D-Programming-Language
 // @version             1.6
 // @grant               GM_xmlhttpRequest
 // @downloadURL         https://auto-tester.puremagic.com/github-tester-summary.user.js

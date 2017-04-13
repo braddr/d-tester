@@ -16,6 +16,10 @@ body {
     height:        100%;
 }
 
+a:link {
+    text-decoration: none;
+}
+
 table.page {
     border-collapse: collapse;
     min-height:      100%;

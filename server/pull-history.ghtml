@@ -13,7 +13,7 @@
 }
 
 \sqlexec{
-    select ghp.id, ghp.repo_id, ghp.pull_id, ghp.user_id, u.username, ghp.updated_at, ghp.open, ghp.base_git_url, ghp.base_ref, ghp.base_sha, ghp.head_git_url, ghp.head_ref, ghp.head_sha, ghp.head_date, ghp.auto_pull
+    select ghp.id, ghp.repo_id, ghp.pull_id, ghp.user_id, u.username, ghp.updated_at, ghp.open, ghp.base_git_url, ghp.base_ref, ghp.base_sha, ghp.head_git_url, ghp.head_ref, ghp.head_sha, ghp.head_date, ghp.auto_pull, ghp.has_priority
       from github_pulls ghp, github_users u, repositories r, projects p, project_repositories pr
      where ghp.pull_id = \get{pullid} and
            r.id = \get{repoid} and
@@ -24,7 +24,7 @@
            p.id = \get{projectid}
 
 }
-\if{\not{\sqlrow{ghp_id}{ghp_repo_id}{ghp_pull_id}{ghp_user_id}{username}{ghp_updated_at}{ghp_open}{ghp_base_git_url}{ghp_base_ref}{ghp_base_sha}{ghp_head_git_url}{ghp_head_ref}{ghp_head_sha}{ghp_head_date}{ghp_auto_pull}}}{
+\if{\not{\sqlrow{ghp_id}{ghp_repo_id}{ghp_pull_id}{ghp_user_id}{username}{ghp_updated_at}{ghp_open}{ghp_base_git_url}{ghp_base_ref}{ghp_base_sha}{ghp_head_git_url}{ghp_head_ref}{ghp_head_sha}{ghp_head_date}{ghp_auto_pull}{ghp_has_priority}}}{
     error, invalid repoid + pullid pair
     \exit
 }
@@ -55,12 +55,14 @@
   </tr><tr>
     <th>Merge into</th> <td><a href="https://github.com/\get{repo_owner}/\get{repo_name}/tree/\get{ghp_base_ref}">\get{ghp_base_ref}</a></td>
   </tr><tr>
-    <th>\if{\eq{\get{ghp_open}}{0}}{Merged By}{Auto-Merge}
+    <th>\if{\eq{\get{ghp_open}}{0}}{Merged By}{Auto-Merge}</th>
     <td>\if{\eq{\get{ghp_open}}{0}}{
           \if{\get{ghp_auto_pull}}{\get{pull_authorizer}}{Closed without Merging}
         }{
-          \if{\get{ghp_auto_pull}}{Yes - (by \get{pull_authorizer})}{No}\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;from=pull-history&amp;csrf=\get{csrf}">Toggle</a></td>
-        }
+          \if{\get{ghp_auto_pull}}{Yes - (by \get{pull_authorizer})}{No}\ &ndash; <a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\get{repoid}&amp;pullid=\get{pullid}&amp;ghp_id=\get{ghp_id}&amp;from=pull-history&amp;csrf=\get{csrf}">Toggle</a>
+        }</td>
+  </tr><tr>
+    <th>Has Priority</th><td>\if{\eq{\get{ghp_has_priority}}{0}}{false}{true}</td>
   </tr>
 </table>
 

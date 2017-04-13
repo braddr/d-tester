@@ -39,6 +39,7 @@ create table if not exists github_pulls
     head_sha          varchar(256) not null,
     head_date         datetime     not null,
     auto_pull         int,
+    has_priority      bool,
 
     primary key(id),
     key(open, id),

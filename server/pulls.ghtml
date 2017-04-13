@@ -123,11 +123,13 @@
 # \7 == head_date
 # \8 == repo owner (D-Programming-Language)
 # \9 == auto-merge
-# \10 == github_pull.id
+# \10 == has_priority
+# \11 == github_pull.id
 \set{drawrow}{\quote{
     <td class="pullcell header"><a href="https://github.com/\8/\1/pull/\3">\1/\3</a></td>
     <td class="pullcell header"><a href="pull-history.ghtml?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3" title="\4/\5">\4/\shorten{\5}</a></td>
-    <td>\if{\get{loggedin}}{<a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3&amp;ghp_id=\10&amp;from=pulls&amp;csrf=\get{csrf}">\if{\9}{Yes}{No}</a>}{\if{\9}{Yes}{No}}</td>
+    <td>\if{\get{loggedin}}{<a href="addv2/toggle_auto_merge?projectid=\get{projectid}&amp;repoid=\2&amp;pullid=\3&amp;ghp_id=\11&amp;from=pulls&amp;csrf=\get{csrf}">\if{\9}{Yes}{No}</a>}{\if{\9}{Yes}{No}}</td>
+    <td>\if{\eq{\10}{0}}{No}{Yes}</td>
     <td class="pullcell lastcommitted">\7</td>
     \drawcol{\1}{\3}{FreeBSD_32}
     \drawcol{\1}{\3}{FreeBSD_64_64}
@@ -219,17 +221,17 @@
 }
 
 \sqlexec{
-    select r.owner, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, date(ghp.head_date), ghp.auto_pull, ghp.id
+    select r.owner, r.name, r.id, ghp.pull_id, u.username, ghp.head_ref, ghp.updated_at, date(ghp.head_date), ghp.auto_pull, ghp.has_priority, ghp.id
       from projects p, repositories r, github_pulls ghp, github_users u, project_repositories pr
      where ghp.repo_id = r.id and ghp.open = 1 and ghp.user_id = u.id and u.pull_approver is not null and r.id = pr.repository_id and pr.project_id = p.id and p.id = \get{projectid}
      order by r.name, ghp.pull_id desc
 }
-\while{\sqlrow{r_owner}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}{ghp_id}}{
+\while{\sqlrow{r_owner}{r_name}{p_id}{ghp_pull_id}{u_username}{ghp_head_ref}{ghp_updated_at}{ghp_head_date}{ghp_autopull}{ghp_haspriority}{ghp_id}}{
     # get the bucket to place the row in
-    \set{name}{\get{r_name}_\if{\get{ghp_autopull}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
+    \set{name}{\get{r_name}_\if{\get{ghp_autopull}\eq{\get{ghp_haspriority}}{1}}{autopull_}\getstate{\get{r_name}}{\get{ghp_pull_id}}}
 
     # get one row of html and store it in name_num
-    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{r_owner}}{\get{ghp_autopull}}{\get{ghp_id}}}
+    \set{\get{name}_\get{num_\get{name}}}{\drawrow{\get{r_name}}{\get{p_id}}{\get{ghp_pull_id}}{\get{u_username}}{\get{ghp_head_ref}}{\get{ghp_updated_at}}{\get{ghp_head_date}}{\get{r_owner}}{\get{ghp_autopull}}{\get{ghp_haspriority}}{\get{ghp_id}}}
 
     \inc{num_\get{name}}
 }
@@ -260,6 +262,7 @@
 <th>GitHub page</th>
 <th>Test History</th>
 <th>Merge</th>
+<th>Priority</th>
 <th>Last Committed</th>
 \buildHeader{F 32}{FreeBSD_32}{FreeBSD with a 32 bit compiler binary and 32 bit output}
 \buildHeader{F 64}{FreeBSD_64_64}{FreeBSD with a 64 bit compiler binary and 64 bit output}
@@ -283,7 +286,7 @@
     \while{ \op{\get{num_\1_\2}}{>}{\get{i}} }{
         \if{\firstsecrow}{
             \set{firstsecrow}{}
-            <tr class="secspacer2"><td colspan="15"></td></tr>
+            <tr class="secspacer2"><td colspan="16"></td></tr>
             <tr class="pullrow seclabel">
                 <td class="seclabel" rowspan="\if{\op{\get{total_\2}}{<}{5}}{\op{\get{total_\2}}{+}{1}}{\get{total_\2}}"><div class="rotate">\3</div></td>
                 \get{\1_\2_\get{i}}
@@ -313,15 +316,15 @@
     \if{\get{firstsecrow}}{
       <tr class="pullrow seclabel">
           <td class="seclabel"><div class="rotate">\2</div></td>
-          <td colspan="14"></td>
+          <td colspan="15"></td>
       </tr>
     }{
       \if{\op{5}{>}{\get{totalrows}}}{
-        <tr class="filler"><td class="filler" colspan="14" style="height: \op{96}{-}{\op{22}{*}{\get{total_\1}}}px"></td></tr>
+        <tr class="filler"><td class="filler" colspan="15" style="height: \op{96}{-}{\op{22}{*}{\get{total_\1}}}px"></td></tr>
       }
     }
     \if{\op{\get{ridx}}{>}{0}}{
-        <tr class="secspacer"><td colspan="15"></td></tr>
+        <tr class="secspacer"><td colspan="16"></td></tr>
     }
   }
 }}
@@ -332,14 +335,14 @@
   \op{\get{total_autopull_hasfailures}}{>}{0}
   \op{\get{total_autopull_old}}{>}{0}
 }{
-  <tr id="pullsheader"><th></th><th colspan="15">Pulls to be auto-merged when successful</th></tr>
+  <tr id="pullsheader"><th></th><th colspan="16">Pulls to be auto-merged when successful</th></tr>
   \drawOneSection{autopull_passed}{&nbsp;&nbsp;Passed}
   \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;Has&nbsp;Passes}
   \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;Has&nbsp;Failures}
   \drawOneSection{autopull_old}{&nbsp;&nbsp;Old&nbsp;Results}
 }
 
-<tr id="pullsheader"><th></th><th colspan="15">Pulls waiting for review and/or manual pull</th></tr>
+<tr id="pullsheader"><th></th><th colspan="16">Pulls waiting for review and/or manual pull</th></tr>
 \if{
   \op{\get{total_passed}}{>}{0}
   \op{\get{total_haspasses}}{>}{0}
@@ -351,11 +354,11 @@
   \drawOneSection{hasfailures}{&nbsp;&nbsp;Has&nbsp;Failures}
   \drawOneSection{old}{&nbsp;&nbsp;Old&nbsp;Results}
 }{
-  <tr><td class="nopulls" colspan="15">No pulls</td></tr>
+  <tr><td class="nopulls" colspan="16">No pulls</td></tr>
 }
 
 # allow enough room for the rounded corners to render
-<tr><td colspan="15"></td></tr>
+<tr><td colspan="16"></td></tr>
 </table>
 
 \pageFooter

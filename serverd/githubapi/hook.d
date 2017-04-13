@@ -107,15 +107,8 @@ bool processPush(const ref JSONValue jv)
     return true;
 }
 
-bool processPull(const ref JSONValue jv)
+Repository findRepo(const ref JSONValue jv, const ref JSONValue pull_request)
 {
-    const(JSONValue)* action       = "action" in jv.object;
-    const(JSONValue)* number       = "number" in jv.object;
-    const(JSONValue)* pull_request = "pull_request" in jv.object;
-
-    // doesn't look like a Push request, bail out
-    if (!action || !number || !pull_request) return false;
-
     const(JSONValue)* base           = "base"  in pull_request.object;
     const(JSONValue)* base_repo      = "repo"  in base.object;
     const(JSONValue)* base_repo_name = "name"  in base_repo.object;
@@ -128,10 +121,15 @@ bool processPull(const ref JSONValue jv)
     Project proj = loadProject(owner.str, base_repo_name.str, base_ref.str);
     Repository repo = proj.getRepositoryByName(base_repo_name.str);
 
-    Pull github_pull = makePullFromJson(*pull_request, repo);
+    return repo;
+}
+
+bool processPull_updated(const Repository repo, ulong pull_id, const ref JSONValue pull_request)
+{
+    Pull github_pull = makePullFromJson(pull_request, repo);
     if (!github_pull) return false;
 
-    Pull db_pull = loadPull(repo.id, number.integer);
+    Pull db_pull = loadPull(repo.id, pull_id);
 
 // TODO: figureout how to make this work cleanly here.. currently using github's updated_at field which
 //       updates more frequently than when commits are made.  Luckily, this hook is only supposed to
@@ -154,6 +152,68 @@ bool processPull(const ref JSONValue jv)
     return true;
 }
 
+bool processPull_labels(string action, const Repository repo, ulong pull_id, const ref JSONValue jv)
+{
+    //"label" : {
+    //  "color" : "d3d3d3",
+    //  "name" : "auto-merge-squash",
+    //  "url" : "https://api.github.com/repos/dlang/phobos/labels/auto-merge-squash",
+    //  "default" : false,
+    //  "id" : 502726977
+    //}
+
+    Pull db_pull = loadPull(repo.id, pull_id);
+
+    const(JSONValue)* label = "label" in jv.object;
+    if (!label || label.type != JSON_TYPE.OBJECT)
+    {
+        writelog("    invalid label");
+        return false;
+    }
+
+    const(JSONValue)* name = "name" in label.object;
+    if (!name || name.type != JSON_TYPE.STRING)
+    {
+        writelog("    invalid name");
+        return false;
+    }
+
+    if (name.str == "auto-merge" || name.str == "auto-merge-squash")
+    {
+        bool has_priority = action == "labeled";
+
+        sql_exec(text("update github_pulls set has_priority = ", (has_priority ? "true" : "false"), " where id = ", db_pull.id));
+    }
+
+    return true;
+}
+
+bool processPull(const ref JSONValue jv)
+{
+    const(JSONValue)* action       = "action" in jv.object;
+    const(JSONValue)* number       = "number" in jv.object;
+    const(JSONValue)* pull_request = "pull_request" in jv.object;
+
+    // doesn't look like a Push request, bail out
+    if (!action       || action.type       != JSON_TYPE.STRING)  return false;
+    if (!number       || number.type       != JSON_TYPE.INTEGER) return false;
+    if (!pull_request || pull_request.type != JSON_TYPE.OBJECT)  return false;
+
+    Repository repo = findRepo(jv, *pull_request);
+
+    writelog("  processPull: %s", action.str);
+
+    switch (action.str)
+    {
+        case "labeled":
+        case "unlabeled":
+            return processPull_labels(action.str, repo, number.integer, jv);
+
+        default:
+            return processPull_updated(repo, number.integer, *pull_request);
+    }
+}
+
 void run(const ref string[string] hash, const ref string[string] userhash, Appender!string outstr)
 {
     outstr.put("Content-type: text/plain\n\n");
@@ -168,7 +228,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     sql_exec(text("insert into github_posts (id, post_time, body) values (null, now(), \"", sql_quote(bodytext), "\")"));
     sql_exec("select last_insert_id()");
     sqlrow liid = sql_row();
-    //formattedWrite(outstr, "%s\n", liid[0]);
+    writelog("  processing event: %s", liid[0]);
 
     if (!eventname)
     {

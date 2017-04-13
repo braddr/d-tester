@@ -30,8 +30,9 @@ class Pull
     SysTime create_date;
     SysTime close_date;
     ulong   auto_pull;
+    bool    has_priority;
 
-    this(ulong _id, ulong _repo_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, bool _base_usable, string _base_git_url, string _base_ref, string _base_sha, bool _head_usable, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date, ulong _auto_pull)
+    this(ulong _id, ulong _repo_id, ulong _pull_id, ulong _user_id, SysTime _updated_at, bool _open, bool _base_usable, string _base_git_url, string _base_ref, string _base_sha, bool _head_usable, string _head_git_url, string _head_ref, string _head_sha, SysTime _head_date, SysTime _create_date, SysTime _close_date, ulong _auto_pull, bool _has_priority)
     {
         id           = _id;
         repo_id      = _repo_id;
@@ -51,6 +52,7 @@ class Pull
         create_date  = _create_date;
         close_date   = _close_date;
         auto_pull    = _auto_pull;
+        has_priority = _has_priority;
     }
 
     override string toString()
@@ -67,8 +69,8 @@ class Pull
 string getPullColumns()
 {
     // field 1 is unused now (was repo_id)
-    //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15       16
-    return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, repo_id, auto_pull";
+    //      0   1  2        3        4                                               5             6         7         8             9         10        11                                             12                                               13                                              14    15       16         17
+    return "id, 0, pull_id, user_id, date_format(updated_at, '%Y-%m-%dT%H:%i:%S%Z'), base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, date_format(head_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(create_date, '%Y-%m-%dT%H:%i:%S%Z'), date_format(close_date, '%Y-%m-%dT%H:%i:%S%Z'), open, repo_id, auto_pull, has_priority";
 }
 
 Pull makePullFromRow(sqlrow row)
@@ -83,10 +85,10 @@ Pull makePullFromRow(sqlrow row)
     if (row[16] == "") row[16] = "0";
 
     //writelog("row[0] = %s, row[4] = %s, row[11] = %s, row[12] = %s, row[13] = %s, row[14] = %s", row[0], row[4], row[11], row[12], row[13], row[14]);
-    return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]), to!ulong(row[16]));
+    return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]), to!ulong(row[16]), (row[17] == "1"));
 }
 
-Pull makePullFromJson(const JSONValue obj, Repository repo)
+Pull makePullFromJson(const JSONValue obj, const Repository repo)
 {
     ulong  uid     = obj.object["user"].object["id"].integer;
     string uname   = obj.object["user"].object["login"].str;
@@ -180,12 +182,13 @@ Pull makePullFromJson(const JSONValue obj, Repository repo)
             SysTime.fromISOExtString(updated_at), // wrong time, but need a value. Will be fixed during loadCommitDateFromGithub
             SysTime.fromISOExtString(created_at),
             SysTime.fromISOExtString(closed_at),
-            auto_pull);
+            auto_pull,
+            false);
 
     return p;
 }
 
-bool updatePull(Repository repo, Pull current, Pull updated)
+bool updatePull(const Repository repo, Pull current, Pull updated)
 {
     bool headerPrinted = false;
     void printHeader()
@@ -292,11 +295,11 @@ bool updatePull(Repository repo, Pull current, Pull updated)
     return clearAutoPull;
 }
 
-void newPull(Repository repo, Pull pull)
+void newPull(const Repository repo, Pull pull)
 {
     writelog("  opening %s/%s/%s", repo.owner, repo.name, pull.pull_id);
 
-    string sqlcmd = text("insert into github_pulls (id, repo_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull) values (null, ", repo.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
+    string sqlcmd = text("insert into github_pulls (id, repo_id, pull_id, user_id, create_date, close_date, updated_at, open, base_git_url, base_ref, base_sha, head_git_url, head_ref, head_sha, head_date, auto_pull, has_priority) values (null, ", repo.id, ", ", pull.pull_id, ", ", pull.user_id, ", '", pull.create_date.toISOExtString(), "', ");
 
     if (pull.close_date.toISOExtString() == "2000-01-01T00:00:00Z")
         sqlcmd ~= "null";
@@ -306,7 +309,7 @@ void newPull(Repository repo, Pull pull)
     sqlcmd ~= text(", '", pull.updated_at.toISOExtString(), "', true, "
                    "'", pull.base_git_url, "', '", pull.base_ref, "', '", pull.base_sha, "', "
                    "'", pull.head_git_url, "', '", pull.head_ref, "', '", pull.head_sha, "', "
-                   "'", pull.head_date.toISOExtString(), "', null)");
+                   "'", pull.head_date.toISOExtString(), "', null, false)");
 
     sql_exec(sqlcmd);
 }

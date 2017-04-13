@@ -25,7 +25,7 @@ sqlrow[] getPullToBuild(string hostid)
         //      0          1     2         3           4          5        6        7       8
         "select ghp_id,    p_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing
            from (
-                  select ghp.head_date, ghp.id as ghp_id, p.id as p_id, ghp.repo_id, ghp.pull_id, c.id as cap_id, c.name as cap_name, ifnull(ptr2.max_rc = 0,true) as is_passing, if(p.allow_auto_merge, ifnull(ghp.auto_pull, 0),0) as auto_merge
+                  select ghp.head_date, ghp.id as ghp_id, p.id as p_id, ghp.repo_id, ghp.pull_id, c.id as cap_id, c.name as cap_name, ifnull(ptr2.max_rc = 0,true) as is_passing, (p.allow_auto_merge && (ifnull(ghp.auto_pull, 0) || ghp.has_priority)) as auto_merge
                     from (github_pulls ghp, github_users ghu, project_repositories pr, projects p, project_capabilities pc, capabilities c)
                          left join pull_test_runs ptr1 use index (g_p_id) on (ptr1.deleted = false and ptr1.g_p_id = ghp.id and ptr1.project_id = p.id and c.name = ptr1.platform)
                          left join (

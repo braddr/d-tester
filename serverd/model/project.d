@@ -95,7 +95,7 @@ Project loadProject(string owner, string repo, string branch)
 
     if (rows.length != 1)
     {
-        writelog("  found more than one project matching %s/%s%s, skipping", owner, repo, branch);
+        writelog("  found more than one project matching %s/%s/%s, skipping", owner, repo, branch);
         return null;
     }
 

@@ -89,7 +89,7 @@ bool getRelatedData(string runid, ref string reponame, ref string repoid, ref st
 }
 
 // called by p_get_runnable_pull -- can it provide these values itself?
-bool updateGithubPullStatus(string runid, Appender!string outstr)
+bool updateGithubPullStatus(string runid, bool starting, Appender!string outstr)
 {
     string projectid;
     string owner, reponame, repoid;
@@ -98,10 +98,21 @@ bool updateGithubPullStatus(string runid, Appender!string outstr)
     if (!getRelatedData(runid, reponame, repoid, sha, pullid, ghp_id, projectid, owner, merge_authorizing_id, outstr))
         return false;
 
-    return updateGithubPullStatus(runid, ghp_id, sha, pullid, projectid, repoid, owner, reponame, outstr);
+    return updateGithubPullStatus(runid, starting, ghp_id, sha, pullid, projectid, repoid, owner, reponame, outstr);
 }
 
-bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pullid, string projectid, string repoid, string owner, string reponame, Appender!string outstr)
+// record just the first start and all finishes
+bool recordStatus(bool starting, int numpass, int numfail, int numinprogress, int numpending)
+{
+    if (!starting) return true;
+
+    if (numinprogress == 1 && numpending == 9)
+        return true;
+
+    return false;
+}
+
+bool updateGithubPullStatus(string runid, bool starting, string ghp_id, string sha, string pullid, string projectid, string repoid, string owner, string reponame, Appender!string outstr)
 {
     if (!sql_exec(text("select rc from pull_test_runs where g_p_id = ", ghp_id, " and deleted = 0")))
     {
@@ -123,6 +134,8 @@ bool updateGithubPullStatus(string runid, string ghp_id, string sha, string pull
     }
     numpending = 10 - numpass - numfail - numinprogress;
     if (numpending < 0) numpending = 0;
+
+    if (!recordStatus(starting, numpass, numfail, numinprogress, numpending)) return true;
 
     string desc;
     void appenddesc(string s)
@@ -227,7 +240,7 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     updateHostLastCheckin(hostid, clientver);
     updateStore(runid, outstr);
-    updateGithubPullStatus(runid, ghp_id, sha, pullid, projectid, repoid, owner, reponame, outstr);
+    updateGithubPullStatus(runid, false, ghp_id, sha, pullid, projectid, repoid, owner, reponame, outstr);
 
     if (merge_authorizing_id != "")
         mergeGithubPull(owner, reponame, pullid, ghp_id, merge_authorizing_id, outstr);

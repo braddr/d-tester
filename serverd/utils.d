@@ -194,7 +194,7 @@ bool runCurlMethodRetry(CURL* curl, CurlOption co, ref string responsepayload, r
 
         long statusCode;
         curl_easy_getinfo(curl, CurlInfo.response_code, &statusCode);
-        if (statusCode >= 200 && statusCode <= 299)
+        if ((statusCode >= 200 && statusCode <= 299) || (statusCode == 422))
             return true;
 
         ++tries;

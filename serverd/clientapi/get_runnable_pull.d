@@ -45,9 +45,9 @@ sqlrow[] getPullToBuild(string hostid)
                          c.capability_type_id = 1 and
                          ptr1.platform is null and
                          ps.id is null
-               ) todo, build_host_capabilities bhc
+               ) todo, build_host_capabilities bhc, build_host_projects bhp
           where todo.cap_id = bhc.capability_id and
-                bhc.host_id = ", hostid,
+                bhc.host_id = ", hostid, " and bhp.host_id = ", hostid, " and bhp.project_id = p_id",
         " order by auto_merge desc, is_passing desc, head_date desc
           limit 1;"));
     sqlrow[] rows = sql_rows();

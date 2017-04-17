@@ -18,7 +18,7 @@ bool validateInput(ref string cookie, ref string csrf, Appender!string outstr)
 
 string parsestate(string state)
 {
-    string parts[] = split(state, "|");
+    string[] parts = split(state, "|");
 
     return parts[0] ~ "?" ~ join(parts[1 .. $], "&");
 }

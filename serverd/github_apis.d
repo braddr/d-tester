@@ -64,7 +64,7 @@ bool getAccessToken(string code, ref JSONValue jv)
     headers ~= "Accept: application/json";
     string url = text("https://github.com/login/oauth/access_token?client_id=", clientid, "&client_secret=", clientsecret, "&code=", code);
     string responsepayload;
-    string responseheaders[];
+    string[] responseheaders;
     if (!runCurlPOST(curl, responsepayload, responseheaders, url, null, headers, null, null))
     {
         writelog("  error retrieving access_token, not logging in");
@@ -79,7 +79,7 @@ bool getAccessTokenDetails(string access_token, ref JSONValue jv)
 {
     string url = text("https://api.github.com/applications/", clientid, "/tokens/", access_token);
     string responsepayload;
-    string responseheaders[];
+    string[] responseheaders;
     if (!runCurlGET(curl, responsepayload, responseheaders, url, clientid, clientsecret))
     {
         writelog("  error retrieving authorization, not logging in");
@@ -97,11 +97,11 @@ bool setSHAStatus(string owner, string repo, string sha, string desc, string sta
     string[] responseheaders;
 
     string requestpayload = text(
-        `{`
-            `"description" : "`, desc, `",`
-            `"state" : "`, status, `",`
-            `"target_url" : "`, targeturl, `",`
-            `"context" : "auto-tester"`
+        `{` ~
+            `"description" : "`, desc, `",` ~
+            `"state" : "`, status, `",` ~
+            `"target_url" : "`, targeturl, `",` ~
+            `"context" : "auto-tester"` ~
         `}`);
 
     writelog("  request body: %s", requestpayload);

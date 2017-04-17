@@ -57,12 +57,7 @@ class Pull
 
     override string toString()
     {
-        return text(
-                "Pull { "
-                    "id = ", id,
-                    ", repo_id = ", repo_id,
-                    ", pull_id = ", pull_id,
-                " }");
+        return text("Pull { id = ", id, ", repo_id = ", repo_id, ", pull_id = ", pull_id, " }");
     }
 }
 
@@ -306,9 +301,9 @@ void newPull(const Repository repo, Pull pull)
     else
         sqlcmd ~= "'" ~ pull.close_date.toISOExtString() ~ "'";
 
-    sqlcmd ~= text(", '", pull.updated_at.toISOExtString(), "', true, "
-                   "'", pull.base_git_url, "', '", pull.base_ref, "', '", pull.base_sha, "', "
-                   "'", pull.head_git_url, "', '", pull.head_ref, "', '", pull.head_sha, "', "
+    sqlcmd ~= text(", '", pull.updated_at.toISOExtString(), "', true, " ~
+                   "'", pull.base_git_url, "', '", pull.base_ref, "', '", pull.base_sha, "', " ~
+                   "'", pull.head_git_url, "', '", pull.head_ref, "', '", pull.head_sha, "', " ~
                    "'", pull.head_date.toISOExtString(), "', null, false)");
 
     sql_exec(sqlcmd);

@@ -89,7 +89,7 @@ bool createSession(string access_token, string username, long userid, ref string
 
 string parsestate(string state)
 {
-    string parts[] = split(state, "|");
+    string[] parts = split(state, "|");
 
     return parts[0] ~ "?" ~ join(parts[1 .. $], "&");
 }

@@ -95,7 +95,7 @@ string recordRunStart(string hostid, string platform, ulong project_id, ulong gh
 
 string recordMasterStart(string hostid, string platform, ulong projectid)
 {
-    sql_exec(text("insert into test_runs (start_time, project_id, host_id, platform, deleted) "
+    sql_exec(text("insert into test_runs (start_time, project_id, host_id, platform, deleted) " ~
                   "values (now(), ", projectid, ", \"", hostid, "\", \"", platform, "\", false)"));
     sql_exec("select last_insert_id()");
     sqlrow row = sql_row();
@@ -105,12 +105,12 @@ string recordMasterStart(string hostid, string platform, ulong projectid)
 
 void tryToCleanup(string hostid)
 {
-    sql_exec(text("select ptr.id, r.name, ghp.pull_id "
-                  "from pull_test_runs ptr, repositories r, github_pulls ghp "
-                  "where ptr.g_p_id = ghp.id and "
-                  "  ghp.repo_id = r.id and "
-                  "  ptr.deleted = 0 and "
-                  "  ptr.host_id = ", hostid, " and "
+    sql_exec(text("select ptr.id, r.name, ghp.pull_id " ~
+                  "from pull_test_runs ptr, repositories r, github_pulls ghp " ~
+                  "where ptr.g_p_id = ghp.id and " ~
+                  "  ghp.repo_id = r.id and " ~
+                  "  ptr.deleted = 0 and " ~
+                  "  ptr.host_id = ", hostid, " and " ~
                   "  ptr.end_time is null"));
     sqlrow[] rows = sql_rows();
     foreach (row; rows)

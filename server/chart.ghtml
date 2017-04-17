@@ -103,6 +103,7 @@
     }
 }}
 
+\if{\eq{1}{\get{projectid}}}{
 \set{cThreeLoadDataTable}{\quote{
     # build i -> epoch map
     # build rdate_epoch -> i map
@@ -178,6 +179,7 @@
         \set{c4_\get{name}_\get{ii}}{\get{count}}
     }
 }}
+}
 
 \set{cFiveLoadDataTable}{\quote{
     # build i -> epoch map
@@ -354,10 +356,12 @@ var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
 \cTwoLoadDataTable
 \generate_chart{c2}{\get{p.menu_label}\ - Weekly Pull Creates by Repository for the last 12 months}{}{100}{bar}{dmd}{druntime}{phobos}
 
-\cThreeLoadDataTable
-\generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{40}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+\if{\eq{1}{\get{projectid}}}{
+    \cThreeLoadDataTable
+    \generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
 
-\cFourLoadDataTable
-\generate_chart{c4}{Weekly Issues resolved by severity for the last 12 months}{}{40}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+    \cFourLoadDataTable
+    \generate_chart{c4}{Weekly Issues resolved by severity for the last 12 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+}
 
 \pageFooter

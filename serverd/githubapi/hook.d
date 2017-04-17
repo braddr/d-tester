@@ -32,13 +32,16 @@ bool parseAndReturn(string str, ref JSONValue jv)
     return true;
 }
 
-bool processPush(const ref JSONValue jv)
+bool parsePush(const ref JSONValue jv, ref string ownerstr, ref string repostr, ref string branchstr)
 {
     const(JSONValue)* refname = "ref" in jv.object;
     const(JSONValue)* repo    = "repository" in jv.object;
 
-    // doesn't look like a Push request, bail out
-    if (!refname || !repo) return false;
+    if (!refname || !repo)
+    {
+        writelog("  missing ref or repository, invalid push?");
+        return false;
+    }
 
     const(JSONValue)* owner    = "owner" in repo.object;
     const(JSONValue)* reponame = "name" in repo.object;
@@ -65,44 +68,63 @@ bool processPush(const ref JSONValue jv)
     }
     branch = branch[11 .. $];
 
+    ownerstr  = owner.str;
+    repostr   = reponame.str;
+    branchstr = branch;
+
+    return true;
+}
+
+bool processPush(const ref JSONValue jv)
+{
+    string owner, reponame, branch;
+
+    if (!parsePush(jv, owner, reponame, branch))
+        return false;
+
+    writelog("  processPush: %s/%s/%s", owner, reponame, branch);
+
+    // build list of affected projects
     sql_exec(text("select p.id " ~
                   "from projects p, repositories r, project_repositories pr " ~
-                  "where p.id = pr.project_id and pr.repository_id = r.id and " ~
-                  "r.owner = \"", sql_quote(owner.str), "\" and r.name = \"", reponame.str, "\" and r.ref = \"", sql_quote(branch), "\""));
-    sqlrow[] rows = sql_rows();
+                  "where p.enabled = true and p.id = pr.project_id and pr.repository_id = r.id and " ~
+                  "r.owner = \"", sql_quote(owner), "\" and r.name = \"", reponame, "\" and r.ref = \"", sql_quote(branch), "\""));
 
+    sqlrow[] rows = sql_rows();
     if (rows.length == 0)
     {
-        writelog ("  no project found for '%s/%s/%s'", owner.str, reponame.str, branch);
-        return false;
+        writelog("  ignoring post, %s/%s/%s not part of any project", owner, reponame, branch);
+        return true;
     }
-    string projectid = rows[0][0];
 
-    // invalidate obsoleted test_runs
-    sql_exec(text("update test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and project_id = ", projectid));
-
-    // invalidate obsoleted pull_test_runs
-    // TODO: merge these two queries into one query with nesting
-    sql_exec(text("select r.id " ~
-                  "from projects p, repositories r, project_repositories pr " ~
-                  "where p.id = pr.project_id and " ~
-                  "pr.repository_id = r.id and " ~
-                  "p.id = ", projectid));
-    rows = sql_rows();
-
-    string query = "update pull_test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and g_p_id in (select id from github_pulls where repo_id in (";
-    bool first = true;
-    foreach(row; rows)
+    string pid_in_list = "(";
+    foreach(index, row; rows)
     {
-        if (first)
-            first = false;
-        else
-            query ~= ", ";
-        query ~= row[0];
+        if (index != 0)
+            pid_in_list ~= ", ";
+        pid_in_list ~= row[0];
     }
-    query ~= "))";
+    pid_in_list ~= ")";
 
-    sql_exec(query);
+    writelog("  invalidate obsoleted test_runs");
+    sql_exec("update test_runs set deleted = true where start_time < (select post_time from github_posts order by id desc limit 1) and deleted = false and project_id in " ~ pid_in_list);
+
+    writelog("  invalidate obsoleted pull_test_runs");
+    sql_exec("update pull_test_runs " ~
+             "set deleted = true " ~
+             "where deleted = false and " ~
+             "start_time < (select post_time from github_posts order by id desc limit 1) and " ~
+             "g_p_id in ( " ~
+                 "select id " ~
+                 "from github_pulls " ~
+                 "where repo_id in (" ~
+                     "select r.id " ~
+                     "from projects p, repositories r, project_repositories pr " ~
+                     "where p.id = pr.project_id and " ~
+                     "pr.repository_id = r.id and " ~
+                     "p.id in " ~ pid_in_list ~
+                 ")" ~
+             ")");
 
     return true;
 }

@@ -130,3 +130,12 @@ Project[] loadProjectsByHostId(ulong hostid)
     return projects;
 }
 
+Repository loadRepositoryById(ulong repoid)
+{
+    sql_exec(text("select r.id, r.owner, r.name, r.ref from repositories r where r.id = ", repoid));
+
+    sqlrow[] rows = sql_rows();
+
+    return new Repository(to!ulong(rows[0][0]), rows[0][1], rows[0][2], rows[0][3]);
+}
+

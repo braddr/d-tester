@@ -30,6 +30,8 @@ Pull loadPullFromGitHub(Repository repo, Pull current_pull, ulong pullid)
         return null;
 
     Pull pull = makePullFromJson(jv, repo);
+    if (!pull) return null;
+    if (pull.base_ref != repo.refname) return null;
 
     if (current_pull.head_sha == pull.head_sha)
         pull.head_date = current_pull.head_date;
@@ -62,6 +64,7 @@ bool processProject(Pull[ulong] knownpulls, Repository repo, const ref JSONValue
     {
         Pull p = makePullFromJson(obj, repo);
         if (!p) continue;
+        if (p.base_ref != repo.refname) continue;
 
         Pull* tmp = p.pull_id in knownpulls;
         knownpulls.remove(p.pull_id);

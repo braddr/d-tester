@@ -105,10 +105,12 @@ Pull makePullFromJson(const JSONValue obj, const Repository repo)
         writelog("%s/%s/%s: base.repo is null, skipping", repo.owner, repo.name, pullid);
         return null;
     }
-    string base_ref = base.object["ref"].str;
-    if (base_ref != repo.refname)
+
+    const JSONValue b_ref = base.object["ref"];
+
+    if (b_ref.type != JSON_TYPE.STRING || b_ref.str.length == 0)
     {
-        //writelog("%s/%s/%s: pull is for %s, not %s", repo.owner, repo.name, pullid, base_ref, repo.refname);
+        writelog("%s/%s/%s: base.ref is null, skipping", repo.owner, repo.name, pullid);
         return null;
     }
 
@@ -167,8 +169,8 @@ Pull makePullFromJson(const JSONValue obj, const Repository repo)
             SysTime.fromISOExtString(updated_at),
             obj.object["state"].str == "open",
             true,
-            base.object["repo"].object["clone_url"].str,
-            base.object["ref"].str,
+            b_repo.object["clone_url"].str,
+            b_ref.str,
             base.object["sha"].str,
             h_isusable,
             h_url,

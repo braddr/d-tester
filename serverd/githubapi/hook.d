@@ -150,6 +150,7 @@ bool processPull_updated(const Repository repo, ulong pull_id, const ref JSONVal
 {
     Pull github_pull = makePullFromJson(pull_request, repo);
     if (!github_pull) return false;
+    if (github_pull.base_ref != repo.refname) return false;
 
     Pull db_pull = loadPull(repo.id, pull_id);
 

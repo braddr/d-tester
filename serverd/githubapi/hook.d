@@ -248,12 +248,18 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
 
     // TODO: add auth check
 
-    sql_exec(text("insert into github_posts (id, post_time, body) values (null, now(), \"", sql_quote(bodytext), "\")"));
-    sql_exec("select last_insert_id()");
-    sqlrow liid = sql_row();
-    writelog("  processing event: %s", liid[0]);
+    string hook_id = lookup(hash, "run_hook_id");
+    if (hook_id.length == 0)
+    {
+        sql_exec(text("insert into github_posts (id, post_time, body) values (null, now(), \"", sql_quote(bodytext), "\")"));
+        sql_exec("select last_insert_id()");
+        hook_id = sql_row()[0];
+    }
+    writelog("  processing event: %s", hook_id);
 
-    if (!eventname)
+    // when hardcoded from run_hook
+
+    if (!eventname || eventname.length == 0)
     {
         writelog("  missing X-GitHub-Event header, ignoring");
         return;
@@ -267,10 +273,10 @@ void run(const ref string[string] hash, const ref string[string] userhash, Appen
     {
         case "push":         rc = processPush(jv); break;
         case "pull_request": rc = processPull(jv); break;
-        default:             writelog("  unrecognized event, id: %s", liid[0]); break;
+        default:             writelog("  unrecognized event, id: %s", hook_id); break;
     }
 
     if (!rc)
-        writelog("  processing of event id %s failed", liid[0]);
+        writelog("  processing of event id %s failed", hook_id);
 }
 

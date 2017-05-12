@@ -139,3 +139,17 @@ Repository loadRepositoryById(ulong repoid)
     return new Repository(to!ulong(rows[0][0]), rows[0][1], rows[0][2], rows[0][3]);
 }
 
+Repository loadRepository(string owner, string name, string branch)
+{
+    sql_exec(text("select r.id, r.owner, r.name, r.ref " ~
+                  "from repositories r, projects p, project_repositories pr " ~
+                  "where p.enabled = true and " ~
+                        "p.id = pr.project_id and " ~
+                        "pr.repository_id = r.id and " ~
+                        "r.owner = \"", owner, "\" and " ~
+                        "r.name = \"", name, "\" and " ~
+                        "r.ref = \"", branch, "\""));
+    sqlrow[] rows = sql_rows();
+
+    return new Repository(to!ulong(rows[0][0]), rows[0][1], rows[0][2], rows[0][3]);
+}

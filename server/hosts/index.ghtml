@@ -54,7 +54,8 @@
                       r.id = ghp.repo_id and
                       bh.id = ptr.host_id and
                       ptr.end_time is null and
-                      ptr.deleted = false
+                      ptr.deleted = false and
+                      p.enabled = true
                 union
                select tr.id,
                       tr.platform,

@@ -147,7 +147,8 @@
            ptr.g_p_id = ghp.id and
            ghp.repo_id = r.id and
            r.id = pr.repository_id and
-           pr.project_id = p.id
+           pr.project_id = p.id and
+           ptr.project_id = p.id
      order by ptr.start_time desc
      limit 50
 }

@@ -142,7 +142,7 @@
               from test_runs tr, test_data td left join repositories r on td.repository_id = r.id, test_types tt
              where tr.id = td.test_run_id and
                    td.test_type_id = tt.id and
-                   tr.id > \get{minid} and
+                   tr.id >= \get{minid} and
                    tr.project_id = \get{projectid}
              order by 1, 2
         }

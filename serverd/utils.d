@@ -7,6 +7,12 @@ import etc.c.curl;
 static const char* USERAGENT = "Auto-Tester. https://auto-tester.puremagic.com/  contact: braddr@puremagic.com";
 static string LOGNAME = "/tmp/serverd.log";
 
+static ulong page_num = 0;
+void setLogPageNum(ulong num)
+{
+    page_num = num;
+}
+
 void writelog(S...)(S s)
 {
     import core.sys.posix.stdio : printf;
@@ -26,7 +32,7 @@ void writelog(S...)(S s)
 
         auto t = Clock.currTime();
         t.fracSecs = msecs(0);
-        fp.writef("%05d - %s - ", mypid, t.toISOExtString());
+        fp.writef("%05d(%03d) - %s - ", mypid, page_num, t.toISOExtString());
 
         fp.writefln(s);
     }

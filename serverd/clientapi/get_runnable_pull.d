@@ -41,6 +41,7 @@ sqlrow[] getPullToBuild(string hostid)
                          ghp.repo_id = pr.repository_id and
                          pr.project_id = p.id and
                          pc.project_id = p.id and
+                         p.enabled = true and
                          pc.capability_id = c.id and
                          c.capability_type_id = 1 and
                          ptr1.platform is null and

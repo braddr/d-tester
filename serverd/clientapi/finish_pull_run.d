@@ -56,7 +56,14 @@ bool validateInput(ref string raddr, ref string runid, ref string hostid, ref st
 
 bool getRelatedData(string runid, ref string reponame, ref string repoid, ref string sha, ref string pullid, ref string ghp_id, ref string projectid, ref string owner, ref string merge_authorizing_id, Appender!string outstr)
 {
-    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, p.id, r.owner, p.allow_auto_merge, ghp.auto_pull from github_pulls ghp, repositories r, pull_test_runs ptr, projects p, project_repositories pr where ptr.id = ", runid, " and ptr.g_p_id = ghp.id and ghp.repo_id = r.id and p.id = pr.project_id and pr.repository_id = r.id")))
+    if (!sql_exec(text("select r.name, ptr.sha, r.id, ghp.pull_id, ghp.id, p.id, r.owner, p.allow_auto_merge, ghp.auto_pull " ~
+                         "from github_pulls ghp, repositories r, pull_test_runs ptr, projects p, project_repositories pr " ~
+                        "where ptr.id = ", runid, " and " ~
+                              "ptr.g_p_id = ghp.id and " ~
+                              "ghp.repo_id = r.id and " ~
+                              "p.id = pr.project_id and " ~
+                              "p.enabled = true and " ~
+                              "pr.repository_id = r.id")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;

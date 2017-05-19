@@ -108,7 +108,11 @@ Project loadProjectById(ulong projectid)
     sql_exec(text("select id, menu_label, project_type, test_pulls from projects where enabled = true and id = ", projectid));
 
     sqlrow[] rows = sql_rows();
-    assert(rows.length == 1);
+    if (rows.length != 1)
+    {
+        writelog("  loadProjectById(%d): rows.length != 1", projectid);
+        return null;
+    }
 
     auto p = new Project(rows[0]);
 

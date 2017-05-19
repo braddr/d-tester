@@ -83,18 +83,18 @@ Pull makePullFromRow(sqlrow row)
     return new Pull(to!ulong(row[0]), to!ulong(row[15]), to!ulong(row[2]), to!ulong(row[3]), SysTime.fromISOExtString(row[4]), (row[14] == "1"), true, row[5], row[6], row[7], true, row[8], row[9], row[10], SysTime.fromISOExtString(row[11]), SysTime.fromISOExtString(row[12]), SysTime.fromISOExtString(row[13]), to!ulong(row[16]), (row[17] == "1"));
 }
 
-Pull makePullFromJson(const JSONValue obj, const Repository repo)
+Pull makePullFromJson(const JSONValue obj, string logid, ulong repo_id)
 {
     ulong  uid     = obj.object["user"].object["id"].integer;
     string uname   = obj.object["user"].object["login"].str;
-    long   pullid  = obj.object["number"].integer;
+    ulong  pull_id = obj.object["number"].integer;
     bool   trusted = checkUser(uid, uname);
 
     const JSONValue base = obj.object["base"];
 
     if (base.type != JSON_TYPE.OBJECT || base.object.length == 0)
     {
-        writelog("%s/%s/%s: base is null, skipping", repo.owner, repo.name, pullid);
+        writelog("%s: base is null, skipping", logid);
         return null;
     }
 
@@ -102,7 +102,7 @@ Pull makePullFromJson(const JSONValue obj, const Repository repo)
 
     if (b_repo.type != JSON_TYPE.OBJECT || b_repo.object.length == 0)
     {
-        writelog("%s/%s/%s: base.repo is null, skipping", repo.owner, repo.name, pullid);
+        writelog("%s: base.repo is null, skipping", logid);
         return null;
     }
 
@@ -110,7 +110,7 @@ Pull makePullFromJson(const JSONValue obj, const Repository repo)
 
     if (b_ref.type != JSON_TYPE.STRING || b_ref.str.length == 0)
     {
-        writelog("%s/%s/%s: base.ref is null, skipping", repo.owner, repo.name, pullid);
+        writelog("%s: base.ref is null, skipping", logid);
         return null;
     }
 
@@ -121,7 +121,7 @@ Pull makePullFromJson(const JSONValue obj, const Repository repo)
     const JSONValue head = obj.object["head"];
     if (head.type != JSON_TYPE.OBJECT || head.object.length == 0)
     {
-        writelog("WARNING: %s/%s/%s: head is null", repo.owner, repo.name, pullid);
+        writelog("WARNING: %s: head is null", logid);
         h_isusable = false;
     }
     else
@@ -129,7 +129,7 @@ Pull makePullFromJson(const JSONValue obj, const Repository repo)
         const JSONValue h_repo = head.object["repo"];
         if (h_repo.type != JSON_TYPE.OBJECT || h_repo.object.length == 0)
         {
-            writelog("WARNING: %s/%s/%s: head.repo is null", repo.owner, repo.name, pullid);
+            writelog("WARNING: %s: head.repo is null", logid);
             h_isusable = false;
         }
         else
@@ -163,8 +163,8 @@ Pull makePullFromJson(const JSONValue obj, const Repository repo)
 
     auto p = new Pull(
             0, // our id not known from github data
-            repo.id,
-            obj.object["number"].integer,
+            repo_id,
+            pull_id,
             uid,
             SysTime.fromISOExtString(updated_at),
             obj.object["state"].str == "open",
@@ -238,6 +238,17 @@ bool updatePull(const Repository repo, Pull current, Pull updated)
         clearAutoPull = true;
         writelog("    base_git_url: %s -> %s", current.base_git_url, updated.base_git_url);
         sql_exec(text("update github_pulls set base_git_url = '", updated.base_git_url, "' where id = ", current.id));
+    }
+
+    if (current.base_ref != updated.base_ref)
+    {
+        printHeader();
+        clearOldResults = true;
+        clearAutoPull = true;
+        writelog("    base_ref: %s -> %s", current.base_ref, updated.base_ref);
+        Repository new_repo = loadRepository(repo.owner, repo.name, updated.base_ref);
+        sql_exec(text("update github_pulls set base_ref = '", updated.base_ref, "', repo_id = ", new_repo.id,
+                      " where id = ", current.id));
     }
 
     if (current.base_sha != updated.base_sha)

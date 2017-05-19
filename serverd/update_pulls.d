@@ -23,18 +23,19 @@ CURL* curl;
 Github github;
 alias string[] sqlrow;
 
-Pull loadPullFromGitHub(Repository repo, Pull current_pull, ulong pullid)
+Pull loadPullFromGitHub(Repository repo, Pull db_pull, ulong pull_id)
 {
     JSONValue jv;
-    if (!github.getPull(repo.owner, repo.name, to!string(pullid), jv))
+    if (!github.getPull(repo.owner, repo.name, to!string(pull_id), jv))
         return null;
 
-    Pull pull = makePullFromJson(jv, repo);
+    string logid = text(repo.owner, "/", repo.name, "/", db_pull.pull_id);
+    Pull pull = makePullFromJson(jv, logid, repo.id);
     if (!pull) return null;
     if (pull.base_ref != repo.refname) return null;
 
-    if (current_pull.head_sha == pull.head_sha)
-        pull.head_date = current_pull.head_date;
+    if (db_pull.head_sha == pull.head_sha)
+        pull.head_date = db_pull.head_date;
     else
     {
         string date = github.loadCommitDateFromGithub(repo.owner, repo.name, pull.head_sha);
@@ -62,7 +63,9 @@ bool processProject(Pull[ulong] knownpulls, Repository repo, const ref JSONValue
 {
     foreach(ref const JSONValue obj; jv.array)
     {
-        Pull p = makePullFromJson(obj, repo);
+        ulong pull_id = obj.object["number"].integer;
+        string logid = text(repo.owner, "/", repo.name, "/", pull_id);
+        Pull p = makePullFromJson(obj, logid, repo.id);
         if (!p) continue;
         if (p.base_ref != repo.refname) continue;
 

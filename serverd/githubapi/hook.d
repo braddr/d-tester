@@ -130,30 +130,54 @@ bool processPush(const ref JSONValue jv)
     return true;
 }
 
-Repository findRepo(const ref JSONValue jv, const ref JSONValue pull_request)
+Pull findPull(const ref JSONValue jv, ulong pull_id, const ref JSONValue pull_request)
 {
     const(JSONValue)* base           = "base"  in pull_request.object;
     const(JSONValue)* base_repo      = "repo"  in base.object;
     const(JSONValue)* base_repo_name = "name"  in base_repo.object;
 
     const(JSONValue)* base_user      = "user"  in base.object;
-    const(JSONValue)* base_ref       = "ref"   in base.object;
     const(JSONValue)* owner          = "login" in base_user.object;
 
-    // TODO: a single pull may affect multiple projects
-    Project proj = loadProject(owner.str, base_repo_name.str, base_ref.str);
-    Repository repo = proj.getRepositoryByName(base_repo_name.str);
+    // could be optimized to just one query
+    sql_exec(text("select ghp.id " ~
+                  "from github_pulls ghp, projects p, repositories r, project_repositories pr " ~
+                  "where p.enabled = true and " ~
+                        "p.id = pr.project_id and " ~
+                        "pr.repository_id = r.id and " ~
+                        "ghp.repo_id = r.id and " ~
+                        "r.owner = \"", sql_quote(owner.str), "\" and " ~
+                        "r.name = \"", sql_quote(base_repo_name.str), "\" and " ~
+                        "ghp.pull_id = ", pull_id));
+    sqlrow[] rows = sql_rows();
 
-    return repo;
+    // new pull, not in db yet
+    if (rows.length == 0)
+        return null;
+
+    return loadPullById(to!ulong(rows[0][0]));
 }
 
-bool processPull_updated(const Repository repo, ulong pull_id, const ref JSONValue pull_request)
+// TODO: this is all a mess still
+bool processPull_updated(Pull db_pull, const ref JSONValue pull_request)
 {
-    Pull github_pull = makePullFromJson(pull_request, repo);
-    if (!github_pull) return false;
-    if (github_pull.base_ref != repo.refname) return false;
+    Repository repo;
 
-    Pull db_pull = loadPull(repo.id, pull_id);
+    if (db_pull)
+       repo = loadRepositoryById(db_pull.repo_id);
+    else
+    {
+        string owner = pull_request.object["base"].object["user"].object["login"].str;
+        string name = pull_request.object["base"].object["repo"].object["name"].str;
+        string branch = pull_request.object["base"].object["ref"].str;
+        repo = loadRepository(owner, name, branch);
+    }
+
+    ulong number = pull_request.object["number"].integer;
+    string logid = text(repo.owner, "/", repo.name, "/", number);
+    Pull github_pull = makePullFromJson(pull_request, logid, repo.id);
+    if (!github_pull) return false;
+    //if (github_pull.base_ref != repo.refname) return false;
 
 // TODO: figureout how to make this work cleanly here.. currently using github's updated_at field which
 //       updates more frequently than when commits are made.  Luckily, this hook is only supposed to
@@ -176,7 +200,7 @@ bool processPull_updated(const Repository repo, ulong pull_id, const ref JSONVal
     return true;
 }
 
-bool processPull_labels(string action, const Repository repo, ulong pull_id, const ref JSONValue jv)
+bool processPull_labels(string action, Pull db_pull, const ref JSONValue jv)
 {
     //"label" : {
     //  "color" : "d3d3d3",
@@ -185,8 +209,6 @@ bool processPull_labels(string action, const Repository repo, ulong pull_id, con
     //  "default" : false,
     //  "id" : 502726977
     //}
-
-    Pull db_pull = loadPull(repo.id, pull_id);
 
     const(JSONValue)* label = "label" in jv.object;
     if (!label || label.type != JSON_TYPE.OBJECT)
@@ -217,24 +239,39 @@ bool processPull(const ref JSONValue jv)
     const(JSONValue)* action       = "action" in jv.object;
     const(JSONValue)* number       = "number" in jv.object;
     const(JSONValue)* pull_request = "pull_request" in jv.object;
+    JSONValue jv_githubpull; // pull data as retrieved from github
 
     // doesn't look like a Push request, bail out
     if (!action       || action.type       != JSON_TYPE.STRING)  return false;
     if (!number       || number.type       != JSON_TYPE.INTEGER) return false;
     if (!pull_request || pull_request.type != JSON_TYPE.OBJECT)  return false;
 
-    Repository repo = findRepo(jv, *pull_request);
-
     writelog("  processPull: %s", action.str);
+
+    Pull db_pull = findPull(jv, number.integer, *pull_request);
 
     switch (action.str)
     {
         case "labeled":
         case "unlabeled":
-            return processPull_labels(action.str, repo, number.integer, jv);
+            return processPull_labels(action.str, db_pull, jv);
+
+        case "edited":
+        {
+            /* NOTE: pull_request from post can't be trusted for edits, contains old data */
+
+            Repository r = loadRepositoryById(db_pull.repo_id);
+            if (!github.getPull(r.owner, r.name, to!string(number.integer), jv_githubpull))
+            {
+                writelog("failed to retrieve pull %s/%s/%s from github", r.owner, r.name, number);
+                return false;
+            }
+            pull_request = &jv_githubpull;
+        }
+        goto default;
 
         default:
-            return processPull_updated(repo, number.integer, *pull_request);
+            return processPull_updated(db_pull, *pull_request);
     }
 }
 

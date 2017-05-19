@@ -8,10 +8,10 @@ LIBS=-L-L/usr/lib64/mysql56 -L-lmysqlclient -L-lcurl -L-lcrypto
 
 ALL_APPS=serverd-fastcgi serverd update-pulls fixup
 ALL_APPS_OUTPUT=$(addprefix $(OUTPUT_DIR)/,$(ALL_APPS))
-COMMON_SRC=mysql.d config.d utils.d model/*.d
-SERVERD_SRC=serverd.d clientapi/*.d githubapi/*.d loggedin/*.d setup.d validate.d www.d github_apis.d
-UPDATE_SRC=update_pulls.d github_apis.d
-FIXUP_SRC=fixup.d github_apis.d
+COMMON_SRC=mysql.d config.d utils.d github_apis.d globals.d model/*.d
+SERVERD_SRC=serverd.d clientapi/*.d githubapi/*.d loggedin/*.d setup.d validate.d www.d
+UPDATE_SRC=update_pulls.d
+FIXUP_SRC=fixup.d
 
 all: $(ALL_APPS_OUTPUT)
 

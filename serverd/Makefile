@@ -2,9 +2,9 @@
 DMD?=dmd
 OUTPUT_DIR=obj
 
-DFLAGS=-m64 -gc
+DFLAGS=-m64 -g
 
-LIBS=-L-L/usr/lib64/mysql56 -L-lmysqlclient -L-lcurl -L-lcrypto
+LIBS=-L-L/usr/lib64/mysql -L-lmysqlclient -L-lcurl -L-lcrypto
 
 ALL_APPS=serverd-fastcgi serverd update-pulls fixup run-hook debug
 ALL_APPS_OUTPUT=$(addprefix $(OUTPUT_DIR)/,$(ALL_APPS))

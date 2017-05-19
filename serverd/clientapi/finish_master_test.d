@@ -1,7 +1,7 @@
 module clientapi.finish_master_test;
 
 import mysql;
-import serverd;
+import globals;
 import utils;
 import validate;
 

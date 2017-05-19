@@ -1,7 +1,7 @@
 module clientapi.start_pull_test;
 
 import mysql;
-import serverd;
+import globals;
 import utils;
 import validate;
 

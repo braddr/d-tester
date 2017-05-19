@@ -3,7 +3,7 @@ module clientapi.get_runnable_pull;
 import config;
 import mysql;
 static import clientapi.finish_pull_run;
-import serverd;
+import globals;
 import utils;
 import validate;
 

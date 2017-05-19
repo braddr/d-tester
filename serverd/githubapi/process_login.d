@@ -3,7 +3,7 @@ module githubapi.process_login;
 import config;
 import github_apis;
 import mysql;
-import serverd;
+import globals;
 import utils;
 import validate;
 

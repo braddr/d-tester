@@ -1,7 +1,7 @@
 module clientapi.upload_pull;
 
 import mysql;
-import serverd;
+import globals;
 import utils;
 import validate;
 

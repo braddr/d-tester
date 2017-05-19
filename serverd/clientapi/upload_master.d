@@ -1,7 +1,7 @@
 module clientapi.upload_master;
 
 import mysql;
-import serverd;
+import globals;
 import utils;
 import validate;
 

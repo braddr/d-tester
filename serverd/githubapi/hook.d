@@ -1,6 +1,7 @@
 module githubapi.hook;
 
 import mysql;
+import globals;
 import utils;
 
 import model.project;

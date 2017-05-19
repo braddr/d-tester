@@ -2,7 +2,7 @@ module clientapi.finish_master_run;
 
 import config;
 import mysql;
-import serverd;
+import globals;
 import utils;
 import validate;
 

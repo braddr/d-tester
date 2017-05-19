@@ -1,7 +1,7 @@
 module clientapi.finish_pull_run;
 
 import config;
-import github_apis;
+import globals;
 import mysql;
 import serverd;
 import utils;

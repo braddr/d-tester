@@ -7,7 +7,7 @@ import std.range;
 
 import github_apis;
 import mysql;
-import serverd;
+import globals;
 import utils;
 import validate;
 

@@ -335,14 +335,14 @@
   \op{\get{total_autopull_hasfailures}}{>}{0}
   \op{\get{total_autopull_old}}{>}{0}
 }{
-  <tr id="pullsheader"><th></th><th colspan="16">Pulls to be auto-merged when successful</th></tr>
+  <tr id="pullsheader"><th></th><th colspan="16">Prioritized Pull Requests</th></tr>
   \drawOneSection{autopull_passed}{&nbsp;&nbsp;Passed}
   \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;Has&nbsp;Passes}
   \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;Has&nbsp;Failures}
   \drawOneSection{autopull_old}{&nbsp;&nbsp;Old&nbsp;Results}
 }
 
-<tr id="pullsheader"><th></th><th colspan="16">Pulls waiting for review and/or manual pull</th></tr>
+<tr id="pullsheader"><th></th><th colspan="16">Standard Priority Pull Requests</th></tr>
 \if{
   \op{\get{total_passed}}{>}{0}
   \op{\get{total_haspasses}}{>}{0}

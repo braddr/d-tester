@@ -138,7 +138,7 @@
 
 \sqlexec{
     select ptr.id, p.id, p.menu_label, r.owner, r.name, ghp.pull_id, ptr.platform, ptr.start_time, ptr.end_time, timediff(ifnull(ptr.end_time, now()), ptr.start_time), ptr.rc, ptr.deleted
-      from pull_test_runs ptr,
+      from pull_test_runs ptr use index (ptr_host_start_time),
            github_pulls ghp,
            repositories r,
            projects p,

@@ -358,7 +358,7 @@ var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
 
 \if{\eq{1}{\get{projectid}}}{
     \cThreeLoadDataTable
-    \generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+    \generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{100}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
 
     \cFourLoadDataTable
     \generate_chart{c4}{Weekly Issues resolved by severity for the last 12 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}

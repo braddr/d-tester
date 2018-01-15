@@ -351,7 +351,7 @@ var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
 \generate_chart{c5}{Number of open pulls grouped by month of creation}{}{40}{bar}{dmd}{druntime}{phobos}
 
 \cOneLoadDataTable
-\generate_chart{c1}{\get{p.menu_label}\ - Weekly Pull Closures by Repository for the last 12 months}{}{100}{bar}{dmd}{druntime}{phobos}
+\generate_chart{c1}{\get{p.menu_label}\ - Weekly Pull Closures by Repository for the last 12 months}{}{120}{bar}{dmd}{druntime}{phobos}
 
 \cTwoLoadDataTable
 \generate_chart{c2}{\get{p.menu_label}\ - Weekly Pull Creates by Repository for the last 12 months}{}{100}{bar}{dmd}{druntime}{phobos}

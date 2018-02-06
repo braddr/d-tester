@@ -23,7 +23,7 @@
            bh.owner_email,
            bh.last_heard_from,
            timediff(now(), last_heard_from) time_since,
-           (timediff(now(), last_heard_from) > "00:20:00") as over_due,
+           (timediff(now(), last_heard_from) > "00:30:00") as over_due,
            ip.run_id,
            ip.platform,
            ip.r_owner,

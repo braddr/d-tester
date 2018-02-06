@@ -79,8 +79,7 @@
          ghp.open = 1 and
          u.pull_approver is not null and
          r.id = pr.repository_id and
-         pr.project_id = \get{projectid} and
-         ptr.start_time > date_sub(now(), interval 2 week)
+         pr.project_id = \get{projectid}
    order by r.name, ghp.pull_id, ptr.platform
 }
 \while{\sqlrow{ptr_id}{r_name}{pull_id}{ptr_platform}{ptr_start_time}{ptr_rc}{ptr_deleted}}{

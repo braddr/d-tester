@@ -102,8 +102,9 @@ create table if not exists projects
     beta_only         bool         not null,
     enabled           bool         not null,
     allow_auto_merge  bool         not null,
+    last_pull_buid    datetime     not null,
 
-    primary key(id),
+    primary key(id, last_pull_build),
     unique key(menu_label)
 );
 

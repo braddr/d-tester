@@ -22,10 +22,13 @@ import std.range;
 sqlrow[] getPullToBuild(string hostid)
 {
     sql_exec(text(
-        //      0          1     2         3           4          5        6        7       8
-        "select ghp_id,    p_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing
+        //      0          1     2         3           4          5        6        7       8           9
+        "select ghp_id,    p_id, cap_name, auto_merge, head_date, repo_id, pull_id, cap_id, is_passing, p_last_pull_build
            from (
-                  select ghp.head_date, ghp.id as ghp_id, p.id as p_id, ghp.repo_id, ghp.pull_id, c.id as cap_id, c.name as cap_name, ifnull(ptr2.max_rc = 0,true) as is_passing, (p.allow_auto_merge && (ifnull(ghp.auto_pull, 0) || ghp.has_priority)) as auto_merge
+                  select ghp.head_date, ghp.id as ghp_id, p.id as p_id, ghp.repo_id, ghp.pull_id, c.id as cap_id, c.name as cap_name,
+                         ifnull(ptr2.max_rc = 0,true) as is_passing,
+                         (p.allow_auto_merge && (ifnull(ghp.auto_pull, 0) || ghp.has_priority)) as auto_merge,
+                         p.last_pull_build as p_last_pull_build
                     from (github_pulls ghp, github_users ghu, project_repositories pr, projects p, project_capabilities pc, capabilities c)
                          left join pull_test_runs ptr1 use index (g_p_id) on (ptr1.deleted = false and ptr1.g_p_id = ghp.id and ptr1.project_id = p.id and c.name = ptr1.platform)
                          left join (
@@ -48,8 +51,8 @@ sqlrow[] getPullToBuild(string hostid)
                          ps.id is null
                ) todo, build_host_capabilities bhc, build_host_projects bhp
           where todo.cap_id = bhc.capability_id and
-                bhc.host_id = ", hostid, " and bhp.host_id = ", hostid, " and bhp.project_id = p_id",
-        " order by auto_merge desc, is_passing desc, head_date desc
+                bhc.host_id = ", hostid, " and bhp.host_id = bhc.host_id and bhp.project_id = p_id
+          order by auto_merge desc, p_last_pull_build, is_passing desc, head_date desc
           limit 1;"));
     sqlrow[] rows = sql_rows();
     return rows;
@@ -90,6 +93,8 @@ string recordRunStart(string hostid, string platform, ulong project_id, ulong gh
                   ghp_id, ", ", hostid, ", ", project_id, ", \"", platform, "\", \"", pull_sha, "\", now(), false)"));
     sql_exec("select last_insert_id()");
     sqlrow lastidrow = sql_row();
+
+    sql_exec(text("update projects set last_pull_build = now() where id = ", project_id));
 
     return lastidrow[0];
 }

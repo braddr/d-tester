@@ -32,7 +32,7 @@
               pr.project_id = \get{projectid} and
               ghp.open = false and
               ghp.close_date is not null and
-              ghp.close_date > now() - interval 1 year
+              ghp.close_date > now() - interval 1.5 year
         group by 1
         order by 1
     }
@@ -52,7 +52,7 @@
                pr.project_id = \get{projectid} and
                ghp.open = false and
                ghp.close_date is not null and
-               ghp.close_date > now() - interval 1 year
+               ghp.close_date > now() - interval 1.5 year
          group by r.id, 2
          order by 1, 2
     }
@@ -73,7 +73,7 @@
               pr.project_id = \get{projectid} and
               ghp.open = false and
               ghp.create_date is not null and
-              ghp.create_date > now() - interval 1 year
+              ghp.create_date > now() - interval 1.5 year
         group by 1
         order by 1
     }
@@ -93,7 +93,7 @@
                pr.project_id = \get{projectid} and
                ghp.open = false and
                ghp.create_date is not null and
-               ghp.create_date > now() - interval 1 year
+               ghp.create_date > now() - interval 1.5 year
          group by r.id, 2
          order by 1, 2
     }
@@ -113,7 +113,7 @@
          where b.product_id = p.id and
                b.component_id = c.id and
                p.name = 'D' and
-               b.creation_ts > now() - interval 1 year
+               b.creation_ts > now() - interval 1.5 year
          group by 1
          order by 1
     }
@@ -131,7 +131,7 @@
          where b.product_id = p.id and
                b.component_id = c.id and
                p.name = 'D' and
-               b.creation_ts > now() - interval 1 year
+               b.creation_ts > now() - interval 1.5 year
          group by 1, 2
          order by 1, 2
     }
@@ -151,7 +151,7 @@
                b.component_id = c.id and
                p.name = 'D' and
                b.bug_status in ('CLOSED', 'RESOLVED') and
-               b.delta_ts > now() - interval 1 year
+               b.delta_ts > now() - interval 1.5 year
          group by 1
          order by 1
     }
@@ -170,7 +170,7 @@
                b.component_id = c.id and
                p.name = 'D' and
                b.bug_status in ('CLOSED', 'RESOLVED') and
-               b.delta_ts > now() - interval 1 year
+               b.delta_ts > now() - interval 1.5 year
          group by 1, 2
          order by 1, 2
     }
@@ -348,20 +348,20 @@ var \1_shelving = new Rickshaw.Graph.Behavior.Series.Toggle( \{
 }{}
 
 \cFiveLoadDataTable
-\generate_chart{c5}{Number of open pulls grouped by month of creation}{}{60}{bar}{dmd}{druntime}{phobos}
+\generate_chart{c5}{Number of open pulls grouped by month of creation}{}{40}{bar}{dmd}{druntime}{phobos}
 
 \cOneLoadDataTable
-\generate_chart{c1}{\get{p.menu_label}\ - Weekly Pull Closures by Repository for the last 12 months}{}{110}{bar}{dmd}{druntime}{phobos}
+\generate_chart{c1}{\get{p.menu_label}\ - Weekly Pull Closures by Repository for the last 18 months}{}{110}{bar}{dmd}{druntime}{phobos}
 
 \cTwoLoadDataTable
-\generate_chart{c2}{\get{p.menu_label}\ - Weekly Pull Creates by Repository for the last 12 months}{}{100}{bar}{dmd}{druntime}{phobos}
+\generate_chart{c2}{\get{p.menu_label}\ - Weekly Pull Creates by Repository for the last 18 months}{}{100}{bar}{dmd}{druntime}{phobos}
 
 \if{\eq{1}{\get{projectid}}}{
     \cThreeLoadDataTable
-    \generate_chart{c3}{Weekly Issues opened by severity for the last 12 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+    \generate_chart{c3}{Weekly Issues opened by severity for the last 18 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
 
     \cFourLoadDataTable
-    \generate_chart{c4}{Weekly Issues resolved by severity for the last 12 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
+    \generate_chart{c4}{Weekly Issues resolved by severity for the last 18 months}{}{70}{bar}{regression}{blocker}{major}{normal}{minor}{trival}{enhancement}
 }
 
 \pageFooter

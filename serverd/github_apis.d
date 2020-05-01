@@ -49,8 +49,8 @@ bool userIsCollaborator(string login, string owner, string repo, string access_t
     string responsepayload;
     string[] responseheaders;
 
-    string url = text("https://api.github.com/repos/", owner, "/", repo, "/collaborators/", login, "?access_token=", access_token);
-    runCurlMethod(curl, CurlOption.httpget, responsepayload, responseheaders, url, null, null, null, null);
+    string url = text("https://api.github.com/repos/", owner, "/", repo, "/collaborators/", login);
+    runCurlGET(curl, responsepayload, responseheaders, url, ["Authorization: token " ~ access_token], null, null);
 
     long statusCode;
     curl_easy_getinfo(curl, CurlInfo.response_code, &statusCode);
@@ -77,10 +77,11 @@ bool getAccessToken(string code, ref JSONValue jv)
 
 bool getAccessTokenDetails(string access_token, ref JSONValue jv)
 {
-    string url = text("https://api.github.com/applications/", clientid, "/tokens/", access_token);
+    string url = text("https://api.github.com/applications/", clientid, "/token");
     string responsepayload;
     string[] responseheaders;
-    if (!runCurlGET(curl, responsepayload, responseheaders, url, clientid, clientsecret))
+    string requestpayload = text(`{ "access_token" : "`, access_token, `" }`);
+    if (!runCurlPOST(curl, responsepayload, responseheaders, url, requestpayload, [], clientid, clientsecret))
     {
         writelog("  error retrieving authorization, not logging in");
         return false;

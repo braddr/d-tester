@@ -29,6 +29,26 @@
     \inc{numRepos}
 }
 
+\set{num_platforms}{0}
+\sqlexec{
+    select c.name,
+           c.short_name,
+           c.description
+      from capabilities c,
+           projects p,
+           project_capabilities pc
+     where c.id = pc.capability_id and
+           p.id = pc.project_id and
+           p.id = \get{projectid}
+     order by c.short_name
+}
+\while{\sqlrow{cname}{cshort}{cdesc}}{
+    \set{plat_\get{num_platforms}}{\get{cname}}
+    \set{plat_\get{num_platforms}_short}{\get{cshort}}
+    \set{plat_\get{num_platforms}_desc}{\get{cdesc}}
+    \inc{num_platforms}
+}
+
 # no inputs, clears a result set
 \set{resetResultSet}{\quote{
     \set{result_id}{}
@@ -275,6 +295,10 @@
 #<td>\draw{FreeBSD_64_32}</td>
 </tr>
 
+\if{
+  \eq{15}{\get{projectid}}
+}{
+}{
 <tr>
 \buildHeader{Linux 32}{Linux_32}{Linux with a 32 bit dmd binary and 32 bit output}
 \buildHeader{Linux 64}{Linux_64_64}{Linux with a 64 bit dmd binary and 64 bit output}
@@ -288,6 +312,10 @@
 <td>\draw{Linux_64_32}</td>
 </tr>
 
+\if{
+  \eq{2}{\get{projectid}}
+}{
+}{
 <tr>
 <th></th> #\buildHeader{OSX 32}{Darwin_32}{OS/X with a 32 bit dmd binary and 32 bit output}
 \buildHeader{OSX 64}{Darwin_64_64}{OS/X with a 64 bit dmd binary and 64 bit output}
@@ -309,6 +337,8 @@
 <td>\draw{Win_32}</td>
 <td>\draw{Win_32_64}</td>
 </tr>
+}
+}
 
 </table>
 }

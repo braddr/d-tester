@@ -178,6 +178,11 @@ bool runCurlGET(CURL* curl, ref string responsepayload, ref string[] responsehea
     return runCurlMethodRetry(curl, CurlOption.httpget, responsepayload, responseheaders, url, null, null, user, passwd);
 }
 
+bool runCurlGET(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string[] requestheaders, string user, string passwd)
+{
+    return runCurlMethodRetry(curl, CurlOption.httpget, responsepayload, responseheaders, url, null, requestheaders, user, passwd);
+}
+
 bool runCurlPUT(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
     return runCurlMethodRetry(curl, CurlOption.put, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
@@ -256,7 +261,7 @@ CURLcode runCurlMethod(CURL* curl, CurlOption co, ref string responsepayload, re
     curl_easy_setopt(curl, CurlOption.writeheader, &responseheaders);
 
     curl_easy_setopt(curl, CurlOption.stderr, fp.getFP());
-    curl_easy_setopt(curl, CurlOption.verbose, 0);
+    curl_easy_setopt(curl, CurlOption.verbose, 0L);
 
     curl_easy_setopt(curl, CurlOption.url, toStringz(url));
     CURLcode res = curl_easy_perform(curl);

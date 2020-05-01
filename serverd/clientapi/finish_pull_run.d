@@ -121,13 +121,25 @@ bool recordStatus(bool starting, int numpass, int numfail, int numinprogress, in
 
 bool updateGithubPullStatus(string runid, bool starting, string ghp_id, string sha, string pullid, string projectid, string repoid, string owner, string reponame, Appender!string outstr)
 {
+    sqlrow[] rows;
+
+    if (!sql_exec(text("select count(*) from capabilities c, project_capabilities pc where c.id = pc.capability_id and pc.project_id = ", projectid)))
+    {
+        formattedWrite(outstr, "error executing sql, check error log\n");
+        return false;
+    }
+
+    rows = sql_rows();
+    int num_platforms = to!int(rows[0][0]);
+    writelog("project_id: %s, num_platforms: %s", projectid, num_platforms);
+
     if (!sql_exec(text("select rc from pull_test_runs where g_p_id = ", ghp_id, " and deleted = 0")))
     {
         formattedWrite(outstr, "error executing sql, check error log\n");
         return false;
     }
 
-    sqlrow[] rows = sql_rows();
+    rows = sql_rows();
 
     int numpass, numfail, numinprogress, numpending;
     foreach(row; rows)
@@ -139,7 +151,7 @@ bool updateGithubPullStatus(string runid, bool starting, string ghp_id, string s
         else
             ++numinprogress;
     }
-    numpending = 10 - numpass - numfail - numinprogress;
+    numpending = num_platforms - numpass - numfail - numinprogress;
     if (numpending < 0) numpending = 0;
 
     if (!recordStatus(starting, numpass, numfail, numinprogress, numpending)) return true;

@@ -10,8 +10,7 @@ import std.string;
 class Github
 {
 private:
-    string userid;
-    string passwd;
+    string token;
     string clientid;
     string clientsecret;
     CURL*  curl;
@@ -35,10 +34,9 @@ bool parseAndReturn(string responsepayload, ref JSONValue jv)
 
 public:
 
-this(string userid_, string passwd_, string clientid_, string clientsecret_, CURL* curl_)
+this(string token_, string clientid_, string clientsecret_, CURL* curl_)
 {
-    userid = userid_;
-    passwd = passwd_;
+    token = token_;
     clientid = clientid_;
     clientsecret = clientsecret_;
     curl = curl_;
@@ -50,7 +48,7 @@ bool userIsCollaborator(string login, string owner, string repo, string access_t
     string[] responseheaders;
 
     string url = text("https://api.github.com/repos/", owner, "/", repo, "/collaborators/", login);
-    runCurlGET(curl, responsepayload, responseheaders, url, ["Authorization: token " ~ access_token], null, null);
+    runCurlGET(curl, responsepayload, responseheaders, url, ["Authorization: token " ~ access_token]);
 
     long statusCode;
     curl_easy_getinfo(curl, CurlInfo.response_code, &statusCode);
@@ -106,8 +104,8 @@ bool setSHAStatus(string owner, string repo, string sha, string desc, string sta
         `}`);
 
     writelog("  request body: %s", requestpayload);
-
-    if (!runCurlPOST(curl, responsepayload, responseheaders, url, requestpayload, null, userid, passwd))
+    string[] requestHeaders = ["Authorization: token " ~ token];
+    if (!runCurlPOST(curl, responsepayload, responseheaders, url, requestpayload, requestHeaders))
     {
         writelog("  failed to update github: %s", responsepayload);
         return false;
@@ -139,7 +137,7 @@ bool getPull(string owner, string repo, string pullid, ref JSONValue jv)
     string responsepayload;
     string[] responseheaders;
 
-    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, ["Authorization: token " ~ token]) || responsepayload.length == 0)
     {
         writelog("  failed to load pull from github");
         return false;
@@ -165,7 +163,7 @@ bool getCommit(string owner, string repo, string sha, ref JSONValue jv)
     string responsepayload;
     string[] responseheaders;
 
-    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, ["Authorization: token " ~ token]) || responsepayload.length == 0)
     {
         writelog("  failed to load commit from github");
         return false;
@@ -207,7 +205,7 @@ bool getPulls(string owner, string repo, ref JSONValue jv, ref string nextlink)
     string responsepayload;
     string[] responseheaders;
 
-    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, ["Authorization: token " ~ token]) || responsepayload.length == 0)
     {
         writelog("  failed to load pulls from github");
         return false;
@@ -224,7 +222,7 @@ bool getPullComments(string owner, string repo, string issuenum, ref JSONValue j
     string responsepayload;
     string[] responseheaders;
 
-    if (!runCurlGET(curl, responsepayload, responseheaders, url, userid, passwd) || responsepayload.length == 0)
+    if (!runCurlGET(curl, responsepayload, responseheaders, url, ["Authorization: token " ~ token]) || responsepayload.length == 0)
     {
         writelog("  failed to load comments from github");
         return false;
@@ -240,7 +238,7 @@ bool addPullComment(string access_token, string owner, string repo, string issue
     string[] responseheaders;
 
     string payload = text(`{ "body" : "`, comment, `" }`);
-    if (!runCurlPOST(curl, responsepayload, responseheaders, url, payload, null, null, null))
+    if (!runCurlPOST(curl, responsepayload, responseheaders, url, payload, null))
     {
         writelog("  failed to add a comment to github(access_token)");
         return false;
@@ -256,9 +254,9 @@ bool addPullComment(string owner, string repo, string issuenum, string comment, 
     string[] responseheaders;
 
     string payload = text(`{ "body" : "`, comment, `" }`);
-    if (!runCurlPOST(curl, responsepayload, responseheaders, url, payload, null, userid, passwd))
+    if (!runCurlPOST(curl, responsepayload, responseheaders, url, payload, ["Authorization: token " ~ token]))
     {
-        writelog("  failed to add a comment to github(userid, passwd)");
+        writelog("  failed to add a comment to github");
         return false;
     }
 

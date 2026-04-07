@@ -14,6 +14,7 @@ struct Config
 
     string github_user;
     string github_passwd;
+    string github_token;
     string github_clientid;
     string github_clientsecret;
 
@@ -58,8 +59,7 @@ void load_config(string filename)
     c.log_sql_queries = jv.as_bool("log_sql_queries");
 
     JSONValue gh = jv.object["github"];
-    c.github_user         = gh.as_string("user");
-    c.github_passwd       = gh.as_string("passwd");
+    c.github_token        = gh.as_string("token");
     c.github_clientid     = gh.as_string("client_id");
     c.github_clientsecret = gh.as_string("client_secret");
 }

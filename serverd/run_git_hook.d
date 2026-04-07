@@ -64,7 +64,7 @@ int main(string[] args)
 
     if (rows.length != 1)
     {
-        writelog("  should be just one row for each hook id, not %d", rows.length);
+        writelog("  should be just one row for each hook id, not %d, %s", rows.length, args[1]);
         return 2;
     }
 

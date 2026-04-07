@@ -183,7 +183,7 @@ int main(string[] args)
         return 1;
     }
 
-    github = new Github(c.github_user, c.github_passwd, c.github_clientid, c.github_clientsecret, curl);
+    github = new Github(c.github_token, c.github_clientid, c.github_clientsecret, curl);
 
     // loads the tree of Project -> Repositories
     Project[ulong] projects = loadProjects();

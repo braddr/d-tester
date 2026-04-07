@@ -178,6 +178,11 @@ bool runCurlGET(CURL* curl, ref string responsepayload, ref string[] responsehea
     return runCurlMethodRetry(curl, CurlOption.httpget, responsepayload, responseheaders, url, null, null, user, passwd);
 }
 
+bool runCurlGET(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string[] requestheaders)
+{
+    return runCurlMethodRetry(curl, CurlOption.httpget, responsepayload, responseheaders, url, null, requestheaders, null, null);
+}
+
 bool runCurlGET(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string[] requestheaders, string user, string passwd)
 {
     return runCurlMethodRetry(curl, CurlOption.httpget, responsepayload, responseheaders, url, null, requestheaders, user, passwd);
@@ -186,6 +191,11 @@ bool runCurlGET(CURL* curl, ref string responsepayload, ref string[] responsehea
 bool runCurlPUT(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)
 {
     return runCurlMethodRetry(curl, CurlOption.put, responsepayload, responseheaders, url, requestpayload, requestheaders, user, passwd);
+}
+
+bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders)
+{
+    return runCurlMethodRetry(curl, CurlOption.post, responsepayload, responseheaders, url, requestpayload, requestheaders, null, null);
 }
 
 bool runCurlPOST(CURL* curl, ref string responsepayload, ref string[] responseheaders, string url, string requestpayload, string[] requestheaders, string user, string passwd)

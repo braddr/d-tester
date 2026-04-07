@@ -101,6 +101,7 @@
          r.id = pr.repository_id and
          pr.project_id = \get{projectid}
    order by r.name, ghp.pull_id, ptr.platform
+   limit 4995
 }
 \while{\sqlrow{ptr_id}{r_name}{pull_id}{ptr_platform}{ptr_start_time}{ptr_rc}{ptr_deleted}}{
   \set{\get{r_name}_\get{pull_id}_\get{ptr_platform}_id}{\get{ptr_id}}
@@ -180,27 +181,32 @@
   \set{result}{old}
   \set{i}{0}
   \set{numpasses}{0}
+  \set{numfails}{0}
+  \set{numrunning}{0}
   \while{\op{\num_platforms}{>}{\i}}{
     \set{ss}{\getastate{\1}{\2}{\get{plat_\get{i}}}}
     \if{
-      \eq{\get{ss}}{fail}
-    }{
-      \set{i}{\get{num_platforms}}
-      \set{result}{hasfailures}
-    }{\if{
-      \eq{\get{ss}}{pass}
-    }{
-      \set{result}{haspasses}
-      \inc{numpasses}
-    }{\if{
       \eq{\get{ss}}{running}
     }{
-      \set{result}{haspasses}
-    }}}
+      \inc{numrunning}
+    }
+    \if{
+      \eq{\get{ss}}{fail}
+    }{
+      \inc{numfails}
+    }
+    \if{
+      \eq{\get{ss}}{pass}
+    }{
+      \inc{numpasses}
+    }
     \inc{i}
   }
-
-  \if{  \eq{\get{numpasses}}{\get{num_platforms}}  }{passed}{\result}
+  \if{\not{\eq{\get{numpasses}}{0}}}{\set{result}{haspasses}}
+  \if{\not{\eq{\get{numfails}}{0}}}{\set{result}{hasfailures}}
+  \if{\not{\eq{\get{numrunning}}{0}}}{\set{result}{hasrunning}}
+  \if{\eq{\get{numpasses}}{\get{num_platforms}}}{\set{result}{passed}}
+  {\get{result}}
 }}
 
 \set{num_repos}{0}
@@ -214,11 +220,13 @@
 \while{\sqlrow{r_\get{num_repos}_name}}{
   \set{num_\get{r_\get{num_repos}_name}_old}{0}
   \set{num_\get{r_\get{num_repos}_name}_hasfailures}{0}
+  \set{num_\get{r_\get{num_repos}_name}_hasrunning}{0}
   \set{num_\get{r_\get{num_repos}_name}_haspasses}{0}
   \set{num_\get{r_\get{num_repos}_name}_passed}{0}
   \set{num_\get{r_\get{num_repos}_name}_autopull_old}{0}
   \set{num_\get{r_\get{num_repos}_name}_autopull_hasfailures}{0}
   \set{num_\get{r_\get{num_repos}_name}_autopull_haspasses}{0}
+  \set{num_\get{r_\get{num_repos}_name}_autopull_hasrunning}{0}
   \set{num_\get{r_\get{num_repos}_name}_autopull_passed}{0}
   \inc{num_repos}
 }
@@ -239,7 +247,7 @@
     \inc{num_\get{name}}
 }
 
-# \1 == passed | haspasses | hasfailures | old
+# \1 == passed | hasrunning | haspasses | hasfailures | old
 \set{sum_repos}{\quote{
   \set{tot}{0}
   \set{i}{0}
@@ -251,10 +259,12 @@
 }}
 
 \set{total_passed}{\sum_repos{passed}}
+\set{total_hasrunning}{\sum_repos{hasrunning}}
 \set{total_haspasses}{\sum_repos{haspasses}}
 \set{total_hasfailures}{\sum_repos{hasfailures}}
 \set{total_old}{\sum_repos{old}}
 \set{total_autopull_passed}{\sum_repos{autopull_passed}}
+\set{total_autopull_hasrunning}{\sum_repos{autopull_hasrunning}}
 \set{total_autopull_haspasses}{\sum_repos{autopull_haspasses}}
 \set{total_autopull_hasfailures}{\sum_repos{autopull_hasfailures}}
 \set{total_autopull_old}{\sum_repos{autopull_old}}
@@ -298,7 +308,7 @@
     \set{totalrows}{\op{\get{totalrows}}{+}{\get{i}}}
 }}
 
-# \1 == section (passed, haspasses, hasfailures, old)
+# \1 == section (passed, hassrunning, haspasses, hasfailures, old)
 # \2 == label (Passed, Has Passes, Has Failures, Old)
 \set{drawOneSection}{\quote{
   \if{\op{\get{total_\1}}{>}{0}}{
@@ -327,11 +337,13 @@
 
 \if{
   \op{\get{total_autopull_passed}}{>}{0}
+  \op{\get{total_autopull_hasrunning}}{>}{0}
   \op{\get{total_autopull_haspasses}}{>}{0}
   \op{\get{total_autopull_hasfailures}}{>}{0}
   \op{\get{total_autopull_old}}{>}{0}
 }{
   <tr id="pullsheader"><th></th><th colspan="16">Prioritized Pull Requests</th></tr>
+  \drawOneSection{autopull_hasrunning}{&nbsp;&nbsp;Has&nbsp;Running}
   \drawOneSection{autopull_passed}{&nbsp;&nbsp;Passed}
   \drawOneSection{autopull_haspasses}{&nbsp;&nbsp;Has&nbsp;Passes}
   \drawOneSection{autopull_hasfailures}{&nbsp;&nbsp;Has&nbsp;Failures}
@@ -342,9 +354,11 @@
 \if{
   \op{\get{total_passed}}{>}{0}
   \op{\get{total_haspasses}}{>}{0}
+  \op{\get{total_hasrunning}}{>}{0}
   \op{\get{total_hasfailures}}{>}{0}
   \op{\get{total_old}}{>}{0}
 }{
+  \drawOneSection{hasrunning}{&nbsp;&nbsp;Has&nbsp;Running}
   \drawOneSection{passed}{&nbsp;&nbsp;Passed}
   \drawOneSection{haspasses}{&nbsp;&nbsp;Has&nbsp;Passes}
   \drawOneSection{hasfailures}{&nbsp;&nbsp;Has&nbsp;Failures}

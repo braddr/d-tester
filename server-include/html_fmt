@@ -8,9 +8,11 @@
 
 # Outputs content-type header and tells env so.
 # Won't output if already done.
+# \1 == extra params to content-type
+# \2 == type
 \set{conttype}{\quote{
   \if{\not{\isset{conttyped}}}{
-    {Content-type: text/html\n\if{\1}{\1\n}\n}
+    {Content-type: \if{\param{2}}{\2}{text/html}; charset=utf-8\n\if{\1}{\1\n}\n}
     \set{conttyped}{}# Don't let it happen more than once!
   }
 }}
@@ -31,7 +33,7 @@
     \set{htmlheaded}{}
     \conttype{\5}
     \6
-    <html>
+    <html lang="en">
     <head>
     <title>\1</title>
     \4#

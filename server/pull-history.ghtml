@@ -32,6 +32,9 @@
 \sqlexec{select owner, name from repositories where id=\get{repoid}}
 \ignore{\sqlrow{repo_owner}{repo_name}}
 
+\sqlexec{select count(*) from pull_suppressions where g_p_id = \get{ghp_id}}
+\ignore{\sqlrow{suppress_count}}
+
 \if{\get{ghp_auto_pull}}{
     \sqlexec{select username from github_users where id = \get{ghp_auto_pull}}
     \ignore{\sqlrow{pull_authorizer}}
@@ -63,6 +66,8 @@
         }</td>
   </tr><tr>
     <th>Has Priority</th><td>\if{\eq{\get{ghp_has_priority}}{0}}{false}{true}</td>
+  </tr><tr>
+    <th>Is Suppressed</th><td>\if{\eq{\get{suppress_count}}{0}}{false}{true}</td>
   </tr>
 </table>
 

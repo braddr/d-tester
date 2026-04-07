@@ -48,6 +48,40 @@
   \set{\1}{\op{\get{\1}}{-}{\if{\2}{\2}{1}}}
 }}
 
+# find the min value (based on op less than) value of all parameters
+\set{min}{\quote{
+  \set{min__tmp}{\param{1}}
+  \set{min__i}{1}
+  \while{
+    \op{\get{min__i}}{<=}{\paramcount}
+  }{
+    \if{\op{\get{min__tmp}}{>}{\param{\get{min__i}}}}{
+      \set{min__tmp}{\param{\get{min__i}}}
+    }
+    \inc{min__i}
+  }
+  \get{min__tmp}
+  \unset{min__i}
+  \unset{min__tmp}
+}}
+
+# find the max value (based on op greater than) value of all parameters
+\set{max}{\quote{
+  \set{max__tmp}{\param{1}}
+  \set{max__i}{1}
+  \while{
+    \op{\get{max__i}}{<=}{\paramcount}
+  }{
+    \if{\op{\get{max__tmp}}{<}{\param{\get{max__i}}}}{
+      \set{max__tmp}{\param{\get{max__i}}}
+    }
+    \inc{max__i}
+  }
+  \get{max__tmp}
+  \unset{max__i}
+  \unset{max__tmp}
+}}
+
 # an and operators.. logical and of all parameters
 \set{and}{\quote{
   \set{and__tmp}{true}

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ -t 1 ]; then clear; fi
+
+cd /home/dwebsite
+
+echo "pull-results"
+ls -l pull-results | head -3 | tail -1
+ls -l pull-results | tail -1
+
+echo
+echo "test-results"
+ls -l test-results | head -2 | tail -1
+ls -l test-results | tail -1
+
+echo
+echo "disk usage"
+du -sh /holdingdisk/DailySet1/
+du -sh /var/lib/mailman/qfiles/
+du -sh /tmp
+
+echo
+df -h .
+
+echo
+echo "overdue build hosts"
+mysql --table -Ddwebsite -e"\. ~/bin/sql/overdue.sql"
